@@ -7,9 +7,29 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>&amp;copy; Jesper Louis Andersen 2007-2018</copyright>
+    <lastBuildDate>Mon, 07 Oct 2013 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="https://jlouis.github.io/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>An Evil Postgres Bug</title>
+      <link>https://jlouis.github.io/posts/evil-postgres-bug/</link>
+      <pubDate>Mon, 07 Oct 2013 00:00:00 +0000</pubDate>
+      
+      <guid>https://jlouis.github.io/posts/evil-postgres-bug/</guid>
+      <description>So, I have this QLGlicko project. It consists of a web scraper which takes in duel matches played in the game of Quake Live—and stores them in a Postgres database. These duels are then analyzed and I run the Glicko 2 (see http://glicko.net/ ranking system on them to tell people who are currently the best player on a given map.
+ The system works well, but I was tired of maintaining it on a Linux machine for several reasons.</description>
+    </item>
+    
+    <item>
+      <title>An Initial Post</title>
+      <link>https://jlouis.github.io/posts/an-initial-post/</link>
+      <pubDate>Wed, 02 Oct 2013 00:00:00 +0000</pubDate>
+      
+      <guid>https://jlouis.github.io/posts/an-initial-post/</guid>
+      <description>I tend to stir up things over on blogger, mostly writing the blog http://jlouisramblings.blogspot.com/ —but I am considering writing and using Medium instead to provide stuff, since the platform just seems nicer. My Ramblings are mostly-technical and they tend to contain a lot of code in them, but the way I tend to add new blog posts is somewhat indirect. I write the post itself in my trusty Acme editor—as markdown—and then I convert that into HTML which I then push in on top of Blogger.</description>
+    </item>
     
   </channel>
 </rss>
