@@ -7,10 +7,29 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>&amp;copy; Jesper Louis Andersen 2007-2018</copyright>
-    <lastBuildDate>Mon, 07 Oct 2013 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 30 Oct 2013 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="https://jlouis.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Eventi</title>
+      <link>https://jlouis.github.io/posts/eventi/</link>
+      <pubDate>Wed, 30 Oct 2013 00:00:00 +0000</pubDate>
+      
+      <guid>https://jlouis.github.io/posts/eventi/</guid>
+      <description>So, listening a bit to &amp;#8220;The Civil Wars&amp;#8221; this afternoon cooked up the rest of eVenti. This blog post is brought to you by Maurice Ravel, and Morcheeba however.[1]
+ The eVenti system is a simple Erlang-implementation of the venti(8) system famous from Plan9. The idea is very simple: We can store data in Venti and the data becomes addressed by its SHA1 checksum.footenote:[I should probably change this later, but for compatibility reasons we stick to it…] This is called a Content Adressable Storage (CAS) because Content is—you guessed it—addressed by the checksum of the content.</description>
+    </item>
+    
+    <item>
+      <title>Why I use erlang.mk</title>
+      <link>https://jlouis.github.io/posts/why-erlang-mk/</link>
+      <pubDate>Mon, 28 Oct 2013 00:00:00 +0000</pubDate>
+      
+      <guid>https://jlouis.github.io/posts/why-erlang-mk/</guid>
+      <description>Here is our typical Erlang project. And note we are on a pretty slow Mac OSX filesystem and a 5400 RPM disk. Not the fastest in the world. If I run a rebar-compile from cold, we get the following a timing of 26 seconds. Doing the same with erlang.mk is 24 seconds. Note that erlang.mk only uses one thread, whereas rebar is parallelizing the build and is using all 4 cores in the machine.</description>
+    </item>
     
     <item>
       <title>An Evil Postgres Bug</title>
@@ -18,7 +37,7 @@
       <pubDate>Mon, 07 Oct 2013 00:00:00 +0000</pubDate>
       
       <guid>https://jlouis.github.io/posts/evil-postgres-bug/</guid>
-      <description>So, I have this QLGlicko project. It consists of a web scraper which takes in duel matches played in the game of Quake Live—and stores them in a Postgres database. These duels are then analyzed and I run the Glicko 2 (see http://glicko.net/ ranking system on them to tell people who are currently the best player on a given map.
+      <description>So, I have this QLGlicko project. It consists of a web scraper which takes in duel matches played in the game of Quake Live—and stores them in a Postgres database. These duels are then analyzed and I run the Glicko 2 (see http://glicko.net/) ranking system on them to tell people who are currently the best player on a given map.
  The system works well, but I was tired of maintaining it on a Linux machine for several reasons.</description>
     </item>
     

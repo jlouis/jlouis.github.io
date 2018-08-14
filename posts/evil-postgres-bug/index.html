@@ -65,7 +65,7 @@
   }
 
   .right-justify {
-    float:right;
+    float: right;
   }
 
   pre, code {
@@ -148,7 +148,7 @@
   }
 
   blockquote {
-    font-family:"Old Standard TT",serif;
+    font-family:"Libre Baskerville", serif;
     text-align:center;
     padding:50px;
   }
@@ -159,7 +159,7 @@
   }
 
   blockquote:before,blockquote:after {
-    font-family:"Old Standard TT",serif;
+    font-family:"Libre Baskerville", serif;
     content:'\201C';
     font-size:35px;
     color:#403c3b;
@@ -222,13 +222,6 @@
 
   ul li {
     margin-left: 5px;
-  }
-
-  ul li {
-    list-style-type: none;
-  }
-  ul li:before {
-    content:"\00BB \0020";
   }
 
   #nav ul li:before, .posts_listing li:before {
@@ -310,7 +303,7 @@
   }
 
   #not-found a {
-    font-family:"Old Standard TT",serif;
+    font-family:"Libre Baskerville",serif;
     font-size: 200px;
     text-decoration: none;
     display: inline-block;
@@ -413,7 +406,7 @@
 <p>So, I have this QLGlicko project. It consists of a web scraper which
 takes in duel matches played in the game of Quake Live—and stores them
 in a Postgres database. These duels are then analyzed and I run the
-Glicko 2 (see <a href="http://glicko.net/" class="bare">http://glicko.net/</a> ranking system on them to tell people
+Glicko 2 (see <a href="http://glicko.net/" class="bare">http://glicko.net/</a>) ranking system on them to tell people
 who are currently the best player on a given map.</p>
 </div>
 <div class="paragraph">
@@ -427,8 +420,8 @@ support on FreeBSD. Hence I decided to move the database onto FreeBSD.</p>
 <p>Most of the migration went well. I dumped the database, installed
 FreeBSD, installed Postgres 9.3 (to avoid having to toy with SysV shared
 memory). Tuned the database. And tried to import. First problem is that
-Linux used the fake locale called <code>en_dk.utf-8''—so I had to fake it
-and install that. Next problem was that I used the </code>uuid-ossp''
+Linux used the fake locale called &#8220;en_dk.utf-8&#8221;—so I had to fake it
+and install that. Next problem was that I used the &#8220;uuid-ossp&#8221;
 EXTENSION in Linux. This one has several problems on FreeBSD, mostly
 related to PIC code and the fact that it will crash the database.</p>
 </div>
@@ -442,7 +435,7 @@ insertion or update code would soundly fail. I was wondering what went
 wrong and began digging.</p>
 </div>
 <div class="paragraph">
-<p>Here is what happened: the ``uuid-ossp'' code had managed to insert a
+<p>Here is what happened: the &#8220;uuid-ossp&#8221; code had managed to insert a
 row into the database before it crashed. So this went under the radar of
 the index and now we had trouble! There is an extra entry in the
 database—violating the index—but it does not detect that.</p>
@@ -458,7 +451,7 @@ makes the error show up. And now I understood what went wrong.</p>
 </div>
 <div class="paragraph">
 <p>The solution was pretty simple: Restore the database from a backup.
-Remove any trace of ``uuid-ossp'' and then start the database again. Now
+Remove any trace of &#8220;uuid-ossp&#8221; and then start the database again. Now
 the index works as expected and the database doesn’t crash.</p>
 </div>
 <div class="paragraph">
@@ -471,6 +464,8 @@ the index works as expected and the database doesn’t crash.</p>
     
       <a class="basic-alignment left" href="https://jlouis.github.io/posts/an-initial-post/">&laquo; An Initial Post</a>
     
+    
+      <a class="basic-alignment left" href="https://jlouis.github.io/posts/why-erlang-mk/">Why I use erlang.mk &raquo;</a>
     
   </div>
 </section>

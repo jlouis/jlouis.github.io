@@ -20,10 +20,10 @@
     <title>
       
       
-         An Initial Post 
+         Why I use erlang.mk 
       
     </title>
-    <link rel="canonical" href="https://jlouis.github.io/posts/an-initial-post/">
+    <link rel="canonical" href="https://jlouis.github.io/posts/why-erlang-mk/">
 
     <style>
   * {
@@ -393,41 +393,51 @@
 
 
 <section id=content>
-  <h1> An Initial Post </h1>
+  <h1> Why I use erlang.mk </h1>
 
   
     <div id=sub-header>
-      October 2013 · 1 minute read
+      October 2013 · 2 minute read
     </div>
   
 
   <div class="entry-content">
     <div class="paragraph">
-<p>I tend to stir up things over on blogger, mostly writing the blog
-<a href="http://jlouisramblings.blogspot.com/" class="bare">http://jlouisramblings.blogspot.com/</a> —but I am considering writing and
-using Medium instead to provide stuff, since the platform just seems
-nicer. My Ramblings are mostly-technical and they tend to contain a lot
-of code in them, but the way I tend to add new blog posts is somewhat
-indirect. I write the post itself in my trusty Acme editor—as
-markdown—and then I convert that into HTML which I then push in on top
-of Blogger. I almost never use the editor in Blogger because I hate it.
-So writing on Medium is an attempt. An attempt to see if the platform
-would be a nicer way to write posts and if I would prefer it to writing
-in the Editor.</p>
+<p>Here is our typical Erlang project. And note we are on a pretty slow Mac
+OSX filesystem and a 5400 RPM disk. Not the fastest in the world. If I
+run a rebar-compile from cold, we get the following a timing of 26
+seconds. Doing the same with erlang.mk is 24 seconds. Note that
+erlang.mk only uses one thread, whereas rebar is parallelizing the build
+and is using all 4 cores in the machine. But erlang.mk only spawns the
+erlc compiler once per directory, and only if it needs to—no change
+means no spawn.</p>
 </div>
 <div class="paragraph">
-<p><em>Aside from 2018:</em> In 2013, Medium was a quite nice platform. But over
-the years, they destroyed the platform totally, making it a platform
-where you have to pay in order to read posts and entries. It was free
-originally.</p>
+<p>But if we have already compiled the code, the numbers are much
+different. When compiling from warm, it takes rebar 9 seconds to figure
+out that there is nothing to do in the project. erlang.mk does the same
+thing in 0.2 seconds.</p>
+</div>
+<div class="paragraph">
+<p>When developing, I don’t want to wait on the compile to finish all the
+time. I want it to be proportional to the amount of change in my
+repository, not on the complexity of the software project.</p>
+</div>
+<div class="paragraph">
+<p>The other reason is that make(1) is the right tool for the job. Most of
+these other tools are reinventions of the thing make(1) does. And it is
+very hard to even contend with a tool that has survived so many years
+and is so archaic.</p>
 </div>
 
   </div>
 
   <div id=links>
     
+      <a class="basic-alignment left" href="https://jlouis.github.io/posts/evil-postgres-bug/">&laquo; An Evil Postgres Bug</a>
     
-      <a class="basic-alignment left" href="https://jlouis.github.io/posts/evil-postgres-bug/">An Evil Postgres Bug &raquo;</a>
+    
+      <a class="basic-alignment left" href="https://jlouis.github.io/posts/eventi/">Eventi &raquo;</a>
     
   </div>
 </section>
