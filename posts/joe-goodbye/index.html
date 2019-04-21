@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    
+
+    
+      <link href="https://fonts.googleapis.com/css?family=Libre+Baskerville:400|Lato:400" rel="stylesheet" type='text/css'>
+    
+
+    <link rel="icon" type="image/png" href="/favicon_16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="/favicon_32x32.png" sizes="32x32">
+    <link rel="icon" type="image/png" href="/favicon_128x128.png" sizes="128x128">
+
+    <title>
+      
+      
+         {&#39;EXIT&#39;, joe, goodbye} 
+      
+    </title>
+    <link rel="canonical" href="https://jlouis.github.io/posts/joe-goodbye/">
+
+    <style>
+  * {
+    border:0;
+    font:inherit;
+    font-size:100%;
+    vertical-align:baseline;
+    margin:0;
+    padding:0;
+    color: black;
+    text-decoration-skip: ink;
+  }
+
+  body {
+    font-family:'Libre Baskerville', serif;
+    font-size:17px;
+    line-height:160%;
+    color:#1d1313;
+    max-width:700px;
+    margin:auto;
+  }
+
+  p {
+    margin: 20px 0;
+  }
+
+  a img {
+    border:none;
+  }
+
+  img {
+    margin: 10px auto 10px auto;
+    max-width: 100%;
+    display: block;
+  }
+
+  .left-justify {
+    float: left;
+  }
+
+  .right-justify {
+    float: right;
+  }
+
+  pre, code {
+    font: 12px Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    background-color: #f7f7f7;
+  }
+
+  code {
+    font-size: 12px;
+    padding: 4px;
+  }
+
+  pre {
+    margin-top: 0;
+    margin-bottom: 16px;
+    word-wrap: normal;
+    padding: 16px;
+    overflow: auto;
+    font-size: 85%;
+    line-height: 1.45;
+  }
+
+  pre>code {
+    padding: 0;
+    margin: 0;
+    font-size: 100%;
+    word-break: normal;
+    white-space: pre;
+    background: transparent;
+    border: 0;
+  }
+
+  pre code {
+    display: inline;
+    max-width: auto;
+    padding: 0;
+    margin: 0;
+    overflow: visible;
+    line-height: inherit;
+    word-wrap: normal;
+    background-color: transparent;
+    border: 0;
+  }
+
+  pre code::before,
+  pre code::after {
+    content: normal;
+  }
+
+  em,q,em,dfn {
+    font-style:italic;
+  }
+
+  .sans,html .gist .gist-file .gist-meta {
+    font-family:"Libre Baskerville", serif;
+  }
+
+  .mono,pre,code,tt,p code,li code {
+    font-family:Menlo,Monaco,"Andale Mono","lucida console","Courier New",monospace;
+  }
+
+  .heading,.serif,h1,h2,h3 {
+    font-family:"Lato",sans-serif;
+  }
+
+  strong {
+    font-weight:600;
+  }
+
+  q:before {
+    content:"\201C";
+  }
+
+  q:after {
+    content:"\201D";
+  }
+
+  del,s {
+    text-decoration:line-through;
+  }
+
+  blockquote {
+    font-family:"Libre Baskerville", serif;
+    text-align:center;
+    padding:50px;
+  }
+
+  blockquote p {
+    display:inline-block;
+    font-style:italic;
+  }
+
+  blockquote:before,blockquote:after {
+    font-family:"Libre Baskerville", serif;
+    content:'\201C';
+    font-size:35px;
+    color:#403c3b;
+  }
+
+  blockquote:after {
+    content:'\201D';
+  }
+
+  hr {
+    width:40%;
+    height: 1px;
+    background:#403c3b;
+    margin: 25px auto;
+  }
+
+  h1 {
+    font-size:35px;
+  }
+
+  h2 {
+    font-size:28px;
+  }
+
+  h3 {
+    font-size:22px;
+    margin-top:18px;
+  }
+
+  h1 a,h2 a,h3 a {
+    text-decoration:none;
+  }
+
+  h1,h2 {
+    margin-top:28px;
+  }
+
+  #sub-header, time {
+    color:#403c3b;
+    font-size:13px;
+  }
+
+  #sub-header {
+    margin: 0 4px;
+  }
+
+  #nav h1 a {
+    font-size:35px;
+    color:#1d1313;
+    line-height:120%;
+  }
+
+  .posts_listing a,#nav a {
+    text-decoration: none;
+  }
+
+  li {
+    margin-left: 20px;
+  }
+
+  ul li {
+    margin-left: 5px;
+  }
+
+  #nav ul li:before, .posts_listing li:before {
+    content:'';
+    margin-right:0;
+  }
+
+  #content {
+    text-align:left;
+    width:100%;
+    font-size:15px;
+    padding:60px 0 80px;
+  }
+
+  #content h1,#content h2 {
+    margin-bottom:5px;
+  }
+
+  #content h2 {
+    font-size:25px;
+  }
+
+  #content .entry-content {
+    margin-top:15px;
+  }
+
+  #content time {
+    margin-left:3px;
+  }
+
+  #content h1 {
+    font-size:30px;
+  }
+
+  .highlight {
+    margin: 10px 0;
+  }
+
+  .posts_listing {
+    margin:0 0 50px;
+  }
+
+  .posts_listing li {
+    margin:0 0 25px 15px;
+  }
+
+  .posts_listing li a:hover,#nav a:hover {
+    text-decoration: underline;
+  }
+
+  #nav {
+    text-align:center;
+    position:static;
+    margin-top:60px;
+  }
+
+  #nav ul {
+    display: table;
+    margin: 8px auto 0 auto;
+  }
+
+  #nav li {
+    list-style-type:none;
+    display:table-cell;
+    font-size:15px;
+    padding: 0 20px;
+  }
+
+  #links {
+    margin: 50px 0 0 0;
+  }
+
+  #links :nth-child(2) {
+    float:right;
+  }
+
+  #not-found {
+    text-align: center;
+  }
+
+  #not-found a {
+    font-family:"Libre Baskerville",serif;
+    font-size: 200px;
+    text-decoration: none;
+    display: inline-block;
+    padding-top: 225px;
+  }
+
+  @media (max-width: 750px) {
+    body {
+      padding-left:20px;
+      padding-right:20px;
+    }
+
+    #nav h1 a {
+      font-size:28px;
+    }
+
+    #nav li {
+      font-size:13px;
+      padding: 0 15px;
+    }
+
+    #content {
+      margin-top:0;
+      padding-top:50px;
+      font-size:14px;
+    }
+
+    #content h1 {
+      font-size:25px;
+    }
+
+    #content h2 {
+      font-size:22px;
+    }
+
+    .posts_listing li div {
+      font-size:12px;
+    }
+  }
+
+  @media (max-width: 400px) {
+    body {
+      padding-left:20px;
+      padding-right:20px;
+    }
+
+    #nav h1 a {
+      font-size:22px;
+    }
+
+    #nav li {
+      font-size:12px;
+      padding: 0 10px;
+    }
+
+    #content {
+      margin-top:0;
+      padding-top:20px;
+      font-size:12px;
+    }
+
+    #content h1 {
+      font-size:20px;
+    }
+
+    #content h2 {
+      font-size:18px;
+    }
+
+    .posts_listing li div{
+      font-size:12px;
+    }
+  }
+</style>
+
+
+    
+  </head>
+
+  <body>
+    <section id=nav>
+      <h1><a href="/">JLOUIS&#39; RAMBLINGS</a></h1>
+      <ul>
+        
+      </ul>
+    </section>
+
+
+<section id=content>
+  <h1> {&#39;EXIT&#39;, joe, goodbye} </h1>
+
+  
+    <div id=sub-header>
+      April 2019 · 7 minute read
+    </div>
+  
+
+  <div class="entry-content">
+    <div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Jesper, I have this idea in which we&#8217;ll connect <em>all</em> of the worlds
+Erlang systems to each other, imagine if every process could talk to
+every other process, world-wide!</p>
+</div>
+</blockquote>
+<div class="attribution">
+&#8212; Joe Armstrong
+</div>
+</div>
+<div class="paragraph">
+<p>Joe was never short on ideas when you spoke to him. At conferences, he
+would engage people with his newest idea, or he would find people
+across the room and connect them. This often resulted in new
+acquaintances, interesting conversations, and new insights. Joe acted
+as the fountain from which insights sprang. He always had a new
+project going, and was keen to tell about it.</p>
+</div>
+<div class="paragraph">
+<p>Joe would speak to everyone. It didn&#8217;t matter if they were new to the
+world of Erlang, or computers, or if you had 20 years of experience.
+He would quickly find your level, and then discuss at that level.</p>
+</div>
+<div class="paragraph">
+<p>In my mind, three rules embodied the ideas of Joe:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>They were always practical and wanted to solve a grand problem with
+computers. Most often, the limitations of physics played a role.</p>
+</li>
+<li>
+<p>They always felt a little bit crazy, mainly due to the novelty of
+the idea.</p>
+</li>
+<li>
+<p>They were going to restructure your brain, and how you thought about
+stuff.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>When I was writing a BitTorrent client for Erlang, Joe was quick to
+comment on the code &#8220;This part uses defensive code style, you can
+probably just let it crash.&#8221; It took some years for that lesson to
+fully sink in, as it did with most of Joes stuff. He would gently
+nudge you in a direction, and by following his trajectory, you
+landed perfectly.</p>
+</div>
+<div class="paragraph">
+<p>Most people reading this will know Joe for his work on Erlang. But he
+had lots of ideas, and not all of them pertained directly to Erlang
+itself, though it was often the vehicle. He had a keen interest in
+music and did collaboration on the Sonic Pi with Sam Aaron. Up until
+recently, Joe was working on improving wiki tooling. In particular,
+he&#8217;d realized how he needed a quine,<sup class="footnote">[<a id="_footnoteref_1" class="footnote" href="#_footnotedef_1" title="View footnote.">1</a>]</sup> the wiki should contain its own source code
+so it could reproduce itself. This would ensure the longevity of the
+wiki. This work was in April 2019, so he was working on stuff up until
+his untimely death.</p>
+</div>
+<div class="paragraph">
+<p>Joe liked to find minimal solutions to problems. He would strip layer
+upon layer off a problem until he had the core. He created a stack of
+universal binary formats, UBF. The ingenious part of this was that to
+transfer a term, one would transfer a <em>program</em> which when executed on
+a small stack-based virtual machine would yield said term. And the
+commands were chosen from the printable ASCII alphabet.</p>
+</div>
+<div class="paragraph">
+<p>The higher layers in the stack was the basis for a lot of discussions
+I had with Joe. Both of us agreed that what happens &#8220;inside&#8221; an
+Erlang process wasn&#8217;t that interesting in the grand scale of things.
+It was the communication which was important, and it should have a
+contract system. Joe had certainly invented most of this before I
+even started looking at Erlang as a language. And I still&#8212;&#8203;to this
+day&#8212;&#8203;believe that this is future of protocol communication.</p>
+</div>
+<div class="paragraph">
+<p>To see how visionary Joe was, his idea was to use such a contract
+system to get any Erlang process on any node to talk to another Erlang
+process, somewhere out in the universe. Essentially, this gives you
+&#8220;Serverless&#8221; operation, so he was a couple of years ahead of the
+pack on that.</p>
+</div>
+<div class="paragraph">
+<p>Joe also wanted to mix this with a content addressable storage
+spanning the internet. He would speak fondly of IPFS which to a large
+extent was this vision. The main idea is to generate the reference key
+for data from the data itself, usually a cryptographic hash over the
+data. This in turn provides integrity: if the data changes, so does
+its key. Now, if you refer to data by its key, then you can verify you
+got the right data. Joe wanted to use this as a basis for software:
+&#8220;I can send you the hash, and you can fetch the library if you don&#8217;t
+have it.&#8221; he told me. He also wanted to use this idea to protect old
+software so &#8220;It could still run after many years.&#8221;--another reason
+Joe preferred minimalistic approaches to software. &#8220;You see, a
+package version is the hash of its source code, not a version number,
+that would be silly.&#8221;</p>
+</div>
+<div class="paragraph">
+<p>He was adamant on making computers useful.</p>
+</div>
+<hr>
+<div class="paragraph">
+<p>The greatest brain restructure, however, was always in the idea that
+your abstract logic of a program <em>has</em> to execute in the physical
+environment. This meant coping with failure when it happened as the
+only way to build robust software. Programming without this profound
+insight&#8212;&#8203;software cannot proactively remove all error&#8212;&#8203;is as silly as
+it is dangerous in hindsight.</p>
+</div>
+<div class="paragraph">
+<p>Once you embrace fault tolerance, then you have the feeling of a burden
+released, and programs gets far easier to write. Of course, the more
+seasoned programmer knows when you can be proactive and when you have
+to be reactive. But if there one thought which has shaped the way I
+think about programming the most, it is this.</p>
+</div>
+<div class="paragraph">
+<p>The second greatest brain restructure was Joe&#8217;s dismissal of
+performance in software. In a post to the Erlang mailing list, Joe
+would come up with the following table:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>This is what we do: (We = ///)
+
+    1) hack it in erlang
+    2) fast enough - ship it
+    3) tweak the erlang
+    4) fast enough? - ship it
+    5) hack it in C?
+    6) fast enough - ship it
+    7) tweak the C
+    8) fast enough? - ship it
+    9) make an FPGA
+    10) fast enough - ship it
+    11) make an ASIC
+    12) fast enough - ship it
+
+As you go down this list things cost more and more - step 11 costs
+1M$/try - to pass step 9
+you need to have a high volume product (10's to hundreds of thousands of units)</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The core idea is that if you want to go really fast, you need to
+implement hardware specific to the problem, and you can only hope to
+tweak the software so far in performance. And he would make a point
+about setting up a specified target before starting the tweakery, so
+you&#8217;d know when to stop. Over the years, I&#8217;ve veered in the same
+general direction as Joe.</p>
+</div>
+<hr>
+<div class="paragraph">
+<p>One thing I liked about Joe was his fearless approach to computing and
+to life. He&#8217;d never bow to authority. He&#8217;d would never be afraid to
+provoke if it was necessary. He never ever stopped R&amp;D. He would
+tinker with things until he understood them, then find something new
+to look at. But only after he told you about his findings. Sharing was
+his modus operandi.</p>
+</div>
+<div class="paragraph">
+<p>At conferences&#8212;&#8203;in which Joe was an attendant&#8212;&#8203;there would be this
+hallway track going on where people would talk with Joe. A slot would be
+skipped here and there. But some interesting conversation would be
+had, and people would convene around him in a circle that grew ever
+larger. I&#8217;ve watched more than once when a &#8220;innocent bystander&#8221; was
+drawn into his web of stories, findings, and insights.</p>
+</div>
+<div class="paragraph">
+<p>Being a speaker with Joe in the audience was always a blast. Once he
+sensed he was allowed to interact, you could be sure he would
+&#8220;heckle&#8221; your talk in the most awesome way. It only took a smirk and
+you saying <code>{hello, joe}</code> and that would be his cue. We should have
+mic&#8217;ed him up at times.</p>
+</div>
+<div class="paragraph">
+<p>When he did speak up, he would often frame a question such that it put
+a speaker in a position where they could really show their work. Never
+have I heard a bad question by Joe.</p>
+</div>
+<hr>
+<div class="paragraph">
+<p>This was the Joe I knew. I think we owe him a lot with regard to
+pushing software and computer science ahead. The best we can do is to
+make sure his grand ideas are not lost upon us, and that they are
+implemented in the future to come.</p>
+</div>
+<div class="paragraph">
+<p>And then perhaps, we will reach a point where Joe&#8217;s prediction from
+this Month will ring true:</p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>One day computers might become useful.</p>
+</div>
+</blockquote>
+<div class="attribution">
+&#8212; Joe Armstrong
+</div>
+</div>
+<div id="footnotes">
+<hr>
+<div class="footnote" id="_footnotedef_1">
+<a href="#_footnoteref_1">1</a>. A quine is a self-reproducing program
+</div>
+</div>
+
+  </div>
+
+  <div id=links>
+    
+      <a class="basic-alignment left" href="https://jlouis.github.io/posts/the-erlang-shell/">&laquo; The Erlang Shell</a>
+    
+    
+  </div>
+</section>
+
+  
+</body>
+</html>
+
+
+
