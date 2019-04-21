@@ -398,83 +398,99 @@
   
 
   <div class="entry-content">
-    
-
-<h2 id="57-glicko-2-benchmarking-2013-12-22">57—Glicko 2 Benchmarking (2013-12-22)</h2>
-
+    <div class="sect1">
+<h2 id="_57glicko_2_benchmarking_2013_12_22">57—Glicko 2 Benchmarking (2013-12-22)</h2>
+<div class="sectionbody">
+<div class="paragraph">
 <p>Glicko2 is a ranking system for duel games. I use it to rank Quake Live
 duels. The idea is to find a value, the <em>strength</em> of a player, called R
 in the system. The higher the R value, the better the player.</p>
-
+</div>
+<div class="paragraph">
 <p>How does Glicko2 estimate R? It looks at historical data and uses
 bayesian methods to estimate the current strength of a player. Like all
 other systems, there are parameters we can tune for a set of players and
 a set of duels:</p>
-
+</div>
+<div class="ulist">
 <ul>
-<li>What initial R value should we pick for new players? We could pick
+<li>
+<p>What initial R value should we pick for new players? We could pick
 1500 as the base, but it may be that there are better initial values
-than this.</li>
-<li>What initial RD value should we pick for new players? The RD value
+than this.</p>
+</li>
+<li>
+<p>What initial RD value should we pick for new players? The RD value
 measures a <em>belief</em> in a given R-value. A large RD means we have
 relatively little information and hence can’t trust the R value as much
-for rathing purposes.</li>
-<li>What about the initial Sigma-value? The Sigma-value is used to adjust
+for rathing purposes.</p>
+</li>
+<li>
+<p>What about the initial Sigma-value? The Sigma-value is used to adjust
 ratings for players which are consistently fooling the rating system. It
-accounts for the situation where a player has been ``locked&rdquo; to a given
+accounts for the situation where a player has been ``locked'' to a given
 rating and then suddenly improves. In other rating systems, it would
 take a long time to move that players R value to the correct position.
 But Glicko2 will detect this and adjust the Sigma for the player,
-allowing for greater R-strides.</li>
-<li>What about the value of Tau? Tau is a global value which controls how
+allowing for greater R-strides.</p>
+</li>
+<li>
+<p>What about the value of Tau? Tau is a global value which controls how
 much power Sigma has. Games with high random variability needs a low Tau
 around 0.2 to account for randomness in games. Games with lower
 variability can run with higher Tau-values. Perhaps as high as 1.2 at
 maximum. In game types with high Tau-scores, there is very little random
 behaviour. Hence a win or a loss is more decisive and Sigma should
-adjust with a greater factor.</li>
+adjust with a greater factor.</p>
+</li>
 </ul>
-
+</div>
+<div class="paragraph">
 <p>The 4 different values spans a 4-dimensional space. We can try to tune
 the values for the game type we are looking at. By doing so, we can hope
 to find good values which optimize the ranking system to the game type.</p>
-
-<p>Nelder-Mead numerical optimization
-++++++++++++++++++++++++++++++++++</p>
-
+</div>
+<div class="sect4">
+<h5 id="_nelder_mead_numerical_optimization">Nelder-Mead numerical optimization</h5>
+<div class="paragraph">
 <p>There are many optimization algorithms. The original algorithm when I
 operated in pure Erlang was quite computationally intensive. I used the
 concept of <em>Simulated Annealing</em> as an optimization heuristic. This
 algorithm works well, but requires many computations in order to find
 good values.</p>
-
+</div>
+<div class="paragraph">
 <p>I had experiments of Glicko2 computations in Erlang, Go &amp; OCaml. Given
 that the fastest Erlang code runs a round in 8us, OCaml in 2us and Go in
 1us, I decided to focus on Go for the next round of work.</p>
-
+</div>
+<div class="paragraph">
 <p>I want a more intelligent search for an optimum. One algorithm is
 Nelder-Mead from 1965. This algorithm has some trouble in certain
 situations. And it may converge to a wrong point. But it often works
 well in practice. So I set out to implement the algorithm for Go. The
 efforts are here, including tests and benchmarks:
-<a href="http://github.com/jlouis/nmoptim">http://github.com/jlouis/nmoptim</a></p>
-
+<a href="http://github.com/jlouis/nmoptim" class="bare">http://github.com/jlouis/nmoptim</a></p>
+</div>
+<div class="paragraph">
 <p>NM is nice for our ranking work since it does not need numerical
 derivatives of the function being computed. Rather, you start with a
 <em>simplex</em> which you then iteratively move around. You can imagine a
 fishing net spanning the whole sea. NM proceeds by moving the fishing
 net according to some rules in order to find the fish you are searching
 for. In this case the minimum of the function at hand.</p>
-
+</div>
+<div class="paragraph">
 <p>Nelder-Mead by itself is not easy to make parallel. But the ranking
 function is trivially parallelizable. So I opted to do operations in
 parallel and then speed up the ranking code. By using sync.WaitGroup in
 Go, I immediately got to around 500% CPU usage on an 8 core machine. So
-now I am blocked on speedup. Getting <sup>5</sup>&frasl;<sub>8</sub> of the cores to do meaningful
+now I am blocked on speedup. Getting 5/8 of the cores to do meaningful
 work and a factor of around 5 in speedup is nice. My ranking runs are
 about 5 times faster in wall-clock as well. And that is disregarding
 other possible optimizations.</p>
-
+</div>
+<div class="paragraph">
 <p>Furthermore, we find a good value in 22 iterations of Nelder-Mead with
 45 function evaluations. I guess it was not that important to speed up
 the computations after all since Erlang would have been able to run
@@ -483,23 +499,35 @@ about 3 minutes on my current Ivy Bridge Core-i7 laptop, which is a fine
 speed for 2.5 million quake matches. It also ranks in around 925ns per
 match which is around the numbers I got in my Glicko2 benchmarks for a
 single test match.</p>
-
-<p>The next steps
-++++++++++++++</p>
-
+</div>
+</div>
+<div class="sect4">
+<h5 id="_the_nextsteps">The next steps</h5>
+<div class="paragraph">
 <p>I can now optimize in Go, but there are still more work to be done
 before it is on par with the Erlang code:</p>
-
+</div>
+<div class="ulist">
 <ul>
-<li>We need to be able to rank pairs of {Player, Map}. This is rather
-easy.</li>
-<li>The prediction code only runs on the last round out of 99. It should
+<li>
+<p>We need to be able to rank pairs of \{Player, Map}. This is rather
+easy.</p>
+</li>
+<li>
+<p>The prediction code only runs on the last round out of 99. It should
 preferably run prediction on the last 4-5 rounds instead so the
 predictions even out over a larger area. This will account for a single
-round of matches becoming too crazy.</li>
-<li>Ranking expected scores need some clamping which I am not doing
-currently, but that should be easy to add as well.</li>
+round of matches becoming too crazy.</p>
+</li>
+<li>
+<p>Ranking expected scores need some clamping which I am not doing
+currently, but that should be easy to add as well.</p>
+</li>
 </ul>
+</div>
+</div>
+</div>
+</div>
 
   </div>
 

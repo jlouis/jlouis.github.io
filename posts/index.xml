@@ -7,10 +7,20 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>&amp;copy; Jesper Louis Andersen 2007-2018</copyright>
-    <lastBuildDate>Sun, 01 Dec 2013 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 21 Apr 2019 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="https://jlouis.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>{&#39;EXIT&#39;, joe, goodbye}</title>
+      <link>https://jlouis.github.io/posts/joe-goodbye/</link>
+      <pubDate>Sun, 21 Apr 2019 00:00:00 +0000</pubDate>
+      
+      <guid>https://jlouis.github.io/posts/joe-goodbye/</guid>
+      <description>Jesper, I have this idea in which we&amp;#8217;ll connect all of the worlds Erlang systems to each other, imagine if every process could talk to every other process, world-wide!
+  &amp;#8212; Joe Armstrong   Joe was never short on ideas when you spoke to him. At conferences, he would engage people with his newest idea, or he would find people across the room and connect them. This often resulted in new acquaintances, interesting conversations, and new insights.</description>
+    </item>
     
     <item>
       <title>The Erlang Shell</title>
@@ -87,7 +97,7 @@
       
       <guid>https://jlouis.github.io/posts/glicko2-benchmarking-2/</guid>
       <description>57—Glicko 2 Benchmarking (2013-12-22) Glicko2 is a ranking system for duel games. I use it to rank Quake Live duels. The idea is to find a value, the strength of a player, called R in the system. The higher the R value, the better the player.
-How does Glicko2 estimate R? It looks at historical data and uses bayesian methods to estimate the current strength of a player. Like all other systems, there are parameters we can tune for a set of players and a set of duels:</description>
+ How does Glicko2 estimate R? It looks at historical data and uses bayesian methods to estimate the current strength of a player. Like all other systems, there are parameters we can tune for a set of players and a set of duels:</description>
     </item>
     
   </channel>
