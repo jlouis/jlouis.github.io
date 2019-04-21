@@ -7,10 +7,40 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>&amp;copy; Jesper Louis Andersen 2007-2018</copyright>
-    <lastBuildDate>Wed, 30 Oct 2013 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 01 Dec 2013 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="https://jlouis.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>The Erlang Shell</title>
+      <link>https://jlouis.github.io/posts/the-erlang-shell/</link>
+      <pubDate>Sun, 01 Dec 2013 00:00:00 +0000</pubDate>
+      
+      <guid>https://jlouis.github.io/posts/the-erlang-shell/</guid>
+      <description>(Front Line Assembly: Civilization, Eastern Sun: In Emptiness)
+ As an Erlang programmer I often claim that &amp;#8220;You can’t pick parts of Erlang and then claim you have the same functionality. It all comes together as a whole&amp;#8221;. This is true for many programming environments where the main components are built to be orthogonal from each other and the parts form the cohesive whole. A good example of this approach would be Go as well.</description>
+    </item>
+    
+    <item>
+      <title>Glicko2 Benchmarking (1)</title>
+      <link>https://jlouis.github.io/posts/glicko2-benchmarking-1/</link>
+      <pubDate>Sat, 16 Nov 2013 00:00:00 +0000</pubDate>
+      
+      <guid>https://jlouis.github.io/posts/glicko2-benchmarking-1/</guid>
+      <description>One of my hobby projects is to run statistics on Quake Live Duel matches. I began collecting data around 1st of Feb 2013 and now I have scraped around \($2.5$\) Million duel matches. This allows me to play with different ranking methods on the players and gauge their ranking.
+  The ranking system I use is called Glicko2, devised by Mark E. Glickman (http://glicko.net). The system is like the chess rating system ELO, except that it is newer and avoids certain problems with ELO.</description>
+    </item>
+    
+    <item>
+      <title>On Logbooks</title>
+      <link>https://jlouis.github.io/posts/on-logbooks/</link>
+      <pubDate>Mon, 11 Nov 2013 00:00:00 +0000</pubDate>
+      
+      <guid>https://jlouis.github.io/posts/on-logbooks/</guid>
+      <description>My friend, Michael T. Richter, presented me with a nice concept from engineering. The logbook. The concept is extremely simple: you keep a log of your work, so you can refer back to it later. Yet, there are relatively few in Computer Science who does that, which is a sad state of affairs.
+ The odd thing is that most computer scientists do know the importance of logging in an application.</description>
+    </item>
     
     <item>
       <title>Eventi</title>
@@ -48,6 +78,16 @@
       
       <guid>https://jlouis.github.io/posts/an-initial-post/</guid>
       <description>I tend to stir up things over on blogger, mostly writing the blog http://jlouisramblings.blogspot.com/ —but I am considering writing and using Medium instead to provide stuff, since the platform just seems nicer. My Ramblings are mostly-technical and they tend to contain a lot of code in them, but the way I tend to add new blog posts is somewhat indirect. I write the post itself in my trusty Acme editor—as markdown—and then I convert that into HTML which I then push in on top of Blogger.</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>https://jlouis.github.io/posts/glicko2-benchmarking-2/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://jlouis.github.io/posts/glicko2-benchmarking-2/</guid>
+      <description>57—Glicko 2 Benchmarking (2013-12-22) Glicko2 is a ranking system for duel games. I use it to rank Quake Live duels. The idea is to find a value, the strength of a player, called R in the system. The higher the R value, the better the player.
+How does Glicko2 estimate R? It looks at historical data and uses bayesian methods to estimate the current strength of a player. Like all other systems, there are parameters we can tune for a set of players and a set of duels:</description>
     </item>
     
   </channel>

@@ -20,10 +20,10 @@
     <title>
       
       
-         An Initial Post 
+         On Logbooks 
       
     </title>
-    <link rel="canonical" href="https://jlouis.github.io/posts/an-initial-post/">
+    <link rel="canonical" href="https://jlouis.github.io/posts/on-logbooks/">
 
     <style>
   * {
@@ -393,43 +393,139 @@
 
 
 <section id=content>
-  <h1> An Initial Post </h1>
+  <h1> On Logbooks </h1>
 
   
     <div id=sub-header>
-      October 2013 · 1 minute read
+      November 2013 · 4 minute read
     </div>
   
 
   <div class="entry-content">
     <div class="paragraph">
-<p>I tend to stir up things over on blogger, mostly writing the blog
-<a href="http://jlouisramblings.blogspot.com/" class="bare">http://jlouisramblings.blogspot.com/</a> —but I am considering writing and
-using Medium instead to provide stuff, since the platform just seems
-nicer. My Ramblings are mostly-technical and they tend to contain a lot
-of code in them, but the way I tend to add new blog posts is somewhat
-indirect. I write the post itself in my trusty Acme editor—as
-markdown—and then I convert that into HTML which I then push in on top
-of Blogger. I almost never use the editor in Blogger because I hate it.
-So writing on Medium is an attempt. An attempt to see if the platform
-would be a nicer way to write posts and if I would prefer it to writing
-in the Editor.</p>
+<p>My friend, Michael T. Richter, presented me with a nice concept from
+engineering. The <em>logbook</em>. The concept is extremely simple: you keep a
+log of your work, so you can refer back to it later. Yet, there are
+relatively few in Computer Science who does that, which is a sad state
+of affairs.</p>
 </div>
 <div class="paragraph">
-<p><em>Aside from 2018:</em> In 2013, Medium was a quite nice platform. But over
-the years, they destroyed the platform totally, making it a platform
-where you have to pay in order to read posts and entries. It was free
-originally.</p>
+<p>The odd thing is that most computer scientists do know the importance of
+logging in an application. You see these elaborate logging frameworks
+that can log at different log levels, can forward logs between machines
+and so on. Yet—it looks like the CS people forgot that the same logging
+could apply to your own work.</p>
+</div>
+<hr>
+<div class="paragraph">
+<p>My Log comprises two files. One for work and one for personal projects.
+In each file, I keep track of dates. The file is pure text, though I use
+utf-8 encoding, so I have access to full Unicode, which I exploit fully.
+I have the following in the file in the acme(1) editor:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>&lt;date +%Y-%m-%d</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>which can be run to enter the current date at the cursor position. I
+tend to jot down the projects that are <em>in progress</em>. My log is not a
+TODO list! I’d rather track stuff I have done than stuff I don’t have
+time to do. Having a log gives me some immediate benefits:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>I can run <em>grep</em> on old entries. This is tremendously efficient. I
+often write down shell-oneliners, R scripts, hostnames too volatile
+for <em>.ssh/config</em>, results from benchmarks, test failures, meeting
+outcomes and so on. I can find old stuff as long as I remember that I
+wrote it down at some point in time. I also keep links to papers, Issues
+I am working on, source files and so on. My editor of choice, acme(1),
+allows one to write <em>file:/REGEX</em> to open a file and then perform a
+search within that file based on the regular expression I give. In
+effect, I have full history tracking.</p>
+</li>
+<li>
+<p>I can answer the question ``What did you do two weeks ago?'' with
+ease. It also means I can gather knowledge about what kind of work I am
+currently doing and for what purpose.</p>
+</li>
+<li>
+<p>The log acts as a tool for improving the process. By keeping track of
+what is being done, I can look back and see what can be done better.
+This allows me to run an iterative quality improvement process on my
+development.</p>
+</li>
+<li>
+<p>The log allows me to use the &#8220;Hemmingway trick&#8221;, which is leaving a
+sentence before it is done and finished. It is then easier to go back
+and pick up from where you left. By tracking what is currently in
+progress, I have an easier time entering flow again on the piece of code
+I am working on. Switching ``context'' is also way easier. Since I can
+write down where I am currently on one part and then switch to another
+part.</p>
+</li>
+<li>
+<p>Since the log tracks stuff in progress, I can quickly figure out if I
+am starting too many new projects and not finishing any of them.</p>
+</li>
+<li>
+<p>The log allows me to clear my brain once in a while since it has been
+documented elsewhere.</p>
+</li>
+<li>
+<p>It is way easier to have <em>focus</em> with a log of what is being done,
+vastly improving efficiency and output.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Personally, I think the most important part is that this has vastly
+improved my process. Especially when hunting for bugs. I tend to write
+down what I know and what hypothesis I have. Then I try to devise some
+experiment that can cut through the hypothesis and cleave up the
+possibilities. Bug finding becomes much faster when you approach it like
+this.</p>
+</div>
+<div class="paragraph">
+<p>Another part of the process which also has improved is the approach to
+writing new code:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>I try to document the purpose of the new piece of code. That way, I
+make sure I know why it is important to implement this part—and I
+document that for future reference.</p>
+</li>
+<li>
+<p>I often write down how hard I think the code is to complete. This
+gives me a benefit later when I can go back and see if I was right or
+wrong with the estimate.</p>
+</li>
+<li>
+<p>If we had multiple solutions, that is documented.</p>
+</li>
+<li>
+<p>If a test comes up with a surprising result, that is documented.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>As a consequence, you do less work and better quality. The concept of
+the <em>logbook</em> is hereby passed on to the reader.</p>
 </div>
 
   </div>
 
   <div id=links>
     
-      <a class="basic-alignment left" href="https://jlouis.github.io/posts/glicko2-benchmarking-2/">&laquo; </a>
+      <a class="basic-alignment left" href="https://jlouis.github.io/posts/eventi/">&laquo; Eventi</a>
     
     
-      <a class="basic-alignment left" href="https://jlouis.github.io/posts/evil-postgres-bug/">An Evil Postgres Bug &raquo;</a>
+      <a class="basic-alignment left" href="https://jlouis.github.io/posts/glicko2-benchmarking-1/">Glicko2 Benchmarking (1) &raquo;</a>
     
   </div>
 </section>

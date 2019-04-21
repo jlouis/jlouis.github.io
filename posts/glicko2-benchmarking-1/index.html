@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    
+
+    
+      <link href="https://fonts.googleapis.com/css?family=Libre+Baskerville:400|Lato:400" rel="stylesheet" type='text/css'>
+    
+
+    <link rel="icon" type="image/png" href="/favicon_16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="/favicon_32x32.png" sizes="32x32">
+    <link rel="icon" type="image/png" href="/favicon_128x128.png" sizes="128x128">
+
+    <title>
+      
+      
+         Glicko2 Benchmarking (1) 
+      
+    </title>
+    <link rel="canonical" href="https://jlouis.github.io/posts/glicko2-benchmarking-1/">
+
+    <style>
+  * {
+    border:0;
+    font:inherit;
+    font-size:100%;
+    vertical-align:baseline;
+    margin:0;
+    padding:0;
+    color: black;
+    text-decoration-skip: ink;
+  }
+
+  body {
+    font-family:'Libre Baskerville', serif;
+    font-size:17px;
+    line-height:160%;
+    color:#1d1313;
+    max-width:700px;
+    margin:auto;
+  }
+
+  p {
+    margin: 20px 0;
+  }
+
+  a img {
+    border:none;
+  }
+
+  img {
+    margin: 10px auto 10px auto;
+    max-width: 100%;
+    display: block;
+  }
+
+  .left-justify {
+    float: left;
+  }
+
+  .right-justify {
+    float: right;
+  }
+
+  pre, code {
+    font: 12px Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    background-color: #f7f7f7;
+  }
+
+  code {
+    font-size: 12px;
+    padding: 4px;
+  }
+
+  pre {
+    margin-top: 0;
+    margin-bottom: 16px;
+    word-wrap: normal;
+    padding: 16px;
+    overflow: auto;
+    font-size: 85%;
+    line-height: 1.45;
+  }
+
+  pre>code {
+    padding: 0;
+    margin: 0;
+    font-size: 100%;
+    word-break: normal;
+    white-space: pre;
+    background: transparent;
+    border: 0;
+  }
+
+  pre code {
+    display: inline;
+    max-width: auto;
+    padding: 0;
+    margin: 0;
+    overflow: visible;
+    line-height: inherit;
+    word-wrap: normal;
+    background-color: transparent;
+    border: 0;
+  }
+
+  pre code::before,
+  pre code::after {
+    content: normal;
+  }
+
+  em,q,em,dfn {
+    font-style:italic;
+  }
+
+  .sans,html .gist .gist-file .gist-meta {
+    font-family:"Libre Baskerville", serif;
+  }
+
+  .mono,pre,code,tt,p code,li code {
+    font-family:Menlo,Monaco,"Andale Mono","lucida console","Courier New",monospace;
+  }
+
+  .heading,.serif,h1,h2,h3 {
+    font-family:"Lato",sans-serif;
+  }
+
+  strong {
+    font-weight:600;
+  }
+
+  q:before {
+    content:"\201C";
+  }
+
+  q:after {
+    content:"\201D";
+  }
+
+  del,s {
+    text-decoration:line-through;
+  }
+
+  blockquote {
+    font-family:"Libre Baskerville", serif;
+    text-align:center;
+    padding:50px;
+  }
+
+  blockquote p {
+    display:inline-block;
+    font-style:italic;
+  }
+
+  blockquote:before,blockquote:after {
+    font-family:"Libre Baskerville", serif;
+    content:'\201C';
+    font-size:35px;
+    color:#403c3b;
+  }
+
+  blockquote:after {
+    content:'\201D';
+  }
+
+  hr {
+    width:40%;
+    height: 1px;
+    background:#403c3b;
+    margin: 25px auto;
+  }
+
+  h1 {
+    font-size:35px;
+  }
+
+  h2 {
+    font-size:28px;
+  }
+
+  h3 {
+    font-size:22px;
+    margin-top:18px;
+  }
+
+  h1 a,h2 a,h3 a {
+    text-decoration:none;
+  }
+
+  h1,h2 {
+    margin-top:28px;
+  }
+
+  #sub-header, time {
+    color:#403c3b;
+    font-size:13px;
+  }
+
+  #sub-header {
+    margin: 0 4px;
+  }
+
+  #nav h1 a {
+    font-size:35px;
+    color:#1d1313;
+    line-height:120%;
+  }
+
+  .posts_listing a,#nav a {
+    text-decoration: none;
+  }
+
+  li {
+    margin-left: 20px;
+  }
+
+  ul li {
+    margin-left: 5px;
+  }
+
+  #nav ul li:before, .posts_listing li:before {
+    content:'';
+    margin-right:0;
+  }
+
+  #content {
+    text-align:left;
+    width:100%;
+    font-size:15px;
+    padding:60px 0 80px;
+  }
+
+  #content h1,#content h2 {
+    margin-bottom:5px;
+  }
+
+  #content h2 {
+    font-size:25px;
+  }
+
+  #content .entry-content {
+    margin-top:15px;
+  }
+
+  #content time {
+    margin-left:3px;
+  }
+
+  #content h1 {
+    font-size:30px;
+  }
+
+  .highlight {
+    margin: 10px 0;
+  }
+
+  .posts_listing {
+    margin:0 0 50px;
+  }
+
+  .posts_listing li {
+    margin:0 0 25px 15px;
+  }
+
+  .posts_listing li a:hover,#nav a:hover {
+    text-decoration: underline;
+  }
+
+  #nav {
+    text-align:center;
+    position:static;
+    margin-top:60px;
+  }
+
+  #nav ul {
+    display: table;
+    margin: 8px auto 0 auto;
+  }
+
+  #nav li {
+    list-style-type:none;
+    display:table-cell;
+    font-size:15px;
+    padding: 0 20px;
+  }
+
+  #links {
+    margin: 50px 0 0 0;
+  }
+
+  #links :nth-child(2) {
+    float:right;
+  }
+
+  #not-found {
+    text-align: center;
+  }
+
+  #not-found a {
+    font-family:"Libre Baskerville",serif;
+    font-size: 200px;
+    text-decoration: none;
+    display: inline-block;
+    padding-top: 225px;
+  }
+
+  @media (max-width: 750px) {
+    body {
+      padding-left:20px;
+      padding-right:20px;
+    }
+
+    #nav h1 a {
+      font-size:28px;
+    }
+
+    #nav li {
+      font-size:13px;
+      padding: 0 15px;
+    }
+
+    #content {
+      margin-top:0;
+      padding-top:50px;
+      font-size:14px;
+    }
+
+    #content h1 {
+      font-size:25px;
+    }
+
+    #content h2 {
+      font-size:22px;
+    }
+
+    .posts_listing li div {
+      font-size:12px;
+    }
+  }
+
+  @media (max-width: 400px) {
+    body {
+      padding-left:20px;
+      padding-right:20px;
+    }
+
+    #nav h1 a {
+      font-size:22px;
+    }
+
+    #nav li {
+      font-size:12px;
+      padding: 0 10px;
+    }
+
+    #content {
+      margin-top:0;
+      padding-top:20px;
+      font-size:12px;
+    }
+
+    #content h1 {
+      font-size:20px;
+    }
+
+    #content h2 {
+      font-size:18px;
+    }
+
+    .posts_listing li div{
+      font-size:12px;
+    }
+  }
+</style>
+
+
+    
+  </head>
+
+  <body>
+    <section id=nav>
+      <h1><a href="/">JLOUIS&#39; RAMBLINGS</a></h1>
+      <ul>
+        
+      </ul>
+    </section>
+
+
+<section id=content>
+  <h1> Glicko2 Benchmarking (1) </h1>
+
+  
+    <div id=sub-header>
+      November 2013 · 12 minute read
+    </div>
+  
+
+  <div class="entry-content">
+    <div class="paragraph">
+<p>One of my hobby projects is to run statistics on Quake Live Duel
+matches. I began collecting data around 1st of Feb 2013 and now I have
+scraped around \($2.5$\) Million duel matches. This allows me to
+play with different ranking methods on the players and gauge their
+ranking.</p>
+</div>
+<hr>
+<div class="paragraph">
+<p>The ranking system I use is called Glicko2, devised by Mark E. Glickman
+(<a href="http://glicko.net/">http://glicko.net</a>). The system is like the chess
+rating system ELO, except that it is newer and avoids certain problems
+with ELO.</p>
+</div>
+<div class="paragraph">
+<p>When ELO was conceived, you had to be able to run the calculations by
+hand. Glicko2 can use a computer and thus carry out much harder
+calculations. So it tend to deliver better results. Glicko2 tracks three
+values for each player. His rating R, starting at 1500. His rating
+deviance, RD, starting at 350 is a measure of how much we trust the
+rating R. If the RD number is small, we have strong belief in the rating
+of the player. If it is high, we don’t yet know a lot about that player.
+As the player plays more matches and we learn more about the player, we
+shrink RD towards 0. Finally a value, Sigma, measures how much a player
+is fooling the rating system. This allows us to compensate for quickly
+improving players so they don’t get ``stuck'' on a certain rating.</p>
+</div>
+<div class="paragraph">
+<p>When considering a new rating for a player, we consider a weeks worth of
+duels for the player. We update his R, RD and Sigma values depending on
+the values from the previous week and the opponents he played against.
+If the player has a high RD for instance, his rating is moved more per
+win or loss since we know less about him yet. This means we quickly find
+the skill level of a given player.</p>
+</div>
+<hr>
+<div class="paragraph">
+<p>The system I have made is written in Erlang. This choice has been very
+fruitful. First of all, I have a system which was easy to write and
+scales well, even though I don’t really need that. Second, the fault
+tolerance of Erlang has helped me a lot. The system has been very robust
+due to the fault tolerance of Erlang. Usually I don’t care about the
+system. It takes care of the network being down or Quake Live being
+upgraded by itself.</p>
+</div>
+<div class="paragraph">
+<p>Storage is handled by Postgres. If you need a database that just works,
+then picking Postgres is rarely a problem. Furthermore, the complete
+data set is less than 6 gigabytes, so almost any kind of store would
+work. But Postgres is a simple choice due to its reliability and feature
+set.</p>
+</div>
+<hr>
+<div class="paragraph">
+<p>The Erlang system works well for the fetching of matches, and for
+display of match scores and so on. But I need to carry out some tunings
+of the Glicko2 parameters. This means I will run through my
+\($2.5$\) million matches many many times and thus the speed at
+which I can run Glicko2 matter. I have an Erlang implementation for a
+simulated annealer and ranker. But since it is heavyweight numerical
+processing—not an Erlang strength—I need to find another language for
+doing that.</p>
+</div>
+<div class="paragraph">
+<p>So there are three things I need to know:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>How fast can I run the Glicko2 ranking codes? That is, how quickly can
+I execute the main loop for a single simple ranking. This will be needed
+to understand how much I could hope to gain by going to another language
+in the first place. If I can’t get enough speed, I can simply abort the
+process right here.</p>
+</li>
+<li>
+<p>I have \($2.5$\) million matches and need to process them all.
+Thus the problem is switching from being CPU-bound to being memory
+bound. I need to find out if this change affects the processing speed of
+other languages. Again, if I can’t do it faster, then I need to abort
+the task.</p>
+</li>
+<li>
+<p>I need to run the \($2.5$\) million ranking runs either in an
+algorithm running simulated annealing or a gradient search. This means
+potentially millions of runs times the \($2.5$\) million ranking
+runs. This is the long-term goal I wish to reach. In this part I require
+the speed much more than in the other parts.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>A slightly smaller problem is that my current ranking runs require
+memory proportional with the number of matches. When I had 400.000
+matches it was easy to fit in memory. But now, I am running up against a
+barrier of the machine doing the computations (it doesn’t have too much
+memory, it is an old machine).</p>
+</div>
+<hr>
+<div class="paragraph">
+<p>In the following I present some Timings. These are run on a Linux Laptop
+workstation, where it is plugged into power and runs full processor
+speed. The machine is a ``Intel&#174; Core&#8482; i7-3720QM CPU @ 2.60GHz''
+which is an Ivy Bridge machine, 4 cores, two HTs per Core.</p>
+</div>
+<div class="paragraph">
+<p>I intend to tune on this machine, so it is paramount the rankings are
+running fast on this machine.</p>
+</div>
+<div class="paragraph">
+<p>Erlang Glicko2</p>
+</div>
+<div class="paragraph">
+<p><a href="http://github.com/jlouis/erl-glicko2">erl-glicko2</a> The Erlang system
+itself can run a single Glicko2 round of one player against 3 players in
+22\($\mu{}$\)s. The benchmark in Erlang is carried out by
+running the test 300 times and then averaging. This batch size seems to
+be quite stable.</p>
+</div>
+<div class="paragraph">
+<p>The speed figure of Erlang is with the standard BEAM bytecode
+interpreter. And the code is straightforward with no tuning whatsoever.
+With \($2.5$\) million matches it takes just around a minute to
+run through them all, which is acceptable. But since I am to run faster
+than that, I wanted to know how much faster I could go.</p>
+</div>
+<div class="paragraph">
+<p>Compiling with HiPE gives 8\($\mu{}$\)s. This is much better and
+far more in the area where I would like to be. But perhaps we can do
+better by switching the language.</p>
+</div>
+<div class="paragraph">
+<p>Ocaml Glicko2</p>
+</div>
+<div class="paragraph">
+<p><a href="http://github.com/jlouis/o-glicko2">o-glicko2</a> One of my favorite
+languages when I need fast processing is OCaml. The language has a large
+number of beneficial properties—static typing, a native code generator
+producing fast executables, a good module system and a nice eco-system.
+So naturally, transcribing the code from Erlang to OCaml has to be
+tried.</p>
+</div>
+<div class="paragraph">
+<p>The code is quite straightforward to change from Erlang into OCaml.
+There are few places in the code base where we use anything but <em>float</em>
+types, so it is easy. The only slight problem was a missing parenthesis
+group which made a subcomputation produce the wrong result. Luckily, I
+have extensive tests so it was caught quickly.</p>
+</div>
+<div class="paragraph">
+<p>Note that the particular error is one of those which will not be caught
+be a type system. In numerical code, everything is of type <em>float</em>
+anyway, so there is no way I can hope to catch this kind of error
+straight away. Type systems help a lot with symbolic processing, but
+this task is not one which has that property.</p>
+</div>
+<div class="paragraph">
+<p>The OCaml code is written in idiomatic style. Functional, closures, and
+so on. I could opt for a more imperative style—which Ocaml allows—but
+for what purpose?</p>
+</div>
+<div class="paragraph">
+<p>I use the <strong>Core_Bench</strong> module from Janes St. to do my benchmarking. The
+nice thing is that this tool predicts the batch size to use and also has
+prediction that avoids making the wrong conclusions. The OCaml bytecode
+interpreter clocks in at 28\($\mu{}$\)s. This result somewhat
+surprises me. I had expected the run to be faster than Erlang. But I
+guess more time is spent optimizing the Erlang interpreter than the
+OCaml bytecode interpreter and code generator.</p>
+</div>
+<div class="paragraph">
+<p>Running native yields a time around 2\($\mu{}$\)s. This number
+is really good. If we are to process \($2.5$\) million matches,
+we can do so in \($2.5 \times 2$\)\($\mu{}$\)s (assuming
+no cache hierarchy) or \($5$\) seconds. Much better than the
+minute it would require in Erlang.</p>
+</div>
+<div class="paragraph">
+<p>Yet, the problem here is that the OCaml core is not parallel. I would
+need to cut up the data set into pieces and then run an OCaml process
+per core. There is no need to do that in Erlang. So even though the
+results will clock in faster, the problem is that I will need more work
+to fetch data in parallel later on. So parallelism might become a
+problem going forward.</p>
+</div>
+<div class="paragraph">
+<p>Go — Glocko2</p>
+</div>
+<div class="paragraph">
+<p><a href="http://github.com/jlouis/glocko2">Glocko2</a> Naturally, I had to try Golang
+next. This language is interesting because it has nice semantics, fixing
+most of the things I hate about C. It compiles to native code with a
+standard slightly optimizing compiler. And it supports multiple cores in
+its runtime, which is needed if I want to get parallelism inside a
+single process later on.</p>
+</div>
+<div class="paragraph">
+<p>Writing the code in Golang is a chore. Productivity is definitely slower
+than in Ocaml since you have to type more and waste precious time
+reframing the nice functional problem into imperative code. Even though
+this was the last thing I implemented, it still took about twice as long
+as the OCaml implementation.</p>
+</div>
+<div class="paragraph">
+<p><em>Do note: My imperative skillset is there, but I don’t write much
+imperative code nowadays. This could be a factor in the slower writing
+speed. However, writing last should be a help, rather than a
+hinderance.</em></p>
+</div>
+<div class="paragraph">
+<p>What is so nice about Golang is the tooling. I set up <em>go test</em> early on
+in my editor, so when I saved a file it would automatically compile and
+run tests. See <a href="http://github.com/eaburns/Watch" class="bare">http://github.com/eaburns/Watch</a> for the tool I use in
+Acme to do this. This meant I could start by writing down all the test
+cases and then go work on the implementation afterwards. As more and
+more of the code base began to work, I had fewer and fewer failing test
+cases.</p>
+</div>
+<div class="paragraph">
+<p>Benchmarking can be done with the Go Testing tools as well. It also
+computes a batch size and gives you predictive results, like in Ocaml.
+But in this case, it is built into the default tooling. I cannot
+<em>stress</em> how important it is for a language to have nice access to
+profiler tooling and so on inside the default language distribution. The
+fact that the build tool does testing and benchmarking as well by
+default is just awesome.</p>
+</div>
+<div class="paragraph">
+<p>Being Go, the compile times are faster—but this doesn’t matter for this
+problem as the compile times are ``not noticable''. Go clocks in at
+1\($\mu{}$\)s. About twice as fast as the OCaml solution. This
+is with the default compiler written by Ken Thompson initially and
+improved by many other people.</p>
+</div>
+<div class="paragraph">
+<p>Recap</p>
+</div>
+<div class="paragraph">
+<p>So we have:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 1. Breakdown of the different implementations running speed</caption>
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Language</th>
+<th class="tableblock halign-left valign-top">Efficiency (\($\mu{}$\)s)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Ocaml bytecode</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">28</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Erlang bytecode</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">22</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Erlang HiPE</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">8</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Ocaml native</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Go</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>There is no solution which totally aborts at this point. I already have
+an Erlang implementation, and the numbers may change around when we add
+the next layer—processing 2.5 million matches. Before I add that and
+have the option to do profiling, I’d rather not try to hand-optimize
+these results too much right now.</p>
+</div>
+<div class="paragraph">
+<p>Tuning Tricks</p>
+</div>
+<div class="paragraph">
+<p>When you revisit the same algorithm in multiple languages, you see
+possibilities for optimizations all over the place. There are some
+subcomputations, the <em>g</em> and <em>e</em> functions, which I don’t know if it is
+worth to compute once and then stash away in memory. I could probably
+lower write memory pressure and GC by recomputing them when I need them.</p>
+</div>
+<div class="paragraph">
+<p>Also, all of Glicko2 runs on a scaling factor of <em>173.7178.</em> This means
+that before doing anything with the given R and RD values, you scale
+them down by this factor. All computation are carried out on the
+downscaled numbers. The final step is to upscale everything again. A
+trick which I am seriously considering is to scale down everything
+before starting my runs. This avoids a down scale and an upscale in each
+loop and this would help a <em>lot</em> for the larger computations where many
+runs are needed.</p>
+</div>
+<div class="paragraph">
+<p>One of the major Glicko2 steps is to find a root of a function. I am
+currently using a root-finder, called Ridder’s method. This finder is
+quite fast, but it is also the major slowdown in the runs. When I first
+implemented the OCaml variant, I picked a different root-finder by
+mistake. This meant that it ran in 0.6\($\mu{}$\)s, so
+definitely this part of the code base is the contending one. It also
+suggests that the Golang implementation is handling this part
+differently than the OCaml code and there is definitely room for
+improvement in the OCaml code.</p>
+</div>
+<div class="paragraph">
+<p>Parting words</p>
+</div>
+<div class="paragraph">
+<p>In the next phase, the code to read, parse and compute on 2.5 million
+lines of code has to be written. I have no time frame for doing so, as I
+am mostly doing this ``for fun and entertainment''. I am pretty sure you
+can optimize the code bases like mad, but there is little reason to do
+so before the other parts have been implemented. The problem will
+quickly be memory bound, so the interesting things in speeding it up
+will be in-memory representation.</p>
+</div>
+<div class="paragraph">
+<p>My initial ideas is to store data in a vector-like format. In Erlang I
+use an ETS-table, but this incurs a hash-table lookup a large number of
+times. My profiling shows I spend 50% time in <em>ets:lookup_element/3</em> in
+Erlang. So to go faster, I need to pack these data better in memory. It
+might very well be that the numerical code is not the hottest path in
+this program at all. So I hesitate to optimize it.</p>
+</div>
+<div class="paragraph">
+<p>This is also the reason why I considered BER MetaOCaml, but lost
+interest in using it again before I know that I can get decent speed on
+the other parts. There are ways to make this parallel even thought the
+OCaml runtime is not. Perhaps I can work around that, but I will note
+the extra cost in time to do so.</p>
+</div>
+<div class="paragraph">
+<p>I also considered Haskell. Given Repa or Accelerate, you can probable
+speed up the computation and move it to the GPU. It is an interesting
+project, but it requires a completely different approach to the problem
+at hand. One could also use the Erlang OpenCL bindings to achieve
+something like this.</p>
+</div>
+<div class="paragraph">
+<p>Finally, if you were a company, <strong>none</strong> of this would have been needed. I
+already had the Erlang code for tuning. I would just have had to lease
+the next machine size in Amazon Web Services for 24 hours. I don’t need
+to run tuning that often. Once a year or so is perfect. And I can run
+weekly updates in a minute. If I cut the dataset into 10 pieces, and
+load it from Postgres a little bit at a time, then I could definitely do
+this inside a 3 minute window. This is hardly a problem. It is not worth
+doing this from a Cost/Benefit perspective. And frankly, writing the
+code in Erlang is probably faster than writing it in OCaml or Go for me.</p>
+</div>
+
+  </div>
+
+  <div id=links>
+    
+      <a class="basic-alignment left" href="https://jlouis.github.io/posts/on-logbooks/">&laquo; On Logbooks</a>
+    
+    
+      <a class="basic-alignment left" href="https://jlouis.github.io/posts/the-erlang-shell/">The Erlang Shell &raquo;</a>
+    
+  </div>
+</section>
+
+  
+</body>
+</html>
+
+
+

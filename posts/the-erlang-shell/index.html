@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    
+
+    
+      <link href="https://fonts.googleapis.com/css?family=Libre+Baskerville:400|Lato:400" rel="stylesheet" type='text/css'>
+    
+
+    <link rel="icon" type="image/png" href="/favicon_16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="/favicon_32x32.png" sizes="32x32">
+    <link rel="icon" type="image/png" href="/favicon_128x128.png" sizes="128x128">
+
+    <title>
+      
+      
+         The Erlang Shell 
+      
+    </title>
+    <link rel="canonical" href="https://jlouis.github.io/posts/the-erlang-shell/">
+
+    <style>
+  * {
+    border:0;
+    font:inherit;
+    font-size:100%;
+    vertical-align:baseline;
+    margin:0;
+    padding:0;
+    color: black;
+    text-decoration-skip: ink;
+  }
+
+  body {
+    font-family:'Libre Baskerville', serif;
+    font-size:17px;
+    line-height:160%;
+    color:#1d1313;
+    max-width:700px;
+    margin:auto;
+  }
+
+  p {
+    margin: 20px 0;
+  }
+
+  a img {
+    border:none;
+  }
+
+  img {
+    margin: 10px auto 10px auto;
+    max-width: 100%;
+    display: block;
+  }
+
+  .left-justify {
+    float: left;
+  }
+
+  .right-justify {
+    float: right;
+  }
+
+  pre, code {
+    font: 12px Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    background-color: #f7f7f7;
+  }
+
+  code {
+    font-size: 12px;
+    padding: 4px;
+  }
+
+  pre {
+    margin-top: 0;
+    margin-bottom: 16px;
+    word-wrap: normal;
+    padding: 16px;
+    overflow: auto;
+    font-size: 85%;
+    line-height: 1.45;
+  }
+
+  pre>code {
+    padding: 0;
+    margin: 0;
+    font-size: 100%;
+    word-break: normal;
+    white-space: pre;
+    background: transparent;
+    border: 0;
+  }
+
+  pre code {
+    display: inline;
+    max-width: auto;
+    padding: 0;
+    margin: 0;
+    overflow: visible;
+    line-height: inherit;
+    word-wrap: normal;
+    background-color: transparent;
+    border: 0;
+  }
+
+  pre code::before,
+  pre code::after {
+    content: normal;
+  }
+
+  em,q,em,dfn {
+    font-style:italic;
+  }
+
+  .sans,html .gist .gist-file .gist-meta {
+    font-family:"Libre Baskerville", serif;
+  }
+
+  .mono,pre,code,tt,p code,li code {
+    font-family:Menlo,Monaco,"Andale Mono","lucida console","Courier New",monospace;
+  }
+
+  .heading,.serif,h1,h2,h3 {
+    font-family:"Lato",sans-serif;
+  }
+
+  strong {
+    font-weight:600;
+  }
+
+  q:before {
+    content:"\201C";
+  }
+
+  q:after {
+    content:"\201D";
+  }
+
+  del,s {
+    text-decoration:line-through;
+  }
+
+  blockquote {
+    font-family:"Libre Baskerville", serif;
+    text-align:center;
+    padding:50px;
+  }
+
+  blockquote p {
+    display:inline-block;
+    font-style:italic;
+  }
+
+  blockquote:before,blockquote:after {
+    font-family:"Libre Baskerville", serif;
+    content:'\201C';
+    font-size:35px;
+    color:#403c3b;
+  }
+
+  blockquote:after {
+    content:'\201D';
+  }
+
+  hr {
+    width:40%;
+    height: 1px;
+    background:#403c3b;
+    margin: 25px auto;
+  }
+
+  h1 {
+    font-size:35px;
+  }
+
+  h2 {
+    font-size:28px;
+  }
+
+  h3 {
+    font-size:22px;
+    margin-top:18px;
+  }
+
+  h1 a,h2 a,h3 a {
+    text-decoration:none;
+  }
+
+  h1,h2 {
+    margin-top:28px;
+  }
+
+  #sub-header, time {
+    color:#403c3b;
+    font-size:13px;
+  }
+
+  #sub-header {
+    margin: 0 4px;
+  }
+
+  #nav h1 a {
+    font-size:35px;
+    color:#1d1313;
+    line-height:120%;
+  }
+
+  .posts_listing a,#nav a {
+    text-decoration: none;
+  }
+
+  li {
+    margin-left: 20px;
+  }
+
+  ul li {
+    margin-left: 5px;
+  }
+
+  #nav ul li:before, .posts_listing li:before {
+    content:'';
+    margin-right:0;
+  }
+
+  #content {
+    text-align:left;
+    width:100%;
+    font-size:15px;
+    padding:60px 0 80px;
+  }
+
+  #content h1,#content h2 {
+    margin-bottom:5px;
+  }
+
+  #content h2 {
+    font-size:25px;
+  }
+
+  #content .entry-content {
+    margin-top:15px;
+  }
+
+  #content time {
+    margin-left:3px;
+  }
+
+  #content h1 {
+    font-size:30px;
+  }
+
+  .highlight {
+    margin: 10px 0;
+  }
+
+  .posts_listing {
+    margin:0 0 50px;
+  }
+
+  .posts_listing li {
+    margin:0 0 25px 15px;
+  }
+
+  .posts_listing li a:hover,#nav a:hover {
+    text-decoration: underline;
+  }
+
+  #nav {
+    text-align:center;
+    position:static;
+    margin-top:60px;
+  }
+
+  #nav ul {
+    display: table;
+    margin: 8px auto 0 auto;
+  }
+
+  #nav li {
+    list-style-type:none;
+    display:table-cell;
+    font-size:15px;
+    padding: 0 20px;
+  }
+
+  #links {
+    margin: 50px 0 0 0;
+  }
+
+  #links :nth-child(2) {
+    float:right;
+  }
+
+  #not-found {
+    text-align: center;
+  }
+
+  #not-found a {
+    font-family:"Libre Baskerville",serif;
+    font-size: 200px;
+    text-decoration: none;
+    display: inline-block;
+    padding-top: 225px;
+  }
+
+  @media (max-width: 750px) {
+    body {
+      padding-left:20px;
+      padding-right:20px;
+    }
+
+    #nav h1 a {
+      font-size:28px;
+    }
+
+    #nav li {
+      font-size:13px;
+      padding: 0 15px;
+    }
+
+    #content {
+      margin-top:0;
+      padding-top:50px;
+      font-size:14px;
+    }
+
+    #content h1 {
+      font-size:25px;
+    }
+
+    #content h2 {
+      font-size:22px;
+    }
+
+    .posts_listing li div {
+      font-size:12px;
+    }
+  }
+
+  @media (max-width: 400px) {
+    body {
+      padding-left:20px;
+      padding-right:20px;
+    }
+
+    #nav h1 a {
+      font-size:22px;
+    }
+
+    #nav li {
+      font-size:12px;
+      padding: 0 10px;
+    }
+
+    #content {
+      margin-top:0;
+      padding-top:20px;
+      font-size:12px;
+    }
+
+    #content h1 {
+      font-size:20px;
+    }
+
+    #content h2 {
+      font-size:18px;
+    }
+
+    .posts_listing li div{
+      font-size:12px;
+    }
+  }
+</style>
+
+
+    
+  </head>
+
+  <body>
+    <section id=nav>
+      <h1><a href="/">JLOUIS&#39; RAMBLINGS</a></h1>
+      <ul>
+        
+      </ul>
+    </section>
+
+
+<section id=content>
+  <h1> The Erlang Shell </h1>
+
+  
+    <div id=sub-header>
+      December 2013 · 9 minute read
+    </div>
+  
+
+  <div class="entry-content">
+    <div class="paragraph">
+<p>(Front Line Assembly: Civilization, Eastern Sun: In Emptiness)</p>
+</div>
+<div class="paragraph">
+<p>As an Erlang programmer I often claim that &#8220;You can’t pick parts of
+Erlang and then claim you have the same functionality. It all comes
+together as a whole&#8221;. This is true for many programming environments
+where the main components are built to be orthogonal from each other and
+the parts form the cohesive whole. A good example of this approach would
+be Go as well.</p>
+</div>
+<div class="paragraph">
+<p>A compelling way of deploying software is what supposedly originated
+with FLEX (Alan Kay). The program, the system and its data are all kept
+inside an <em>image</em> which can be persisted to disk and restarted later. In
+essence we specify which world we operate in by giving an image. Many
+Smalltalk systems utilize this notion of images. So do Common Lisp
+systems. And they even understand how to reconnect to networks and
+reopen files.</p>
+</div>
+<div class="paragraph">
+<p>Erlang provides its own, weaker, mechanism for assembling software
+called a <em>release</em>. A release consists of the runtime together with a
+set of Erlang applications. They are started as a whole—in a specific
+order. The same release is usually booted across several machines if we
+want to have resilience against hardware faults. The big shift compared
+to images is that there are no on-disk persistence. The ideology is
+different: the system should never stop, so even if one <em>node()</em> in the
+cluster is stopped, the data is on other nodes as well and lives. Erlang
+systems also allow for seamless upgrades from one release to another
+while they are running.</p>
+</div>
+<div class="paragraph">
+<p>But there are some resemblance from Common Lisp / Smalltalk images and
+Erlang releases. While they don’t persist the data, Erlang images do
+define a separate enclosed system with no link to the original system.</p>
+</div>
+<hr>
+<div class="paragraph">
+<p>The strength of these persistent models come apparent late in the
+development cycle. Software usually goes through several phases</p>
+</div>
+<div class="paragraph">
+<p>\(\[\text{Analysis} \rightarrow
+\text{Design} \rightarrow
+\text{Implementation} \rightarrow
+\text{Test} \rightarrow
+\text{Deploy} \rightarrow
+\text{Maintenance}]\)</p>
+</div>
+<div class="paragraph">
+<p>It is important to stress that development of software is a dynamic
+activity. We repeatedly change the software in production by layering
+more and more complexity/features on top of the system. We also
+dynamically fix bugs in the software while it is in production.</p>
+</div>
+<div class="paragraph">
+<p>The recent years, development tends to so-called Agile methods—where
+there are many small dynamic iterations of the software construction
+process running all at the same time. We have social tooling in place
+which tries to achieve this (Scrum, Kanban,…), and we have technical
+tooling in place to reach the goal (git, Mercurial,…).</p>
+</div>
+<div class="paragraph">
+<p>The &#8220;Maintenance&#8221; part is very expensive. Maintaining running software
+has periodic costs associated with it. In a world where everything is a
+service, we have to pay operators, pay for hardware resources,
+developers, and so on.</p>
+</div>
+<div class="paragraph">
+<p>When we program, we try to remove errors early. We employ static type
+systems, we do extensive testing, we use static analysis. Perhaps we
+even use probalistic model checkers like QuickCheck, exhaustive model
+checkers like SPIN or prove our software in Coq. We know, inherently,
+that eradicating bugs early on in the software life cycle means less
+work in the maintenance phase.</p>
+</div>
+<div class="paragraph">
+<p>But interestingly, all this only <em>raises</em> the bar for errors. When we
+have done all our hard work, the errors that do remain are all of the
+subtle kind. These are errors which were not caught by our initial
+guardian systems. Most static type systems won’t capture the class of
+faults which has to do with slow algorithms or excessive memory
+consumption for instance. A proper benchmark suite will—but only if we
+can envision the failure case up front.</p>
+</div>
+<div class="paragraph">
+<p>The class of faults that tend to be <em>interesting</em> is the class that can
+survive a static type check. The mere fact we could not capture it by a
+static analysis in the compile phase makes the error much more subtle.
+Also, it often means they are much harder to trigger in production
+systems. If the fault furthermore survives the test suite it becomes
+even more <em>interesting</em>. The viral strain has a certain basic DNA which
+mutated it so it could get past two barriers of correctness tests. Now
+it becomes a latent bug in your software.</p>
+</div>
+<div class="paragraph">
+<p><em>Aside:</em> I tend to absolutely love static type systems. I enjoy them a
+lot when I program in Go, Standard ML, OCaml or Haskell. I am all for
+the richer description that comes with having a static type system.</p>
+</div>
+<div class="paragraph">
+<p>There is a great power in being able to say \($v \colon \tau$\)
+rather than just \($v$\)—exactly because the former
+representation is <em>richer</em> in structure. Richer structure helps
+documentation, makes it possible to pick better in-memory
+representations, makes the programs go faster and forces a more coherent
+programming model.</p>
+</div>
+<div class="paragraph">
+<p>Yet, I also recognize that most of the errors caught by static type
+systems are <strong>not</strong> <em>interesting.</em> They are of the kind where a simple run
+of the program will find them instantly.</p>
+</div>
+<div class="paragraph">
+<p><em>End of Aside.</em></p>
+</div>
+<div class="sect4">
+<h5 id="_concurrency_and_distribution_failures">Concurrency and Distribution failures</h5>
+<div class="paragraph">
+<p>When systems have faults due to concurrency and distribution, debuggers
+will not work. The problem is that you can’t stop the world and then go
+inspect it. A foreign system will inspect an answer in time or it will
+time out. Many modern systems have large parts of which you have no
+direct control anymore. Such is life in the Post-1991 era of computing
+where the internet defines the interface to your program and its
+components. An Erlang system with two nodes is enough to be problematic.
+Even if I could snapshot one node, the other node will carry on.</p>
+</div>
+<div class="paragraph">
+<p>The same is true for concurrency errors. They often incorporate race
+conditions which must trigger. Attaching a debugger alters the execution
+schedule making the race condition disappear in the process. The only
+way to debug such systems is by analysing post-mortem traces of what
+went wrong—or by inspecting the systems online while they are running.</p>
+</div>
+<div class="paragraph">
+<p>To make matters worse, a lot of races only occur when data sizes are
+increased to production system batches. Say you have a small write
+conflict in the data store due to inappropriate transactional
+serialization and isolation. If your test system has few users, this
+conflict will never show up. And if it does, you will disregard it as a
+one-time fluke that will never happen again. Yet—on the production
+system, as you increase capacity, this problem will start to occur. The
+statistical &#8220;Birthday Paradox&#8221; will come and rear its ugly head and
+you will be hitting the conflict more and more often. Up until the point
+where it occurs multiple times a day.</p>
+</div>
+<div class="paragraph">
+<p>In conclusion, capturing these kinds of bugs up front is deceptively
+hard.</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_the_erlangshell">The Erlang Shell</h5>
+<div class="paragraph">
+<p>The Erlang shell is a necessary tool for producing correct software. Its
+usefulness is mostly targeted at the maintenance phase, but it is also
+useful in the initial phases of development. A running Erlang system can
+be connected to while it is running:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>(qlglicko@127.0.0.1)3&gt;</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This provides a REPL so you can work with the software. But note that
+this is a REPL on the <em>running production system</em>. If I run commands on
+the system:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>(qlglicko@127.0.0.1)3&gt; qlg_db:players_to_refresh(1000). {ok,[]}
+(qlglicko@127.0.0.1)4&gt;</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>I hook into running processes. In this case <em>qlg_db</em> which does
+connection pooling towards the Postgres database. This allows me to go
+probe the system while it is running to check for its correct operation.
+Any exported functionality can be probed from the shell.</p>
+</div>
+<div class="paragraph">
+<p>I often keep a module around, named <em>z.erl</em> which I can compile and
+inject into the running system:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>(qlglicko@127.0.0.1)6&gt; c("../../z.erl").
+{ok,z}
+(qlglicko@127.0.0.1)7&gt;</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This dynamically compiles and loads the <em>z</em> module into the running
+system. It makes the functions of the module available for system
+introspection and manipulation. When debugging hard-to-find bugs on
+systems, you <em>need</em> this functionality.</p>
+</div>
+<div class="paragraph">
+<p>And yes, if you want, Erlang nodes contains the <em>compiler</em> application
+so they can compile modules.</p>
+</div>
+<hr>
+<div class="paragraph">
+<p>In Erlang, linking is deliberately &#8220;as late as possible&#8221;. This means
+you can change software in the system while it is running. There is no
+linker phase up front at compile time. Linkage is done when you call
+another module. Yes, this costs performance. But on the other hand, it
+means you can always rely on the system calling the newest loaded
+version of the module. The ability to hot-patch a system while it is
+running can help a lot. You don’t have to interrupt the system for small
+fixes for instance. If you know that you only changed a single module in
+your test build, you can opt to just push that compiled byte code to
+production and then inject it into that system. As long as you
+systematically add the change to your standard deployment pipeline, this
+works.</p>
+</div>
+<hr>
+<div class="paragraph">
+<p>The shell also provides a lot of nice tooling to help you when you are
+looking for problems in a system:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>There is built-in job-control in the sense of the sh(1) shell. You can
+have several shells open at the same time. You can reconnect to shells,
+either locally or remote. And you can kill shells which have hung for
+one reason or the other.</p>
+</li>
+<li>
+<p>Erlang has built in trace capabilities. These provide DTrace-like
+behaviour on the system directly without effort. Enabling tracing only
+impacts the traced modules and it is generally non-intrusive (unless you
+make a mistake when setting trace patterns, heh). You can mask events:
+only when this process calls. And only these two functions. And only
+when the 3rd passed parameter is 37. The Erlang shell makes this all
+possible dynamically on the running system.</p>
+</li>
+<li>
+<p>Want to know what state a given process has? Fear not, you have online
+introspection via the shell.</p>
+</li>
+<li>
+<p>Want to know how many messages there is the inbox of a process? Fear
+not…</p>
+</li>
+<li>
+<p>Want to insert a new log statement? Recompile the code and hot-deploy
+it via the shell. Fear not…</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>And all this <em>without</em> service interruption. And you get all this for
+free, just because you picked Erlang as the implementation language.</p>
+</div>
+<hr>
+<div class="paragraph">
+<p>Here is the thing: the first time you use the Erlang shell in production
+to fix a hard-to-debug problem it becomes very very hard to live without
+it. I’d willingly give up static typing for the ability to look at the
+running system. Problems that survive past the tests and into production
+tend to be sinister and evil. And subtly elusive. You need a system
+there where you can go and inspect it, while the error is occuring in
+production.</p>
+</div>
+<div class="paragraph">
+<p>It is the same traits that made UNIX a success (and what makes Plan9
+alluring and appealing). Your system can be inspected and manipulated
+while it is being developed and changed dynamically. Except that in
+Erlang, we have much finer grained control over the running UNIX-process
+since we can go inside it and inspect running processes inside the node.</p>
+</div>
+</div>
+
+  </div>
+
+  <div id=links>
+    
+      <a class="basic-alignment left" href="https://jlouis.github.io/posts/glicko2-benchmarking-1/">&laquo; Glicko2 Benchmarking (1)</a>
+    
+    
+  </div>
+</section>
+
+  
+</body>
+</html>
+
+
+
