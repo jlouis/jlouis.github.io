@@ -7,10 +7,19 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>&amp;copy; Jesper Louis Andersen 2007-2018</copyright>
-    <lastBuildDate>Sun, 21 Apr 2019 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 28 Apr 2019 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="https://jlouis.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Experience Report: Bidirectional type checking of GraphQL</title>
+      <link>https://jlouis.github.io/posts/graphql-bidir-type-check/</link>
+      <pubDate>Sun, 28 Apr 2019 00:00:00 +0000</pubDate>
+      
+      <guid>https://jlouis.github.io/posts/graphql-bidir-type-check/</guid>
+      <description>The core idea of GraphQL is this: let clients have a small, typed, total, functional (declarative) language where they can push programs to the server side. The server then interprets these programs and provides data to the client. The natural core for this is a lambda calculus: a GraphQL fragment is a lambda over the free variables of that fragment, for instance. A query is also a lambda, but no variables are free, and it is &amp;#8220;exported&amp;#8221; for others to use.</description>
+    </item>
     
     <item>
       <title>{&#39;EXIT&#39;, joe, goodbye}</title>
