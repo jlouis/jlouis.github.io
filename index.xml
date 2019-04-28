@@ -23,6 +23,16 @@
     </item>
     
     <item>
+      <title>A moonpig-like system</title>
+      <link>https://jlouis.github.io/posts/a-moonpig-like-system/</link>
+      <pubDate>Sun, 29 Dec 2013 00:00:00 +0000</pubDate>
+      
+      <guid>https://jlouis.github.io/posts/a-moonpig-like-system/</guid>
+      <description>The Raven that used to sing&amp;#8212;&amp;#8203;and other stories
+   Mark Jason Dominus wrote about &#34;Moonpig&#34;, which is his and Rik Signes work on building a billing system in Perl. He wrote up his story over on his blog. At Issuu, Francesco Zanitti, Anders Fugmann, and I wrote a system which has some similarities to Moonpig. This is a hash through that system. Currently, we mostly handle post-paid services.</description>
+    </item>
+    
+    <item>
       <title>The Erlang Shell</title>
       <link>https://jlouis.github.io/posts/the-erlang-shell/</link>
       <pubDate>Sun, 01 Dec 2013 00:00:00 +0000</pubDate>

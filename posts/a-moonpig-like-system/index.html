@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    
+
+    
+      <link href="https://fonts.googleapis.com/css?family=Libre+Baskerville:400|Lato:400" rel="stylesheet" type='text/css'>
+    
+
+    <link rel="icon" type="image/png" href="/favicon_16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="/favicon_32x32.png" sizes="32x32">
+    <link rel="icon" type="image/png" href="/favicon_128x128.png" sizes="128x128">
+
+    <title>
+      
+      
+         A moonpig-like system 
+      
+    </title>
+    <link rel="canonical" href="https://jlouis.github.io/posts/a-moonpig-like-system/">
+
+    <style>
+  * {
+    border:0;
+    font:inherit;
+    font-size:100%;
+    vertical-align:baseline;
+    margin:0;
+    padding:0;
+    color: black;
+    text-decoration-skip: ink;
+  }
+
+  body {
+    font-family:'Libre Baskerville', serif;
+    font-size:17px;
+    line-height:160%;
+    color:#1d1313;
+    max-width:700px;
+    margin:auto;
+  }
+
+  p {
+    margin: 20px 0;
+  }
+
+  a img {
+    border:none;
+  }
+
+  img {
+    margin: 10px auto 10px auto;
+    max-width: 100%;
+    display: block;
+  }
+
+  .left-justify {
+    float: left;
+  }
+
+  .right-justify {
+    float: right;
+  }
+
+  pre, code {
+    font: 12px Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    background-color: #f7f7f7;
+  }
+
+  code {
+    font-size: 12px;
+    padding: 4px;
+  }
+
+  pre {
+    margin-top: 0;
+    margin-bottom: 16px;
+    word-wrap: normal;
+    padding: 16px;
+    overflow: auto;
+    font-size: 85%;
+    line-height: 1.45;
+  }
+
+  pre>code {
+    padding: 0;
+    margin: 0;
+    font-size: 100%;
+    word-break: normal;
+    white-space: pre;
+    background: transparent;
+    border: 0;
+  }
+
+  pre code {
+    display: inline;
+    max-width: auto;
+    padding: 0;
+    margin: 0;
+    overflow: visible;
+    line-height: inherit;
+    word-wrap: normal;
+    background-color: transparent;
+    border: 0;
+  }
+
+  pre code::before,
+  pre code::after {
+    content: normal;
+  }
+
+  em,q,em,dfn {
+    font-style:italic;
+  }
+
+  .sans,html .gist .gist-file .gist-meta {
+    font-family:"Libre Baskerville", serif;
+  }
+
+  .mono,pre,code,tt,p code,li code {
+    font-family:Menlo,Monaco,"Andale Mono","lucida console","Courier New",monospace;
+  }
+
+  .heading,.serif,h1,h2,h3 {
+    font-family:"Lato",sans-serif;
+  }
+
+  strong {
+    font-weight:600;
+  }
+
+  q:before {
+    content:"\201C";
+  }
+
+  q:after {
+    content:"\201D";
+  }
+
+  del,s {
+    text-decoration:line-through;
+  }
+
+  blockquote {
+    font-family:"Libre Baskerville", serif;
+    text-align:center;
+    padding:50px;
+  }
+
+  blockquote p {
+    display:inline-block;
+    font-style:italic;
+  }
+
+  blockquote:before,blockquote:after {
+    font-family:"Libre Baskerville", serif;
+    content:'\201C';
+    font-size:35px;
+    color:#403c3b;
+  }
+
+  blockquote:after {
+    content:'\201D';
+  }
+
+  hr {
+    width:40%;
+    height: 1px;
+    background:#403c3b;
+    margin: 25px auto;
+  }
+
+  h1 {
+    font-size:35px;
+  }
+
+  h2 {
+    font-size:28px;
+  }
+
+  h3 {
+    font-size:22px;
+    margin-top:18px;
+  }
+
+  h1 a,h2 a,h3 a {
+    text-decoration:none;
+  }
+
+  h1,h2 {
+    margin-top:28px;
+  }
+
+  #sub-header, time {
+    color:#403c3b;
+    font-size:13px;
+  }
+
+  #sub-header {
+    margin: 0 4px;
+  }
+
+  #nav h1 a {
+    font-size:35px;
+    color:#1d1313;
+    line-height:120%;
+  }
+
+  .posts_listing a,#nav a {
+    text-decoration: none;
+  }
+
+  li {
+    margin-left: 20px;
+  }
+
+  ul li {
+    margin-left: 5px;
+  }
+
+  #nav ul li:before, .posts_listing li:before {
+    content:'';
+    margin-right:0;
+  }
+
+  #content {
+    text-align:left;
+    width:100%;
+    font-size:15px;
+    padding:60px 0 80px;
+  }
+
+  #content h1,#content h2 {
+    margin-bottom:5px;
+  }
+
+  #content h2 {
+    font-size:25px;
+  }
+
+  #content .entry-content {
+    margin-top:15px;
+  }
+
+  #content time {
+    margin-left:3px;
+  }
+
+  #content h1 {
+    font-size:30px;
+  }
+
+  .highlight {
+    margin: 10px 0;
+  }
+
+  .posts_listing {
+    margin:0 0 50px;
+  }
+
+  .posts_listing li {
+    margin:0 0 25px 15px;
+  }
+
+  .posts_listing li a:hover,#nav a:hover {
+    text-decoration: underline;
+  }
+
+  #nav {
+    text-align:center;
+    position:static;
+    margin-top:60px;
+  }
+
+  #nav ul {
+    display: table;
+    margin: 8px auto 0 auto;
+  }
+
+  #nav li {
+    list-style-type:none;
+    display:table-cell;
+    font-size:15px;
+    padding: 0 20px;
+  }
+
+  #links {
+    margin: 50px 0 0 0;
+  }
+
+  #links :nth-child(2) {
+    float:right;
+  }
+
+  #not-found {
+    text-align: center;
+  }
+
+  #not-found a {
+    font-family:"Libre Baskerville",serif;
+    font-size: 200px;
+    text-decoration: none;
+    display: inline-block;
+    padding-top: 225px;
+  }
+
+  @media (max-width: 750px) {
+    body {
+      padding-left:20px;
+      padding-right:20px;
+    }
+
+    #nav h1 a {
+      font-size:28px;
+    }
+
+    #nav li {
+      font-size:13px;
+      padding: 0 15px;
+    }
+
+    #content {
+      margin-top:0;
+      padding-top:50px;
+      font-size:14px;
+    }
+
+    #content h1 {
+      font-size:25px;
+    }
+
+    #content h2 {
+      font-size:22px;
+    }
+
+    .posts_listing li div {
+      font-size:12px;
+    }
+  }
+
+  @media (max-width: 400px) {
+    body {
+      padding-left:20px;
+      padding-right:20px;
+    }
+
+    #nav h1 a {
+      font-size:22px;
+    }
+
+    #nav li {
+      font-size:12px;
+      padding: 0 10px;
+    }
+
+    #content {
+      margin-top:0;
+      padding-top:20px;
+      font-size:12px;
+    }
+
+    #content h1 {
+      font-size:20px;
+    }
+
+    #content h2 {
+      font-size:18px;
+    }
+
+    .posts_listing li div{
+      font-size:12px;
+    }
+  }
+</style>
+
+
+    
+  </head>
+
+  <body>
+    <section id=nav>
+      <h1><a href="/">JLOUIS&#39; RAMBLINGS</a></h1>
+      <ul>
+        
+      </ul>
+    </section>
+
+
+<section id=content>
+  <h1> A moonpig-like system </h1>
+
+  
+    <div id=sub-header>
+      December 2013 · 12 minute read
+    </div>
+  
+
+  <div class="entry-content">
+    <div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>The Raven that used to sing&#8212;&#8203;and other stories</p>
+</div>
+</blockquote>
+</div>
+<div class="paragraph">
+<p>Mark Jason Dominus wrote about <code>"Moonpig"</code>, which is his and Rik Signes
+work on building a billing system in Perl. He wrote up his story over on
+his <a href="http://blog.plover.com/prog/Moonpig.html">blog</a>. At
+<a href="http://www.issuu.com/">Issuu</a>, Francesco Zanitti, Anders Fugmann,
+and I wrote a system which has some similarities to Moonpig. This is a
+hash through that system. Currently, we mostly handle post-paid
+services.</p>
+</div>
+<div class="paragraph">
+<p>Billing mostly sucks. It is one of those areas of software where the
+realities of the world clashes with your nice logically structured code
+base. This clash often produces problematic complications in systems for
+one reason or the other. Furthermore, to rub salt into the wound, most
+billing solutions out there sucks even more. So we decided, like Mark
+and Rik, to write our own.</p>
+</div>
+<div class="paragraph">
+<p>In hindsight, there are things we should probably have done differently
+in the structure of the system. And there are things we should perhaps
+have treated in other ways. But the system is in production and runs. It
+rarely gets updates.</p>
+</div>
+<div class="sect1">
+<h2 id="_inspiration">Inspiration</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>When we wrote the system, two papers inspired us.
+<a href="http://research.microsoft.com/en-us/um/people/simonpj/papers/financial-contracts/contracts-icfp.htm">Composing
+Contracts</a> by Peyton Jones, Seward and Eber describes a small contract
+language for financial transactions. And this language is compiled with
+several compilers to produce different interpretations of the same
+syntax.</p>
+</div>
+<div class="paragraph">
+<p>The other source of inspiration was the 3gERP project at
+<a href="http://www.diku.dk/">DIKU</a> lead by Fritz Henglein. Of interest is
+<a href="http://www.diku.dk/~hvitved/">Tom Hvitved</a>'s Phd dissertation,
+which describes an ERP system based on <em>contracts</em> and <em>event
+logs</em>. Roughly the idea is that events in the system is sent to a
+persistent log which is never deleted. Code in contracts read events
+from the log and proceed to execute. A central aspect is the concept of
+<em>replay</em> where a contracts state can be replayed from the start of
+time. This provides Point-in-time-recovery (PITR) of any contract at any
+point, as well as an audit log. Current contract state is kept
+<em>in-memory</em> and is never persisted. Only the events that will lead
+to that state.</p>
+</div>
+<div class="paragraph">
+<p>Our system&#8212;&#8203;and the 3gERP model&#8212;&#8203;consist of contract processes and
+agent processes. A contract poses <em>obligations</em> which are read by
+agents. Once agents fulfill the obligation they send back
+<em>transactions</em> to the event log&#8212;&#8203;and transactions are subsequently
+picked up by the contracts. A powerful concept in the model is that of
+<em>blame.</em> If we can&#8217;t proceed in a contract due to a time constraint
+being hit, we can see which party had the obligation of an action. This
+means we can identify if it is the customer or the company which made
+the error, and handle it accordingly.</p>
+</div>
+<div class="paragraph">
+<p>Since our system is written in Erlang, agents are separate
+(Erlang-)process groups. This allows our system to handle events
+concurrently, and allows multiple subsystems to proceed. We can also
+replace standard contracts and agents with mock variants for testing.</p>
+</div>
+<div class="paragraph">
+<p>Currently we handle all contracts in a single Erlang-process, but this
+is clearly a design mistake. We could get better isolation properties by
+splitting each contract into a process of its own and then let contracts
+run in a truly concurrent fashion.</p>
+</div>
+<div class="paragraph">
+<p>Another mistake is that we route obligations and transactions over
+<em>buses</em> inside the system. But it would probably have been better
+to make contracts to direct-calls through a routing/proxy layer to a
+target process. The current bus-model is not very Erlang-idiomatic.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_the_key_observations_aboutbilling">The key observations about~billing</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Here is the primary key observation about billing:</p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Profit scales proportionally with the billing system load</p>
+</div>
+</blockquote>
+</div>
+<div class="paragraph">
+<p>Modern computers are incredibly beefy. We can run a gigantic billing
+system in memory on a 7.5 or 15 Gigabyte instance on Amazon EC2. Even if
+we outscale it and need a 244 Gigabyte machine at almost \$7 per hour,
+chances are our profits are such that this amount of money is peanuts.</p>
+</div>
+<div class="paragraph">
+<p>Hence, worrying about system performance is&#8212;&#8203;for most companies&#8212;&#8203;going
+to be premature optimization. Much more important is correctness,
+durability and resilience. Thus, the focus should be on that and not
+<em>lolspeed</em>. This is a welcome change of pace.</p>
+</div>
+<div class="paragraph">
+<p>This key principle is an efficient driving force behind design
+decisions. You can opt for the simple and verifiable algorithms and data
+structures over the fast ones. If you ever need to go back and tune the
+system for scale, you will be making so high a profit it will be a
+problem of luxury.</p>
+</div>
+<div class="paragraph">
+<p>Some napkin math: A typical customer account runs a single contract. A
+contract is around 2 Kilobytes of memory in Erlang. I have 244 Gigabytes
+of memory. We will run out around 128 million paying customers. Assume
+profits of $1 per customer and this is not a problem.</p>
+</div>
+<div class="paragraph">
+<p>The second key observation is this:</p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>We can arrange the system such that we take all the blame for errors</p>
+</div>
+</blockquote>
+</div>
+<div class="paragraph">
+<p>That is, whenever we are in doubt, we give the benefit to the customer.
+Mark wrote about this when he decided to handle rounding errors by
+giving customers the fraction which cannot be divided.</p>
+</div>
+<div class="paragraph">
+<p>But there are many places where this principle can be used to simplify
+the code base. If a given feature costs $30,000 to implement but only
+yields you $50 a year, then the effort of implementation is clearly not
+worth it.</p>
+</div>
+<div class="paragraph">
+<p>This principle gives us more freedom and flexibility in the
+implementation because we can handle certain problematic areas by just
+ignoring them while measuring their impact.</p>
+</div>
+<div class="paragraph">
+<p>Finally:</p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>The world is not perfect and faults will happen</p>
+</div>
+</blockquote>
+</div>
+<div class="paragraph">
+<p>Our system is systematically built to acknowledge certain subsystems
+will fail. And the approach is to regard that we are always in a state
+where the subsystem failed. More on that later.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_storage">Storage</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We store all data in a flat file on disk. Data are stored as Erlang
+terms in a pseudo-human-readable format (think XML, S-expressions or
+JSON). This is deliberate. It is much easier to read and verify.</p>
+</div>
+<div class="paragraph">
+<p>The <em>current</em> state is handled by a built-in database in Erlang
+called <em>mnesia</em>. This database stores an in-memory current view.
+Provides a transactional store loced to the on-disk log and so on. It
+provides a cache of what is in the flat file on disk. We can always
+throw away the database and replay the log from the dawn of time (which
+is somewhere around Nov. 2011 for this system). In principle Mnesia can
+also bootstrap the system faster since we can skip over large parts of
+the log, but we have not had the reason to implement that optimization
+yet. A reboot just replays from the start.</p>
+</div>
+<div class="paragraph">
+<p>The Mnesia part also explains how we can do reporting. We have a
+database, almost Relational in nature, which we can query to extract
+reports. The PITR-property of the event log also lets us answer
+questions back in time. But for simplicity, we just store all data
+persistently in Mnesia in classic OLTP-manner.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_other_storage_options">Other storage-options</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>One option we have thought of is to keep a flat file per contract and
+one global file. The advantage is we can then boot contracts on demand
+when we need them. The disadvantage is we loose an important property of
+the current system: linear time ordering.</p>
+</div>
+<div class="paragraph">
+<p>The current system forces an ordering on all events and only forwards
+events in that order. This simplifies almost all of the code base.
+Distribution afficianados might claim that this will be a problem for
+performance. But due to the primary key observation, we can ignore it.</p>
+</div>
+<div class="paragraph">
+<p>The other option is to introduce a database to run the event log.
+Postgres is an obvious candidate. We have not given this much thought,
+but it may be an option and simplify some parts of the system.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_handling_time">Handling time</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Time in our system is handled roughly like time is handled in Moonpig.
+Time is <em>injected</em> or <em>pushed</em> into the system. It is never
+pulled by the system. Whenever an event happens, there is a time
+parameter which is sent into the system and tells us what time it is.
+Functions inside the system pass on the <code>"current time"</code> and we never
+call <code>erlang:now()</code> nor <code>os:timestamp()</code> inside the code
+base.</p>
+</div>
+<div class="paragraph">
+<p>The consequence is that testing is now suddenly possible. We can quickly
+play out scenarios where time is forwarded a couple of years. The test
+system controls the time fully, so it is easy to play out
+what-would-have-happened scenarios.</p>
+</div>
+<div class="paragraph">
+<p>When running normally, we inject time at the boundary of the system when
+some event happens. In effect, other users do not have to cope with the
+fact that time is injected into the model. But from a testing
+perspective, we can just pick the variant of the call where time can be
+overridden.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_current_time_contract_time">Current time &amp; contract-time</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>A distinction from Moonpig is how we handle time in contracts. In
+Moonpig, time is handled by heartbeats and it is the responsibility of
+subsystems to ignore heartbeats which were duplicated etc.</p>
+</div>
+<div class="paragraph">
+<p>In our system, contracts have an internal time which we can call <code>C</code>. If <code>T</code>
+denotes current time, we always have the property that <code>C &lt; T</code>.
+That is, the contracts time is always behind the current time by some
+small epsilon value. The scheme where the contract always lags behind
+real time allows us to handle heartbeats in a slightly different manner.
+When an event is injected into the contract, a timestamp T is also sent.
+The contract now <em>forwards</em> itself to the next point in time where
+something interesting happens on the contract. This makes sure duplicate
+injections of time and events are ignored by the contract.</p>
+</div>
+<div class="paragraph">
+<p>This model also describes how we handle problems where the system fails.
+We have backup procedures. We can just restart the system a couple of
+days later, and it will forward time and do things correctly. If
+anything important should have happened on the days in between, they
+will be handled at this point.</p>
+</div>
+<div class="paragraph">
+<p>Note the implication: our system is always in a catch-up mode. It always
+thinks the state of affairs is that it is behind and need to do
+something to catch up to the current situation.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_quickcheck">QuickCheck</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We never got around to do QuickCheck models for contracts, but there is
+an interesting property of contracts which is worth mentioning: A
+contracts state is derivable from a stream of transactions. Such a
+contract should be indifferent to heartbeat-events and other events
+types that happens in between the transactions. This can be
+probalisitically verified by an <a href="http://quviq.com/">Erlang
+QuickCheck model</a>. But we did not get to do that.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_idempotence">Idempotence</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>A very important aspect of our system is idempotent <code>"best effort"</code>
+delivery. When contracts want to have something done, they send out an
+<em>obligation.</em> These are picked up by agents and then handled.
+Obligations may get lost. They are periodically restated by the
+contract. If an Agent crashes, it doesn&#8217;t matter that it did not handle
+all the obligations. We will catch up eventually.</p>
+</div>
+<div class="paragraph">
+<p>Agents track which obligations they have already fulfilled. If so, they
+idempotently produce the same answer as before as a <em>transaction</em>
+which is then sent back to the contract. Thus, if our event log system
+crashes, the agent can just send in the transaction again.</p>
+</div>
+<div class="paragraph">
+<p>Charging works on this system as well. A charge contains a unique
+reference and it handles transactions idempotently. So it doesn&#8217;t matter
+if the charging system sits in the other end of the world and we lose
+the network connection. We will just retry the charge with the same
+reference. Since our end handles the unique reference persistenly on
+disk, we can&#8217;t generate another reference for the charge. And the other
+end can safely store a transaction in their database.</p>
+</div>
+<div class="paragraph">
+<p>Many areas can be handled with a fire-and-forget type of message. We
+only try to send mails once. If the underlying system accepts the mail,
+we idempotently mark it as <code>"done and sent"</code>. This minimizes annoyances
+on customers, should we have to try to resend mails.</p>
+</div>
+<div class="paragraph">
+<p>Note that each agent is usually very simple. Often they are less than 40
+lines of code. And they can be checked individually, without the rest of
+the system.</p>
+</div>
+<div class="paragraph">
+<p>We only have to worry about progress, but that can be measured. Our
+system extensively uses the
+<a href="http://github.com/boundary/folsom">folsom</a> system in Erlang to
+track counters and gauges so we can see what is happening inside the
+node. In fact, we track almost everything with probes in the system.
+Full instrumentation is something we strongly believe in for every new
+system written.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_immutability">Immutability</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Like in Moonpig, we use immutable constructions all over the place. We
+never throw away data, but record it into the global event log for
+future replayability. This is also what we use when something goes wrong
+and we need to figure out what went wrong.</p>
+</div>
+<div class="paragraph">
+<p>Immutability is also very powerful when one considers debugging. Since
+we have every transition recorded and full PITR-support, we can
+essentially always rerun the business rules of a contract and see what
+went on inside it.</p>
+</div>
+<div class="paragraph">
+<p>Replayability has an interesting impact. When we upgrade our code in
+non-compatible ways, we also have to mention that upgrade in the event
+log. So old versions of the code still lives on, but is only used up
+till a point. Then it is switched with new versions of the code base.
+Essentially the system switches between different contract versions over
+time.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_floats_time_zones">Floats / Time zones</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>No floats! Only integers. The system stores everything in cents
+internally, but doesn&#8217;t do financial calculations. Our plan&#8212;&#8203;should we
+need to do so&#8212;&#8203;was to store everything in picodollars and calculate
+exchange rates for other currencies. Much like all time is in UTC and
+are offset from there at the boundary.</p>
+</div>
+<div class="paragraph">
+<p>However, we do note that our billing provider expects floats, we have a
+boundary conversion going on&#8230;&#8203; The mind baffles at times at the
+choices made in software systems.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_what_we_skipped_on">What we skipped on</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We did not implement a DSL for writing contracts. Rather, we wrote the
+few contracts we needed in (purely) functional Erlang code.</p>
+</div>
+<div class="paragraph">
+<p>We don&#8217;t have a lot of code in place to manage blame. This is due to the
+contract simplicity currently in place. We don&#8217;t really need this.</p>
+</div>
+<div class="paragraph">
+<p>We could probably improve the model if we had to do it over. I believe
+this is <em>the</em> way to do billing systems for the vast majority of
+companies out there. The code is neat and modularized into contracts,
+agents and persisters of data. Each can be implemented with a natural
+backing into Erlang processes, proxies for foreign subsystems and
+RDBMs systems and so on. I also note that a system like
+<a href="http://www.datomic.com/">Datomic</a> would be near-perfect to store the
+transaction log. And would have a nice scalability curve to boot.</p>
+</div>
+<div class="paragraph">
+<p>The choice of Erlang is rather nice for a system like this, where
+contracts, agents and so on can be modeled as processes. Other good
+languages could be OCaml&#8212;&#8203;for its expressive type system, or Go&#8212;&#8203;for
+the goroutines.</p>
+</div>
+</div>
+</div>
+
+  </div>
+
+  <div id=links>
+    
+      <a class="basic-alignment left" href="https://jlouis.github.io/posts/the-erlang-shell/">&laquo; The Erlang Shell</a>
+    
+    
+      <a class="basic-alignment left" href="https://jlouis.github.io/posts/joe-goodbye/">{&#39;EXIT&#39;, joe, goodbye} &raquo;</a>
+    
+  </div>
+</section>
+
+  
+</body>
+</html>
+
+
+
