@@ -492,15 +492,17 @@ logic, and also what is easy to implement in a logic. This helps
 coherence of the language quite a bit.</p>
 </div>
 <div class="paragraph">
-<p>The first type checker we wrote was based on a classic algorithm. It
+<p>The first type checker we wrote were based on a classic algorithm. It
 had many bugs, mostly because it was built and extended as we went
 along implementing more and more language features. So with that
 experiment behind us, we embarked on the idea to rewrite it using a
-more modern style.</p>
+more modern style, hopefully simplifying and squashing further bugs in
+the process. At this point, we had a sizable test suite, so a rewrite
+would not introduce too many futher faults.</p>
 </div>
 <div class="paragraph">
 <p>I&#8217;m pretty sure bidirectional type checking is part of the folk-lore,
-but there are some really good expositions of them. One is written by
+but there are some really good expositions on them. One is written by
 David R. Christensen, and another by Frank Pfenning:</p>
 </div>
 <div class="ulist">
@@ -513,8 +515,18 @@ David R. Christensen, and another by Frank Pfenning:</p>
 </li>
 </ul>
 </div>
+<div class="paragraph">
+<p>Once you start using this style of type checker, you will want to
+write every type checker in this style.</p>
+</div>
 <div class="sect2">
 <h3 id="_the_core_idea">The core idea</h3>
+<div class="paragraph">
+<p>The key observation is that type checking can be split into a couple
+of different building blocks. Once these blocks are established, we
+can recombine them, as you would in typical algebraic fashion. There
+are obvious similarities to attribute grammars, as we will see.</p>
+</div>
 <div class="paragraph">
 <p>We split type checking into three building blocks. We annotate each
 entry with a <code>+</code> if they are given (have positive mode in the
