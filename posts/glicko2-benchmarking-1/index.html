@@ -1,411 +1,100 @@
-<!DOCTYPE html>
-<html lang="en-us">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <meta name="HandheldFriendly" content="True">
-    <meta name="MobileOptimized" content="320">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="referrer" content="no-referrer">
+<!doctype html>
+
+<html lang="en">
+
+<head>
+  <title>Glicko2 Benchmarking (1) - jlouis&#39; Ramblings</title>
+  <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="The HTML5 Herald" />
+<meta name="author" content="Jesper Louis Andersen" /><meta property="og:title" content="Glicko2 Benchmarking (1)" />
+<meta property="og:description" content="One of my hobby projects is to run statistics on Quake Live Duel matches. I began collecting data around 1st of Feb 2013 and now I have scraped around \(2.5\) Million duel matches. This allows me to play with different ranking methods on the players and gauge their ranking.
+  The ranking system I use is called Glicko2, devised by Mark E. Glickman (http://glicko.net). The system is like the chess rating system ELO, except that it is newer and avoids certain problems with ELO." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://jlouis.github.io/posts/glicko2-benchmarking-1/" />
+<meta property="article:published_time" content="2013-11-16T00:00:00+00:00" />
+<meta property="article:modified_time" content="2013-11-16T00:00:00+00:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Glicko2 Benchmarking (1)"/>
+<meta name="twitter:description" content="One of my hobby projects is to run statistics on Quake Live Duel matches. I began collecting data around 1st of Feb 2013 and now I have scraped around \(2.5\) Million duel matches. This allows me to play with different ranking methods on the players and gauge their ranking.
+  The ranking system I use is called Glicko2, devised by Mark E. Glickman (http://glicko.net). The system is like the chess rating system ELO, except that it is newer and avoids certain problems with ELO."/>
+
+<meta name="generator" content="Hugo 0.74.3" />
     
 
-    
-      <link href="https://fonts.googleapis.com/css?family=Libre+Baskerville:400|Lato:400" rel="stylesheet" type='text/css'>
-    
-
-    <link rel="icon" type="image/png" href="/favicon_16x16.png" sizes="16x16">
-    <link rel="icon" type="image/png" href="/favicon_32x32.png" sizes="32x32">
-    <link rel="icon" type="image/png" href="/favicon_128x128.png" sizes="128x128">
-
-    <title>
-      
-      
-         Glicko2 Benchmarking (1) 
-      
-    </title>
-    <link rel="canonical" href="https://jlouis.github.io/posts/glicko2-benchmarking-1/">
-
-    <style>
-  * {
-    border:0;
-    font:inherit;
-    font-size:100%;
-    vertical-align:baseline;
-    margin:0;
-    padding:0;
-    color: black;
-    text-decoration-skip: ink;
-  }
-
-  body {
-    font-family:'Libre Baskerville', serif;
-    font-size:17px;
-    line-height:160%;
-    color:#1d1313;
-    max-width:700px;
-    margin:auto;
-  }
-
-  p {
-    margin: 20px 0;
-  }
-
-  a img {
-    border:none;
-  }
-
-  img {
-    margin: 10px auto 10px auto;
-    max-width: 100%;
-    display: block;
-  }
-
-  .left-justify {
-    float: left;
-  }
-
-  .right-justify {
-    float: right;
-  }
-
-  pre, code {
-    font: 12px Consolas, "Liberation Mono", Menlo, Courier, monospace;
-    background-color: #f7f7f7;
-  }
-
-  code {
-    font-size: 12px;
-    padding: 4px;
-  }
-
-  pre {
-    margin-top: 0;
-    margin-bottom: 16px;
-    word-wrap: normal;
-    padding: 16px;
-    overflow: auto;
-    font-size: 85%;
-    line-height: 1.45;
-  }
-
-  pre>code {
-    padding: 0;
-    margin: 0;
-    font-size: 100%;
-    word-break: normal;
-    white-space: pre;
-    background: transparent;
-    border: 0;
-  }
-
-  pre code {
-    display: inline;
-    max-width: auto;
-    padding: 0;
-    margin: 0;
-    overflow: visible;
-    line-height: inherit;
-    word-wrap: normal;
-    background-color: transparent;
-    border: 0;
-  }
-
-  pre code::before,
-  pre code::after {
-    content: normal;
-  }
-
-  em,q,em,dfn {
-    font-style:italic;
-  }
-
-  .sans,html .gist .gist-file .gist-meta {
-    font-family:"Libre Baskerville", serif;
-  }
-
-  .mono,pre,code,tt,p code,li code {
-    font-family:Menlo,Monaco,"Andale Mono","lucida console","Courier New",monospace;
-  }
-
-  .heading,.serif,h1,h2,h3 {
-    font-family:"Lato",sans-serif;
-  }
-
-  strong {
-    font-weight:600;
-  }
-
-  q:before {
-    content:"\201C";
-  }
-
-  q:after {
-    content:"\201D";
-  }
-
-  del,s {
-    text-decoration:line-through;
-  }
-
-  blockquote {
-    font-family:"Libre Baskerville", serif;
-    text-align:center;
-    padding:50px;
-  }
-
-  blockquote p {
-    display:inline-block;
-    font-style:italic;
-  }
-
-  blockquote:before,blockquote:after {
-    font-family:"Libre Baskerville", serif;
-    content:'\201C';
-    font-size:35px;
-    color:#403c3b;
-  }
-
-  blockquote:after {
-    content:'\201D';
-  }
-
-  hr {
-    width:40%;
-    height: 1px;
-    background:#403c3b;
-    margin: 25px auto;
-  }
-
-  h1 {
-    font-size:35px;
-  }
-
-  h2 {
-    font-size:28px;
-  }
-
-  h3 {
-    font-size:22px;
-    margin-top:18px;
-  }
-
-  h1 a,h2 a,h3 a {
-    text-decoration:none;
-  }
-
-  h1,h2 {
-    margin-top:28px;
-  }
-
-  #sub-header, time {
-    color:#403c3b;
-    font-size:13px;
-  }
-
-  #sub-header {
-    margin: 0 4px;
-  }
-
-  #nav h1 a {
-    font-size:35px;
-    color:#1d1313;
-    line-height:120%;
-  }
-
-  .posts_listing a,#nav a {
-    text-decoration: none;
-  }
-
-  li {
-    margin-left: 20px;
-  }
-
-  ul li {
-    margin-left: 5px;
-  }
-
-  #nav ul li:before, .posts_listing li:before {
-    content:'';
-    margin-right:0;
-  }
-
-  #content {
-    text-align:left;
-    width:100%;
-    font-size:15px;
-    padding:60px 0 80px;
-  }
-
-  #content h1,#content h2 {
-    margin-bottom:5px;
-  }
-
-  #content h2 {
-    font-size:25px;
-  }
-
-  #content .entry-content {
-    margin-top:15px;
-  }
-
-  #content time {
-    margin-left:3px;
-  }
-
-  #content h1 {
-    font-size:30px;
-  }
-
-  .highlight {
-    margin: 10px 0;
-  }
-
-  .posts_listing {
-    margin:0 0 50px;
-  }
-
-  .posts_listing li {
-    margin:0 0 25px 15px;
-  }
-
-  .posts_listing li a:hover,#nav a:hover {
-    text-decoration: underline;
-  }
-
-  #nav {
-    text-align:center;
-    position:static;
-    margin-top:60px;
-  }
-
-  #nav ul {
-    display: table;
-    margin: 8px auto 0 auto;
-  }
-
-  #nav li {
-    list-style-type:none;
-    display:table-cell;
-    font-size:15px;
-    padding: 0 20px;
-  }
-
-  #links {
-    margin: 50px 0 0 0;
-  }
-
-  #links :nth-child(2) {
-    float:right;
-  }
-
-  #not-found {
-    text-align: center;
-  }
-
-  #not-found a {
-    font-family:"Libre Baskerville",serif;
-    font-size: 200px;
-    text-decoration: none;
-    display: inline-block;
-    padding-top: 225px;
-  }
-
-  @media (max-width: 750px) {
-    body {
-      padding-left:20px;
-      padding-right:20px;
-    }
-
-    #nav h1 a {
-      font-size:28px;
-    }
-
-    #nav li {
-      font-size:13px;
-      padding: 0 15px;
-    }
-
-    #content {
-      margin-top:0;
-      padding-top:50px;
-      font-size:14px;
-    }
-
-    #content h1 {
-      font-size:25px;
-    }
-
-    #content h2 {
-      font-size:22px;
-    }
-
-    .posts_listing li div {
-      font-size:12px;
-    }
-  }
-
-  @media (max-width: 400px) {
-    body {
-      padding-left:20px;
-      padding-right:20px;
-    }
-
-    #nav h1 a {
-      font-size:22px;
-    }
-
-    #nav li {
-      font-size:12px;
-      padding: 0 10px;
-    }
-
-    #content {
-      margin-top:0;
-      padding-top:20px;
-      font-size:12px;
-    }
-
-    #content h1 {
-      font-size:20px;
-    }
-
-    #content h2 {
-      font-size:18px;
-    }
-
-    .posts_listing li div{
-      font-size:12px;
-    }
-  }
-</style>
-
-
-    
-  </head>
-
-  <body>
-    <section id=nav>
-      <h1><a href="/">JLOUIS&#39; RAMBLINGS</a></h1>
-      <ul>
-        
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" integrity="sha256-l85OmPOjvil/SOvVt3HnSSjzF1TUMyT9eV0c2BzEGzU=" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://jlouis.github.io/fontawesome/css/all.min.css" />
+  
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Slab|Ruda" />
+  
+  
+  <link rel="stylesheet" type="text/css" href="/css/styles.css" /></head>
+
+<body>
+  <div id="container">
+    <header>
+      <h1>
+                <a href="/">jlouis&rsquo; Ramblings</a>
+            </h1>
+
+      <ul id="social-media">
+             <li>
+               <a href="https://github.com/jlouis" title="GitHub">
+               <i class="fab fa-github fa-lg"></i>
+               </a>
+             </li>
+             <li>
+               <a href="https://twitter.com/jlouis666" title="Twitter">
+               <i class="fab fa-twitter fa-lg"></i>
+               </a>
+             </li>
       </ul>
-    </section>
+      
+      <p><em>Musings on tech, software, and other things</em></p>
+      
+    </header>
+
+    
+<nav>
+    <ul>
+        
+    </ul>
+</nav>
 
 
-<section id=content>
-  <h1> Glicko2 Benchmarking (1) </h1>
+    <main>
 
-  
-    <div id=sub-header>
-      November 2013 · 12 minute read
-    </div>
-  
 
-  <div class="entry-content">
+
+
+<article>
+
+    <h1>Glicko2 Benchmarking (1)</h1>
+
+    
+      <aside>
+    <ul>
+        <li>
+            <time class="post-date" datetime="2013-11-16T00:00:00Z">Nov 16, 2013</time>
+        </li>
+        
+
+        
+
+        <li>12 minutes read</li>
+    </ul>
+</aside>
+
+    
+
+    
+
+
     <div class="paragraph">
 <p>One of my hobby projects is to run statistics on Quake Live Duel
 matches. I began collecting data around 1st of Feb 2013 and now I have
-scraped around \($2.5$\) Million duel matches. This allows me to
+scraped around \(2.5\) Million duel matches. This allows me to
 play with different ranking methods on the players and gauge their
 ranking.</p>
 </div>
@@ -459,7 +148,7 @@ set.</p>
 <p>The Erlang system works well for the fetching of matches, and for
 display of match scores and so on. But I need to carry out some tunings
 of the Glicko2 parameters. This means I will run through my
-\($2.5$\) million matches many many times and thus the speed at
+\(2.5\) million matches many many times and thus the speed at
 which I can run Glicko2 matter. I have an Erlang implementation for a
 simulated annealer and ranker. But since it is heavyweight numerical
 processing—not an Erlang strength—I need to find another language for
@@ -478,16 +167,16 @@ in the first place. If I can’t get enough speed, I can simply abort the
 process right here.</p>
 </li>
 <li>
-<p>I have \($2.5$\) million matches and need to process them all.
+<p>I have \(2.5\) million matches and need to process them all.
 Thus the problem is switching from being CPU-bound to being memory
 bound. I need to find out if this change affects the processing speed of
 other languages. Again, if I can’t do it faster, then I need to abort
 the task.</p>
 </li>
 <li>
-<p>I need to run the \($2.5$\) million ranking runs either in an
+<p>I need to run the \(2.5\) million ranking runs either in an
 algorithm running simulated annealing or a gradient search. This means
-potentially millions of runs times the \($2.5$\) million ranking
+potentially millions of runs times the \(2.5\) million ranking
 runs. This is the long-term goal I wish to reach. In this part I require
 the speed much more than in the other parts.</p>
 </li>
@@ -517,19 +206,19 @@ running fast on this machine.</p>
 <div class="paragraph">
 <p><a href="http://github.com/jlouis/erl-glicko2">erl-glicko2</a> The Erlang system
 itself can run a single Glicko2 round of one player against 3 players in
-22\($\mu{}$\)s. The benchmark in Erlang is carried out by
+22\(\mu{}\)s. The benchmark in Erlang is carried out by
 running the test 300 times and then averaging. This batch size seems to
 be quite stable.</p>
 </div>
 <div class="paragraph">
 <p>The speed figure of Erlang is with the standard BEAM bytecode
 interpreter. And the code is straightforward with no tuning whatsoever.
-With \($2.5$\) million matches it takes just around a minute to
+With \(2.5\) million matches it takes just around a minute to
 run through them all, which is acceptable. But since I am to run faster
 than that, I wanted to know how much faster I could go.</p>
 </div>
 <div class="paragraph">
-<p>Compiling with HiPE gives 8\($\mu{}$\)s. This is much better and
+<p>Compiling with HiPE gives 8\(\mu{}\)s. This is much better and
 far more in the area where I would like to be. But perhaps we can do
 better by switching the language.</p>
 </div>
@@ -567,16 +256,16 @@ for what purpose?</p>
 <p>I use the <strong>Core_Bench</strong> module from Janes St. to do my benchmarking. The
 nice thing is that this tool predicts the batch size to use and also has
 prediction that avoids making the wrong conclusions. The OCaml bytecode
-interpreter clocks in at 28\($\mu{}$\)s. This result somewhat
+interpreter clocks in at 28\(\mu{}\)s. This result somewhat
 surprises me. I had expected the run to be faster than Erlang. But I
 guess more time is spent optimizing the Erlang interpreter than the
 OCaml bytecode interpreter and code generator.</p>
 </div>
 <div class="paragraph">
-<p>Running native yields a time around 2\($\mu{}$\)s. This number
-is really good. If we are to process \($2.5$\) million matches,
-we can do so in \($2.5 \times 2$\)\($\mu{}$\)s (assuming
-no cache hierarchy) or \($5$\) seconds. Much better than the
+<p>Running native yields a time around 2\(\mu{}\)s. This number
+is really good. If we are to process \(2.5\) million matches,
+we can do so in \(2.5 \times 2\)\(\mu{}\)s (assuming
+no cache hierarchy) or \(5\) seconds. Much better than the
 minute it would require in Erlang.</p>
 </div>
 <div class="paragraph">
@@ -632,7 +321,7 @@ default is just awesome.</p>
 <div class="paragraph">
 <p>Being Go, the compile times are faster—but this doesn’t matter for this
 problem as the compile times are ``not noticable''. Go clocks in at
-1\($\mu{}$\)s. About twice as fast as the OCaml solution. This
+1\(\mu{}\)s. About twice as fast as the OCaml solution. This
 is with the default compiler written by Ken Thompson initially and
 improved by many other people.</p>
 </div>
@@ -651,7 +340,7 @@ improved by many other people.</p>
 <thead>
 <tr>
 <th class="tableblock halign-left valign-top">Language</th>
-<th class="tableblock halign-left valign-top">Efficiency (\($\mu{}$\)s)</th>
+<th class="tableblock halign-left valign-top">Efficiency (\(\mu{}\)s)</th>
 </tr>
 </thead>
 <tbody>
@@ -709,7 +398,7 @@ runs are needed.</p>
 currently using a root-finder, called Ridder’s method. This finder is
 quite fast, but it is also the major slowdown in the runs. When I first
 implemented the OCaml variant, I picked a different root-finder by
-mistake. This meant that it ran in 0.6\($\mu{}$\)s, so
+mistake. This meant that it ran in 0.6\(\mu{}\)s, so
 definitely this part of the code base is the contending one. It also
 suggests that the Golang implementation is handling this part
 differently than the OCaml code and there is definitely room for
@@ -761,21 +450,43 @@ doing this from a Cost/Benefit perspective. And frankly, writing the
 code in Erlang is probably faster than writing it in OCaml or Go for me.</p>
 </div>
 
-  </div>
 
-  <div id=links>
-    
-      <a class="basic-alignment left" href="https://jlouis.github.io/posts/on-logbooks/">&laquo; On Logbooks</a>
-    
-    
-      <a class="basic-alignment left" href="https://jlouis.github.io/posts/the-erlang-shell/">The Erlang Shell &raquo;</a>
-    
-  </div>
+</article>
+
+
+<section class="post-nav">
+    <ul>
+        
+        <li>
+            <a href="https://jlouis.github.io/posts/on-logbooks/"><i class="fa fa-chevron-circle-left"></i> On Logbooks</a>
+        </li>
+        
+        
+        <li>
+            <a href="https://jlouis.github.io/posts/the-erlang-shell/">The Erlang Shell <i class="fa fa-chevron-circle-right"></i> </a>
+        </li>
+        
+    </ul>
 </section>
-
   
+    
+    
+  
+
+
+
+
+
+</main>
+    <footer>
+        <h6> |
+            Rendered by <a href="https://gohugo.io" title="Hugo">Hugo</a> |
+            <a href="https://jlouis.github.ioindex.xml">Subscribe </a></h6>
+    </footer>
+</div>
+<script src="/js/scripts.js"></script>
+
 </body>
+
 </html>
-
-
 
