@@ -9,18 +9,19 @@
 <meta name="description" content="The HTML5 Herald" />
 <meta name="author" content="Jesper Louis Andersen" /><meta property="og:title" content="On Observability" />
 <meta property="og:description" content="The hard part is not debugging the code. The hard part is figuring out where the bug is. This is what observability is.
-  &#8212; Charity Majors   I really like the notion of &#8220;observability&#8221;, which stems from Control Theory. The idea is that we have some system, with inputs, some internal state and some outputs. A system is observable if we can determine its internal state, solely from a finite set of outputs (in finite time)." />
+  — Charity Majors   I really like the notion of “observability”, which stems from Control Theory. The idea is that we have some system, with inputs, some internal state and some outputs. A system is observable if we can determine its internal state, solely from a finite set of outputs (in finite time)." />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://jlouis.github.io/posts/observability/" />
-<meta property="article:published_time" content="2019-06-01T00:00:00+00:00" />
-<meta property="article:modified_time" content="2019-06-01T00:00:00+00:00" />
+<meta property="og:url" content="https://jlouis.github.io/posts/observability/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2019-06-01T00:00:00&#43;00:00" />
+<meta property="article:modified_time" content="2019-06-01T00:00:00&#43;00:00" />
+
 
 <meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="On Observability"/>
 <meta name="twitter:description" content="The hard part is not debugging the code. The hard part is figuring out where the bug is. This is what observability is.
-  &#8212; Charity Majors   I really like the notion of &#8220;observability&#8221;, which stems from Control Theory. The idea is that we have some system, with inputs, some internal state and some outputs. A system is observable if we can determine its internal state, solely from a finite set of outputs (in finite time)."/>
+  — Charity Majors   I really like the notion of “observability”, which stems from Control Theory. The idea is that we have some system, with inputs, some internal state and some outputs. A system is observable if we can determine its internal state, solely from a finite set of outputs (in finite time)."/>
 
-<meta name="generator" content="Hugo 0.74.3" />
+<meta name="generator" content="Hugo 0.82.0" />
     
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" integrity="sha256-l85OmPOjvil/SOvVt3HnSSjzF1TUMyT9eV0c2BzEGzU=" crossorigin="anonymous" />
@@ -35,7 +36,7 @@
   <div id="container">
     <header>
       <h1>
-                <a href="/">jlouis&rsquo; Ramblings</a>
+                <a href="/">jlouis' Ramblings</a>
             </h1>
 
       <ul id="social-media">
@@ -79,10 +80,11 @@
             <time class="post-date" datetime="2019-06-01T00:00:00Z">Jun 1, 2019</time>
         </li>
         
+        
 
         
 
-        <li>7 minutes read</li>
+        <li>7 minute read</li>
     </ul>
 </aside>
 
@@ -98,11 +100,11 @@
 </div>
 </blockquote>
 <div class="attribution">
-&#8212; Charity Majors
+— Charity Majors
 </div>
 </div>
 <div class="paragraph">
-<p>I really like the notion of &#8220;observability&#8221;, which stems from Control Theory. The idea is that we have some system, with inputs, some internal state and some outputs. A system is observable if we can determine its internal state, solely from a finite set of outputs (in finite time).</p>
+<p>I really like the notion of “observability”, which stems from Control Theory. The idea is that we have some system, with inputs, some internal state and some outputs. A system is observable if we can determine its internal state, solely from a finite set of outputs (in finite time).</p>
 </div>
 <div class="paragraph">
 <p>The contrast, a non-observable system, has some internal state we cannot infer just by looking at the outputs over some time frame.</p>
@@ -114,7 +116,7 @@
 <p>When we look at program output, we need to take a (w)holistic approach. There are the immediate replies to user requests; but there are also log lines, trace probes, metrics and so on. Everything can be considered an output, even if it is a side-effect of the primary computation. And that set is what we look at when we try to determine what is happening inside a running system.</p>
 </div>
 <div class="paragraph">
-<p>Most computer systems are strictly non-observable. We don&#8217;t log the relevant information, we don&#8217;t have the relevant metrics, and we don&#8217;t have the ability to trace arbitrarily in most systems. As a result, we have no chance when a system misbehaves. In many cases we won&#8217;t even know that the system misbehaved in some way.</p>
+<p>Most computer systems are strictly non-observable. We don’t log the relevant information, we don’t have the relevant metrics, and we don’t have the ability to trace arbitrarily in most systems. As a result, we have no chance when a system misbehaves. In many cases we won’t even know that the system misbehaved in some way.</p>
 </div>
 <div class="paragraph">
 <p>Logs, Metrics and Tracing are <em>necessary</em> but certainly not <em>sufficient</em> properties needed to achieve observability in a system. People will do all kinds of aggregations, filters, reductions and so on to their data in order to cut down on it.</p>
@@ -123,10 +125,10 @@
 <p>Logs tend to have all kinds of problems associated with them. The good old syslog system has the problem it treats each line as a separate event. It also has no structure in the log lines. Asking questions in these are hell. A little better is if the log lines has structure, where the structure is flat. But the best situation is if you just log an Erlang term, and S-expression or the like, so you have all relevant information in the log line.</p>
 </div>
 <div class="paragraph">
-<p>Metrics tend to aggregate. You know you had an error, but you don&#8217;t know any context. You also tend to have a temporal problem, in which you take 30 seconds of errors and store in one value. This makes spikes impossible to detect.</p>
+<p>Metrics tend to aggregate. You know you had an error, but you don’t know any context. You also tend to have a temporal problem, in which you take 30 seconds of errors and store in one value. This makes spikes impossible to detect.</p>
 </div>
 <div class="paragraph">
-<p>When people say tracing, they often mean &#8220;We added this static set of probe points to our code base, and we want to output all of those when we increase the log level.&#8221; People don&#8217;t enable this because it kills their production servers with on-disk log writes.</p>
+<p>When people say tracing, they often mean “We added this static set of probe points to our code base, and we want to output all of those when we increase the log level.” People don’t enable this because it kills their production servers with on-disk log writes.</p>
 </div>
 <div class="paragraph">
 <p>How we transplant the notion from control theory is a bit vague:</p>
@@ -137,7 +139,7 @@
 <p>We could treat the notion as a continous axis where systems can converge toward being (fully) observable.</p>
 </li>
 <li>
-<p>We could treat the notion as a discrete property. Either you have a system which is, or you have a system which isn&#8217;t.</p>
+<p>We could treat the notion as a discrete property. Either you have a system which is, or you have a system which isn’t.</p>
 </li>
 <li>
 <p>We could accept a discrete notion, but with partiality. In some cases our system is observable, but not in others. Then define a fully observable system as one which is observable in all cases.</p>
@@ -184,7 +186,7 @@
 <p>If you assert your invariants in your code, then Erlang systems will crash if an invariant is broken, which leads to crash logs for the faulty process. Erlang systems often assert processing as they are executing. This vastly increases cases where the system is observable. As an example, suppose you open a file on disk. You assert that you successfully open the file. If any error occurs, this produces output which allows you to observe the fault.</p>
 </div>
 <div class="paragraph">
-<p>The key insight is that you don&#8217;t know which kind of fault is occurring. It could be that the file is not existent. Or you don&#8217;t have access to the file. So by asserting on any non-successful return, you get to learn important information necessary for internal-state-reconstruction. This information is added to the context of the crash log. In erlang systems you often see <code>{ok, _} = file:open(FName)</code> which asserts the intended operation.</p>
+<p>The key insight is that you don’t know which kind of fault is occurring. It could be that the file is not existent. Or you don’t have access to the file. So by asserting on any non-successful return, you get to learn important information necessary for internal-state-reconstruction. This information is added to the context of the crash log. In erlang systems you often see <code>{ok, _} = file:open(FName)</code> which asserts the intended operation.</p>
 </div>
 </div>
 </div>
@@ -196,13 +198,13 @@
 <p>Tools such as dTrace, eBPF, and the built-in Erlang tracer are tools which can make a system observable. If a fault is detected, you can trace the fault in detail and capture enough information about the fault such that it becomes observable.</p>
 </div>
 <div class="paragraph">
-<p>Note that the system doesn&#8217;t start out as being observable. You often encounter the fault, and scratch your head. Then you add tracing which is specific to a user-id, or a type of request. This trace is what changes the system, dynamically, from a non-observable system to one that is. Once the fault has been dealt with, you can go back and disable tracing.</p>
+<p>Note that the system doesn’t start out as being observable. You often encounter the fault, and scratch your head. Then you add tracing which is specific to a user-id, or a type of request. This trace is what changes the system, dynamically, from a non-observable system to one that is. Once the fault has been dealt with, you can go back and disable tracing.</p>
 </div>
 <div class="paragraph">
 <p>Tracing is dynamic though. You cannot just add some extra lines to the code and then redeploy to capture the problem. You need to be able to change the system while it is in operation, and without having an impact on the system. The reason this is important is because the system might reset itself under a redeploy. Suppose you have a data structure which some times ends up in a pathological state making your system slow. If you redeploy, you reset this data structure, so now you cannot figure out why it is slow. This is why you need to be able to query the system dynamically.</p>
 </div>
 <div class="paragraph">
-<p>Also, the impact of adding tracing must be proportional to the haystack/needle problem you have. If you add tracing for a specific customer, we cannot have this affecting any other customer in the system. It might take weeks before we hit the fault again, so we need to have this enabled for a while. If tracing impacts the system efficiency, people won&#8217;t enable it in production. And all really interesting errors occur in production.</p>
+<p>Also, the impact of adding tracing must be proportional to the haystack/needle problem you have. If you add tracing for a specific customer, we cannot have this affecting any other customer in the system. It might take weeks before we hit the fault again, so we need to have this enabled for a while. If tracing impacts the system efficiency, people won’t enable it in production. And all really interesting errors occur in production.</p>
 </div>
 </div>
 </div>
@@ -272,6 +274,7 @@
     </footer>
 </div>
 <script src="/js/scripts.js"></script>
+
 
 </body>
 

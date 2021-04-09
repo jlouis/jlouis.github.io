@@ -1,0 +1,611 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+  <title>Erlang String Handling - jlouis&#39; Ramblings</title>
+  <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="The HTML5 Herald" />
+<meta name="author" content="Jesper Louis Andersen" /><meta property="og:title" content="Erlang String Handling" />
+<meta property="og:description" content="The cat is out of the bag. Now, since WhatsApp had success using Erlang, more people will gravitate toward the platform. One of the common things that will happen as a result is that people who do not understand the string handling capabilities of the Erlang BEAM VM will fail to use it correctly. This costs a lot of unneeded clock cycles and this post aims to thwart it.
+ First of all, since this is rather VM specific, it also applies to Elixir users." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://jlouis.github.io/posts/erlang-string-handling/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2014-02-23T00:00:00&#43;00:00" />
+<meta property="article:modified_time" content="2014-02-23T00:00:00&#43;00:00" />
+
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Erlang String Handling"/>
+<meta name="twitter:description" content="The cat is out of the bag. Now, since WhatsApp had success using Erlang, more people will gravitate toward the platform. One of the common things that will happen as a result is that people who do not understand the string handling capabilities of the Erlang BEAM VM will fail to use it correctly. This costs a lot of unneeded clock cycles and this post aims to thwart it.
+ First of all, since this is rather VM specific, it also applies to Elixir users."/>
+
+<meta name="generator" content="Hugo 0.82.0" />
+    
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" integrity="sha256-l85OmPOjvil/SOvVt3HnSSjzF1TUMyT9eV0c2BzEGzU=" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://jlouis.github.io/fontawesome/css/all.min.css" />
+  
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Slab|Ruda" />
+  
+  
+  <link rel="stylesheet" type="text/css" href="/css/styles.css" /></head>
+
+<body>
+  <div id="container">
+    <header>
+      <h1>
+                <a href="/">jlouis' Ramblings</a>
+            </h1>
+
+      <ul id="social-media">
+             <li>
+               <a href="https://github.com/jlouis" title="GitHub">
+               <i class="fab fa-github fa-lg"></i>
+               </a>
+             </li>
+             <li>
+               <a href="https://twitter.com/jlouis666" title="Twitter">
+               <i class="fab fa-twitter fa-lg"></i>
+               </a>
+             </li>
+      </ul>
+      
+      <p><em>Musings on tech, software, and other things</em></p>
+      
+    </header>
+
+    
+<nav>
+    <ul>
+        
+    </ul>
+</nav>
+
+
+    <main>
+
+
+
+
+<article>
+
+    <h1>Erlang String Handling</h1>
+
+    
+      <aside>
+    <ul>
+        <li>
+            <time class="post-date" datetime="2014-02-23T00:00:00Z">Feb 23, 2014</time>
+        </li>
+        
+        
+
+        
+
+        <li>14 minute read</li>
+    </ul>
+</aside>
+
+    
+
+    
+
+
+    <div class="paragraph">
+<p>The cat is out of the bag. Now, since WhatsApp had success using Erlang, more
+people will gravitate toward the platform. One of the common things that will
+happen as a result is that people who do not understand the string handling
+capabilities of the Erlang BEAM VM will fail to use it correctly. This costs a
+lot of unneeded clock cycles and this post aims to thwart it.</p>
+</div>
+<div class="paragraph">
+<p>First of all, since this is rather VM specific, it also applies to Elixir users.
+The VM basically handles strings the same way, so you should be thinking in the
+same general direction as I am doing here, for Erlang. Though Elixir, to the
+best of my knowledge, maps its string type onto binaries.</p>
+</div>
+<div class="paragraph">
+<p>The first thing to understand is that Erlang is a functional language first and
+foremost. This means, among other things, data will be immutable by construction
+and there is no way to circumvent that. It also means certain tricks pertaining
+to ephermeral mutability is out the window. And it would be outright against the
+spirit of Erlang to have mutable data in any form.</p>
+</div>
+<div class="sect1">
+<h2 id="_when_you_should_avoid_using_erlang_in_the_firstplace">When you should avoid using Erlang in the first place</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Erlang as a language fares bad at programs where you have a <em>small</em>
+computational kernel which <em>has to</em> be extremely fast. This is the case for a
+lot of heavyweight processing tasks. It is often better to take your kernel and
+move it into another language, or in some cases move the kernel onto an FPGA or
+into hardware, depending on your needs.</p>
+</div>
+<div class="paragraph">
+<p>Depending on the problem, it may not be efficient to spend your time
+implementing the code in Erlang. Unless you plan to utilise some of the other
+Erlang strengths, like robustness, you may be better off by just implementing
+your system in Go or Clojure. Alternatively, you can write a NIF and then handle
+the core kernel in C. Don’t use Erlang when another tool solves the job in a way
+better and way faster way. A rough estimate is that C code is 20-50 times faster
+for tight computational kernels.</p>
+</div>
+<div class="paragraph">
+<p>The Erlang language is built for handling more complex interactions where the
+raw execution speed matter less and the program structure matters more. If your
+system has no specific kernel which is executing for heavyweight processing,
+then Erlang might suit your needs. If your system is bound to memory or I/O then
+Erlang may be <em>very</em> suitable.</p>
+</div>
+<div class="paragraph">
+<p>You goal is to get most processing out of the emulator loop and onto the BEAM VM
+core. The runtime core is very efficient at handling large amounts of data and
+many structures are built such that they can sustain heavy load. A good way to
+look at this is with the linux perf(1) tool. Run perf on the beam.smp emulator
+and if <code>beam_emu.c</code> is spending too much time, chances are you are processing
+heavy. Even processing-heavy applications I have written tend to have 20% time
+spent in the emulator loop. The consequence is you can’t win much by replacing
+the interpreter with a JIT or a native code compiler. You can only, at best,
+squeeze the 20% so it is limited how much faster you can get the code by doing
+this.</p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Aside: A JIT would still be useful so more of the Erlang system could be written
+in Erlang rather than C. But for most code, it is not given a priori it would
+yield a speedup.</p>
+</div>
+</blockquote>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_what_is_a_string">What is a string()?</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The Erlang string type is implemented as a single-linked-list of unicode code
+points. That is, if we write “Hello” in the language, this is represented as
+<code>[$H, $e, $l, $l, $o]</code>. The overhead of this representation is massive. Each
+Cons-cell use 8 bytes for the code point and 8 bytes for the pointer to the next
+value. This means that the 5-byte ASCII-representation of “Hello” is 5*16 = 80
+bytes in the Erlang representation.</p>
+</div>
+<div class="paragraph">
+<p>Strings are shared. If we write <code>L = &#34;World&#34;,</code> followed by <code>A = &#34;Hello&#34; ++ L</code>,
+then A and L shares the tail, due to persistence and immutability. In some cases
+this can be utilised to limit the amount of data present in a system, and
+somewhat help with the massive data blowup you will otherwise see.</p>
+</div>
+<div class="paragraph">
+<p>Erlang is not unique in having the string-as-integer-list representation. It is
+the same representation which is used by Haskell. But since no type information
+is present, you can’t discriminate between a list of integers and a string. You
+will have to know from the code at hand.</p>
+</div>
+<div class="paragraph">
+<p>There are a lot of disadvantages of this representation. It results in memory
+blowup, more cache misses, more data bandwidth use, and so on. On the other
+hand, all the normal list-processing functions are present and can be used on
+strings alike. So to manipulate strings, you have access to four modules:
+<code>[string, lists, unicode, re]</code>.</p>
+</div>
+<div class="paragraph">
+<p>The module <code>string</code> contains valuable helper functions for manipulation of strings. Most importantly:</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><code>string:tokens/2</code></dt>
+<dd>
+<p>which can be used to split a string into parts, and</p>
+</dd>
+<dt class="hdlist1"><code>string:join/2</code></dt>
+<dd>
+<p>which can join strings together with a separator.</p>
+</dd>
+</dl>
+</div>
+<div class="paragraph">
+<p>I normally only use plain strings like these when the data sizes are rather
+small and we are not on a critical code path. Otherwise, you need to do
+something else in order to make things work quickly and efficiently.</p>
+</div>
+<div class="paragraph">
+<p>The <code>lists</code> module contains many functions which are useful for working with
+strings. As an example, <code>lists:prefix/2</code> can be used on strings as well.</p>
+</div>
+<div class="paragraph">
+<p>The <code>re</code> module implements regular expressions. Here is the
+basic rule:</p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Do NOT use the <code>re</code> module</p>
+</div>
+</blockquote>
+</div>
+<div class="paragraph">
+<p>Usually, there are better ways to handle data than to supply a regular
+expression to handle it. Mind you, I utterly love using regexes in editors and I
+also like using them in lexers. But for most normal data processing, regular
+expressions are overkill. Also, the regular expression engine in Erlang has been
+altered so it preempts. This avoids a long-running regex to destroy the VM’s
+scheduling mechanism.</p>
+</div>
+<div class="paragraph">
+<p>Typical code will have maybe one or two calls to the <code>re</code> module per 5000 lines
+of code. If you have more than that, chances are you are trying to program PERL
+in Erlang. And that is a bad idea.</p>
+</div>
+<div class="paragraph">
+<p>However, the <code>re</code> module is way faster than the older <code>regexp</code> module which was deprecated.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_the_binarytype">The binary() type</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Erlang, like Haskell, saw the problem with a memory-heavy string type. So they
+both implement a type which is more efficient at handling large amounts of data.
+In Erlang, this is called a <code>binary</code> and in Haskell it is called a <code>ByteString</code>.
+Binaries are arrays of binary data. They are immutable, which means they can be
+shared. Also, referral to subparts of a binary can be shared by having the
+system store 3 values called a sub-binary:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>A pointer to the original binary</p>
+</li>
+<li>
+<p>An offset</p>
+</li>
+<li>
+<p>A size</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Note that sub-binaries work a bit like Go’s slice construction in this way. The
+VM is built such that passing around binaries and subbinaries are always
+efficient. The trick is immutability, which allows the system to pass pointers
+on binaries rather than passing the binary value itself.</p>
+</div>
+<div class="paragraph">
+<p>Binaries, like in Go, also has extra <em>capacity</em> in the sense that in some cases
+a binary can be appended to efficiently without having to copy the binary data
+to a new place. The system will automatically extend binaries with extra
+capacity when they are copied, ensuring efficient append.</p>
+</div>
+<div class="paragraph">
+<p>When programming Erlang, the compiler and VM will automatically generate
+binaries and sub-binaries for you. Write your code in a straightforward and
+readable manner first. Then compile your program with <code>+bin_opt_info</code></p>
+</div>
+<div class="paragraph">
+<p>to have the compiler report on which binaries were not optimised in code which
+is heavily traversed by the program.</p>
+</div>
+<div class="paragraph">
+<p>Binaries can be pattern matched. This is extremely efficient, but sometimes you
+can’t write a matching rule since they essentially work from the beginning
+always. You can’t “search” in a binary until you hit something which matches by
+a single pattern match. The way to handle this problem is by using the <code>binary</code>
+module:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>binary:split/3</code> is extremely powerful. It is the binary variant of
+<code>string:tokens/2</code> but it is returning shared data and so does only produce a
+small amount of garbage. The split string simply refers into the original binary
+through sub-binaries. Be very aware of the option “[global]” which will allow
+you to split the binary into more than two parts.</p>
+</li>
+<li>
+<p><code>binary:match/3</code> is your generic search routine for picking out parts deeply in binary data.</p>
+</li>
+<li>
+<p><code>binary:compile_pattern/1</code> allows you to build some simple compiled patterns like a weaker
+(but way faster) regular expression search</p>
+</li>
+<li>
+<p><code>binary:copy/1</code> forces a copy of a binary. This is useful if you have a 1 megabyte binary and
+you have found a 45 byte sequence in it—and you only want that sequence. Then you can copy
+the sequence which means you don’t hold on to the 1 megabyte binary anymore—in turn allowing
+the garbage collector to collect it. This is extremely useful if you are cutting input into
+pieces (with <code>split/3</code>) and storing it at rest for a long time. For instance in ETS.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_the_iodata_type">The iodata() type</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>There is another quite important data type which I want to describe. These are
+called <code>iodata()</code> or <code>iolists()</code>. The rule is the following:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>A list of integers in the range 0..255 is IOData.</p>
+</li>
+<li>
+<p>A binary is IOData.</p>
+</li>
+<li>
+<p>Lists of IOData is IOData.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>In particular, this means you can form IOData by collecting IOData as lists.
+This means string concatenation in the language is O(1). <code>p(IOData) → [&#34;&lt;p&gt;&#34;, IOData, &#34;&lt;/p&gt;&#34;].</code></p>
+</div>
+<div class="paragraph">
+<p>The <code>p/1</code> function given here will wrap IOData in a standard paragraph section
+in HTML, but it will not reallocate any data, nor will it generate any garbage.
+The sections “&lt;p&gt;” and “&lt;/p&gt;” are constants, so the only allocation that will
+happen will be for the front of the list, two list elements.</p>
+</div>
+<div class="paragraph">
+<p>Most IO functions in Erlang understands IOData directly. This means you can
+avoid having to flatten data, but just send the IOData out over a socket or the
+like. It avoids costly allocations and copies on the IO pipe in your program.
+Highly recommended!</p>
+</div>
+<div class="paragraph">
+<p>A good way to gauge how well thought out a library is is to look at how well it
+handles IOData. If it doesn’t and requires you to explicitly call
+<code>iolist_to_binary/1</code> then chances are the library is not that well written.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_handling_unicode_data">Handling <code>unicode()</code> data</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Unicode data in Erlang is handled by the <code>unicode</code> module, which can convert between
+representations of Unicode. My recommendation however, would be to keep most unicode data as UTF-8 strings
+in binaries. You can match on unicode code-points:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code>-module(z).
+-export([len/1]).
+len(B) when is_binary(B) -&gt;
+len(B, 0);
+len(&lt;&lt;&gt;&gt;, K) -&gt; K;
+len(&lt;&lt;_ /utf8, Rest/binary&gt;&gt;, K) -&gt; len(Rest, K+1).</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This is useful together with the ability to input character strings as UTF-8:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code>Erlang R16B03-1 (erts-5.10.4) [source-ce3d6e8] [64-bit] [smp:8:8] [async-threads:10] [hipe] [kernel-poll:false]
+[dtrace]
+Eshell V5.10.4 (abort with ^G)
+...2&gt; z:len(&lt;&lt;”Rødgrød med fløde”/utf8&gt;&gt;).
+17
+3&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In Release 17.0, the default will be UTF-8 in Erlang files. This will probably
+have some deep effects on Erlang source code, but it will ultimately help
+getting Unicode into Erlang. Release 18.0 is planned to accept unicode atoms as
+well, to open up the design space.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_attack_vectors">Attack Vectors</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The basic rule of all Erlang string handling is this:</p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Never never NEVER work on stringly typed data</p>
+</div>
+</blockquote>
+</div>
+<div class="paragraph">
+<p>When data is “stringly” typed, it means that your data has no structure and
+everything are represented in strings. This is fairly expensive to work on for a
+system since you are limited to use the string-handling code. Parsing is always
+expensive and this hurts your processing speed. Some languagues, like awk or
+perl are built to process these kind of things. But you rather do not want to do
+this processing in Erlang.</p>
+</div>
+<div class="paragraph">
+<p>The way you avoid stringly typed data is to take the input and transform it as
+early as possible into structured data inside your code. That way, you can avoid
+working on the string data, and you only need it in a few places. The more
+structure you can attach to the data, the better.</p>
+</div>
+<div class="paragraph">
+<p>The primary problem is when you have to work with a bad data format. Again, the
+trick is to turn the bad format into something sensible quickly and then process
+it as sensible data.</p>
+</div>
+<div class="paragraph">
+<p>Erlang is designed to work with data that has structure. With structure, you can
+pattern match which is fast. Without structure, you have to rely on standard
+techniques and this is almost always going to be a pain in the language. So
+don’t do it. Convert data into a structured format and then proceed by handling
+the structure with pattern matches.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_immutability">Immutability</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Erlang takes a stance. All data are immutable. In particular, strings are
+immutable. Binaries are immutable. There will be an overhead to this stance. If
+you can’t accept this, you must pick another language. That said, the advantages
+of immutability far outshine the benefits of immutability.</p>
+</div>
+<div class="paragraph">
+<p>Erlang is immutable because it eliminates a large source of programming errors
+and programming mistakes. After all, the value of an incorrect program is lower
+than a correct one. This stance is highly unlikely to be changed, since the
+safety guarantee provided by immutability is part of the Erlang-DNA.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_when_you_have_control_of_data">When you have control of data</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In some situations you control the format of the data you are going to use. This
+is an &lt;em class=&#34;markup—​em markup—​p-em&#34;&gt;excellent&lt;/em&gt; oppurtunity to pick
+some clever ways of working with data. In particular to enforce structure on
+data by default. If communicating between Erlang systems, you can use
+<code>term_to_binary/1</code> &amp; <code>binary_to_term/2</code> and just put data at rest in the
+standard Erlang-format. If the foreign system also supports this format, it is
+an excellent way to interchange data. The encoder/decoder for this format is
+written in C and it also handles very large terms with grace—the running process
+will be preempted while producing the binary.</p>
+</div>
+<div class="paragraph">
+<p>The man page for <code>inet</code>, <code>erl -man inet / setopts\( RET</code> describes common socket
+options you can set on a socket. By setting the <code>packet</code> option you can control
+how the system decodes inbound data. Most interesting, you can set ASN.1 BER
+encoding or Line-wise encoding. If you value speed, you should consider an
+efficient binary format.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_json">JSON</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The ubiquitous format today, you need to handle
+is JSON data. I don’t particularly like JSON as a data exchange format, since it is very weak in what
+types it encodes. I’d much rather have a format like Joe Armstrong’s UBF or the Clojure <code>edn</code> &amp; <code>data.fressian</code> encodings. But JSON it is. There are two good JSON libraries for Erlang:</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">jsx </dt>
+<dd>
+<p><a href="http://github.com/talentdeficit/jsx" class="bare">http://github.com/talentdeficit/jsx</a></p>
+</dd>
+<dt class="hdlist1">jiffy</dt>
+<dd>
+<p><a href="http://github.com/davisp/jiffy" class="bare">http://github.com/davisp/jiffy</a></p>
+</dd>
+</dl>
+</div>
+<div class="paragraph">
+<p>They differ in how they are implemented. The jsx library is implemented in pure
+Erlang and is the slower of the two. The jiffy library uses a C NIF (Natively
+Implemented Function) to run the encoder and decoder and is about 10 times
+faster.</p>
+</div>
+<div class="paragraph">
+<p>Beware: the jiffy library can’t be used to decode large JSON data sets. The
+decoder is not a well-behaved NIF and as such it can mess up the schedulers if
+it is used to decode large data strings. If the JSON takes more than 1ms to
+decode, you should probably avoid using it. In Release 17.0, we get so-called
+<em>dirty schedulers</em> which can be used to work around this problem.</p>
+</div>
+<div class="paragraph">
+<p>The other problem with JSON data is the internal
+Erlang representation. Right now, there is no isomorphic mapping for JSON objects/dictionaries into
+Erlang. This will be fixed in Release 17.0 as well, since it includes maps so
+you can obtain a native mapping of objects/dictionaries
+into Erlang data. I also have a side project on the run to properly handle JSON to Record encoding in
+Erlang, but this still ongoing work. And it will take some time before it is fully implemented.</p>
+</div>
+<div class="paragraph">
+<p>On the other hand, note that JSON will never be a fast interchange format. If
+you use JSON to move large amounts of data, you are screwed. Plain and simple.
+You best bet is then to hope data are sent as many small pieces so you can use
+jiffy on them. Or wait till 17.0 so you can get jiffy in a dirty-scheduler
+variant.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_files">Files</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>You should study the section “PERFORMANCE” of the man page <code>erl -man file</code> Note
+that in order to have fast file I/O you need to open the file in “raw” mode, use
+binaries, and you can usually also benefit by following some of the advice in
+the section about performance. The general rule of IOData applies: If you supply
+IOData, the underlying file driver is able to map this onto a unix <code>pwrite(2)`</code>
+call which is highly efficient.</p>
+</div>
+<div class="paragraph">
+<p>Not opening in raw mode does have its benefits
+though, because you can then get the IO subsystem to work. This subsystem allow you to open a file on a
+foreign file system (on another node) and then operate on that file. If you don’t need the high speed,
+this is desirable in many situations, should your system span multiple nodes.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_closing_off">Closing off</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>It is a myth erlang strings are slow. You will have to think a bit more
+about what you do in order for the system to speed up. But chances are that string processing won’t be
+your limit. It is much more conceivable your bottleneck will have to do with a lock, or the wrong
+structure of processes than it will be slow strings.</p>
+</div>
+</div>
+</div>
+
+
+</article>
+
+
+<section class="post-nav">
+    <ul>
+        
+        <li>
+            <a href="https://jlouis.github.io/posts/error-kernels/"><i class="fa fa-chevron-circle-left"></i> Error Kernels</a>
+        </li>
+        
+        
+        <li>
+            <a href="https://jlouis.github.io/posts/erlang-and-code-style/">Erlang and code style <i class="fa fa-chevron-circle-right"></i> </a>
+        </li>
+        
+    </ul>
+</section>
+  
+    
+    
+  
+
+
+
+
+
+</main>
+    <footer>
+        <h6> |
+            Rendered by <a href="https://gohugo.io" title="Hugo">Hugo</a> |
+            <a href="https://jlouis.github.ioindex.xml">Subscribe </a></h6>
+    </footer>
+</div>
+<script src="/js/scripts.js"></script>
+
+
+</body>
+
+</html>
+

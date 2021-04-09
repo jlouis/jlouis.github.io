@@ -11,16 +11,17 @@
 <meta property="og:description" content="One of my hobby projects is to run statistics on Quake Live Duel matches. I began collecting data around 1st of Feb 2013 and now I have scraped around \(2.5\) Million duel matches. This allows me to play with different ranking methods on the players and gauge their ranking.
   The ranking system I use is called Glicko2, devised by Mark E. Glickman (http://glicko.net). The system is like the chess rating system ELO, except that it is newer and avoids certain problems with ELO." />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://jlouis.github.io/posts/glicko2-benchmarking-1/" />
-<meta property="article:published_time" content="2013-11-16T00:00:00+00:00" />
-<meta property="article:modified_time" content="2013-11-16T00:00:00+00:00" />
+<meta property="og:url" content="https://jlouis.github.io/posts/glicko2-benchmarking-1/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2013-11-16T00:00:00&#43;00:00" />
+<meta property="article:modified_time" content="2013-11-16T00:00:00&#43;00:00" />
+
 
 <meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="Glicko2 Benchmarking (1)"/>
 <meta name="twitter:description" content="One of my hobby projects is to run statistics on Quake Live Duel matches. I began collecting data around 1st of Feb 2013 and now I have scraped around \(2.5\) Million duel matches. This allows me to play with different ranking methods on the players and gauge their ranking.
   The ranking system I use is called Glicko2, devised by Mark E. Glickman (http://glicko.net). The system is like the chess rating system ELO, except that it is newer and avoids certain problems with ELO."/>
 
-<meta name="generator" content="Hugo 0.74.3" />
+<meta name="generator" content="Hugo 0.82.0" />
     
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" integrity="sha256-l85OmPOjvil/SOvVt3HnSSjzF1TUMyT9eV0c2BzEGzU=" crossorigin="anonymous" />
@@ -35,7 +36,7 @@
   <div id="container">
     <header>
       <h1>
-                <a href="/">jlouis&rsquo; Ramblings</a>
+                <a href="/">jlouis' Ramblings</a>
             </h1>
 
       <ul id="social-media">
@@ -79,10 +80,11 @@
             <time class="post-date" datetime="2013-11-16T00:00:00Z">Nov 16, 2013</time>
         </li>
         
+        
 
         
 
-        <li>12 minutes read</li>
+        <li>12 minute read</li>
     </ul>
 </aside>
 
@@ -98,7 +100,7 @@ scraped around \(2.5\) Million duel matches. This allows me to
 play with different ranking methods on the players and gauge their
 ranking.</p>
 </div>
-<hr>
+<hr/>
 <div class="paragraph">
 <p>The ranking system I use is called Glicko2, devised by Mark E. Glickman
 (<a href="http://glicko.net/">http://glicko.net</a>). The system is like the chess
@@ -116,7 +118,7 @@ of the player. If it is high, we don’t yet know a lot about that player.
 As the player plays more matches and we learn more about the player, we
 shrink RD towards 0. Finally a value, Sigma, measures how much a player
 is fooling the rating system. This allows us to compensate for quickly
-improving players so they don’t get ``stuck'' on a certain rating.</p>
+improving players so they don’t get ``stuck&#39;&#39; on a certain rating.</p>
 </div>
 <div class="paragraph">
 <p>When considering a new rating for a player, we consider a weeks worth of
@@ -126,7 +128,7 @@ If the player has a high RD for instance, his rating is moved more per
 win or loss since we know less about him yet. This means we quickly find
 the skill level of a given player.</p>
 </div>
-<hr>
+<hr/>
 <div class="paragraph">
 <p>The system I have made is written in Erlang. This choice has been very
 fruitful. First of all, I have a system which was easy to write and
@@ -143,7 +145,7 @@ data set is less than 6 gigabytes, so almost any kind of store would
 work. But Postgres is a simple choice due to its reliability and feature
 set.</p>
 </div>
-<hr>
+<hr/>
 <div class="paragraph">
 <p>The Erlang system works well for the fetching of matches, and for
 display of match scores and so on. But I need to carry out some tunings
@@ -189,11 +191,11 @@ matches it was easy to fit in memory. But now, I am running up against a
 barrier of the machine doing the computations (it doesn’t have too much
 memory, it is an old machine).</p>
 </div>
-<hr>
+<hr/>
 <div class="paragraph">
 <p>In the following I present some Timings. These are run on a Linux Laptop
 workstation, where it is plugged into power and runs full processor
-speed. The machine is a ``Intel&#174; Core&#8482; i7-3720QM CPU @ 2.60GHz''
+speed. The machine is a ``Intel® Core™ i7-3720QM CPU @ 2.60GHz&#39;&#39;
 which is an Ivy Bridge machine, 4 cores, two HTs per Core.</p>
 </div>
 <div class="paragraph">
@@ -320,7 +322,7 @@ default is just awesome.</p>
 </div>
 <div class="paragraph">
 <p>Being Go, the compile times are faster—but this doesn’t matter for this
-problem as the compile times are ``not noticable''. Go clocks in at
+problem as the compile times are ``not noticable&#39;&#39;. Go clocks in at
 1\(\mu{}\)s. About twice as fast as the OCaml solution. This
 is with the default compiler written by Ken Thompson initially and
 improved by many other people.</p>
@@ -334,8 +336,8 @@ improved by many other people.</p>
 <table class="tableblock frame-all grid-all stretch">
 <caption class="title">Table 1. Breakdown of the different implementations running speed</caption>
 <colgroup>
-<col style="width: 50%;">
-<col style="width: 50%;">
+<col style="width: 50%;"/>
+<col style="width: 50%;"/>
 </colgroup>
 <thead>
 <tr>
@@ -410,7 +412,7 @@ improvement in the OCaml code.</p>
 <div class="paragraph">
 <p>In the next phase, the code to read, parse and compute on 2.5 million
 lines of code has to be written. I have no time frame for doing so, as I
-am mostly doing this ``for fun and entertainment''. I am pretty sure you
+am mostly doing this ``for fun and entertainment&#39;&#39;. I am pretty sure you
 can optimize the code bases like mad, but there is little reason to do
 so before the other parts have been implemented. The problem will
 quickly be memory bound, so the interesting things in speeding it up
@@ -485,6 +487,7 @@ code in Erlang is probably faster than writing it in OCaml or Go for me.</p>
     </footer>
 </div>
 <script src="/js/scripts.js"></script>
+
 
 </body>
 

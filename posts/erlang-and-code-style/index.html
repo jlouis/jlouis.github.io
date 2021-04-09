@@ -1,0 +1,515 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+  <title>Erlang and code style - jlouis&#39; Ramblings</title>
+  <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="The HTML5 Herald" />
+<meta name="author" content="Jesper Louis Andersen" /><meta property="og:title" content="Erlang and code style" />
+<meta property="og:description" content="Correct Erlang usage mandates you do not write any kind of defensive code. This is called intentional programming. You write code for the intentional control flow path which you expect the code to take. And you don’t write any code for the paths which you think are not possible. Furthermore, you don’t write code for data flow which was not the intention of the program.
+ It is an effect, silly If an Erlang program goes wrong, it crashes." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://jlouis.github.io/posts/erlang-and-code-style/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2014-05-20T00:00:00&#43;00:00" />
+<meta property="article:modified_time" content="2014-05-20T00:00:00&#43;00:00" />
+
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Erlang and code style"/>
+<meta name="twitter:description" content="Correct Erlang usage mandates you do not write any kind of defensive code. This is called intentional programming. You write code for the intentional control flow path which you expect the code to take. And you don’t write any code for the paths which you think are not possible. Furthermore, you don’t write code for data flow which was not the intention of the program.
+ It is an effect, silly If an Erlang program goes wrong, it crashes."/>
+
+<meta name="generator" content="Hugo 0.82.0" />
+    
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" integrity="sha256-l85OmPOjvil/SOvVt3HnSSjzF1TUMyT9eV0c2BzEGzU=" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://jlouis.github.io/fontawesome/css/all.min.css" />
+  
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Slab|Ruda" />
+  
+  
+  <link rel="stylesheet" type="text/css" href="/css/styles.css" /></head>
+
+<body>
+  <div id="container">
+    <header>
+      <h1>
+                <a href="/">jlouis' Ramblings</a>
+            </h1>
+
+      <ul id="social-media">
+             <li>
+               <a href="https://github.com/jlouis" title="GitHub">
+               <i class="fab fa-github fa-lg"></i>
+               </a>
+             </li>
+             <li>
+               <a href="https://twitter.com/jlouis666" title="Twitter">
+               <i class="fab fa-twitter fa-lg"></i>
+               </a>
+             </li>
+      </ul>
+      
+      <p><em>Musings on tech, software, and other things</em></p>
+      
+    </header>
+
+    
+<nav>
+    <ul>
+        
+    </ul>
+</nav>
+
+
+    <main>
+
+
+
+
+<article>
+
+    <h1>Erlang and code style</h1>
+
+    
+      <aside>
+    <ul>
+        <li>
+            <time class="post-date" datetime="2014-05-20T00:00:00Z">May 20, 2014</time>
+        </li>
+        
+        
+
+        
+
+        <li>9 minute read</li>
+    </ul>
+</aside>
+
+    
+
+    
+
+
+    <div class="paragraph">
+<p>Correct Erlang usage mandates you do not write any kind of defensive code. This
+is called <em>intentional programming</em>. You write code for the intentional control
+flow path which you expect the code to take. And you don’t write any code for
+the paths which you think are not possible. Furthermore, you don’t write code
+for data flow which was not the intention of the program.</p>
+</div>
+<div class="sect1">
+<h2 id="_it_is_an_effectsilly">It is an effect, silly</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If an Erlang program goes wrong, it crashes. Say we are opening a file. We can
+<em>guard</em> the file open call like so:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code>{ok, Fd} = file:open(Filename, [raw, binary, read, read_ahead]),</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>What happens if the file doesn’t exist? Well the process crashes. But note we
+did not have to write any code for that path. The default in Erlang is to crash
+when a match isn’t valid. We get a badmatch error with a reason as to why we
+could not open the file.</p>
+</div>
+<div class="paragraph">
+<p>A process crashing is not a problem. The program is still operating and
+supervision—An important fault-tolerance concept in Erlang—will make sure that
+we try again in a little while. Say we have introduced a race condition on the
+file open, by accident. If it happens rarely, the program would still run, even
+if the file open fails from time to time.</p>
+</div>
+<div class="paragraph">
+<p>You will often see code that looks like:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code>ok = foo(...),&lt;br&gt;ok = bar(...),&lt;br&gt;ok = ...</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>which then asserts that each of these calls went well, making sure code crashes
+if the control and data flow is not what is expected.</p>
+</div>
+<div class="paragraph">
+<p>Notice the complete lack of error handling. We don’t write</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code>case foo(...) of
+  ok -&gt; case bar(...) of ... end;
+  {error, Reason} -&gt; throw({error, Reason})
+end,</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Nor do we fall into the trap of the Go programming
+language and write:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code>res, err := foo(...)
+if err != nil {
+  panic(...)
+}
+res2, err := bar(...)
+if err != nil {
+  panic(...)
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>because this is also plain silly, tedious and cumbersome
+to write.</p>
+</div>
+<div class="paragraph">
+<p>The key is that we have a crash-effect in the Erlang interpreter which we can
+invoke where the default is to crash the process if something goes wrong. And
+have another process clean up. Good Erlang code abuses this fact as much as
+possible.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_intentional">Intentional?</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Note the word intentional. In some cases, we do expect calls to fail. So we just
+handle it like everyone else would, but since we can emulate sum-types in
+Erlang, we can do better than languages with no concept of a sum-type:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code>case file:open(Filename, [raw, read, binary]) of
+    {ok, Fd} -&gt; ...;
+    {error, enoent} -&gt; ...
+end,</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Here we have written down the intention that the file might not exist. However:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>We only worry about non existence.</p>
+</li>
+<li>
+<p>We crash on <code>eaccess</code> which means an access error due to permissions.</p>
+</li>
+<li>
+<p>Likewise for <code>eisdir</code>, <code>enotdir</code>, <code>enospc</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_why">Why?</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Leaner code, that’s why.</p>
+</div>
+<div class="paragraph">
+<p>We can skip lots of defensive code which often more than halves the code size of
+projects. There are much less code to maintain so when we refactor, we need to
+manipulate less code as well.</p>
+</div>
+<div class="paragraph">
+<p>Our code is not littered with things having nothing to do with the “normal” code
+flow. This makes it far easier to read code and determine what is going on.</p>
+</div>
+<div class="paragraph">
+<p>Erlang process crashes gives lots of information when something dies. For a
+proper OTP process, we get the State of the process before it died and what
+message was sent to it that triggered the crash. A dump of this is enough in
+about 50% of all cases and you can reproduce the error just by looking at the
+crash dump. In effect, this eliminates a lot of silly logging code.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_data_flow_defensive_programming">Data flow defensive programming</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Another common way of messing up Erlang programs is to mangle incoming data
+through pattern matching. Stuff like the following:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code>convert(I) when is_integer(I) -&gt; I;
+convert(F) when is_float(F) -&gt; round(F);
+convert(L) when is_list(L) -&gt; list_to_integer(L).</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The function will convert “anything” to an integer. Then
+you proceed to use it:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code>process(Anything) -&gt; I = convert(Anything), ...I...</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The problem here is not with the process function, but with the call-sites of
+the process function. Each call-site has a different opinion on what data is
+being passed in this code. This leads to a situation where every subsystem
+handles conversions like these.</p>
+</div>
+<div class="paragraph">
+<p>There are several disguises of this anti-pattern. Here is
+another smell:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code>convert({X, Y}) -&gt; {X, Y};
+convert(B) when is_binary(B) -&gt;
+    [X, Y] = binary:split(B, &lt;&lt;&#34;-&#34;&gt;&gt;),
+    {X, Y}.</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This is stringified programming where all data are pushed into a string and then
+manually deconstructed at each caller. It leads to a lot of ugly code with
+little provision for extension later.</p>
+</div>
+<div class="paragraph">
+<p>Rather than trying to handle different types, enforce the invariant early on the
+api:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code>process(I) when is_integer(I) -&gt; ...</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And then never test for correctness inside your subsystem. The dialyzer is good
+at inferring the use of I as an integer. Littering your code with is_integer
+tests is not going to buy you anything. If something is wrong in your subsystem,
+the code will crash, and you can go handle the error.</p>
+</div>
+<div class="paragraph">
+<p>There is something to be said about static typing here, which will force you out
+of this unityped world very easily. In a statically typed language, I could
+still obtain the same thing, but then I would have to define something along the
+lines of (* Standard ML code follows *)</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code>datatype anything = INT of int
+                  | STRING of string&lt;br&gt;
+                  | REAL of real</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>and so on. This quickly becomes hard to write pattern matches for, so hence
+people only defines the anything type if they really need it. (Gilad Bracha was
+partially right when he identified this as a run-time check on the value, but
+what he omitted was the fact that the programmer has the decision to avoid a
+costly runtime check all the time—come again, Gilad ☺).</p>
+</div>
+<div class="sect2">
+<h3 id="_the_scourge_of_undefined">The scourge of undefined</h3>
+<div class="paragraph">
+<p>Another important smell is that of the <code>undefined</code> value. The story here is that
+undefined is often used to program a Option/Maybe monad. That is, we have the
+type</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code>-type option(A) :: undefined | {value, A}.</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>(For the static typists out there: Erlang does have a type system based on
+success types for figuring out errors, and the above is one such type
+definition)</p>
+</div>
+<div class="paragraph">
+<p>It is straightforward to define reflection/reification into an exception-effect
+for these. Jakob Sievers
+<a href="https://github.com/cannedprimates/stdlib2/blob/master/src/s2_maybe.erl" class="bare">https://github.com/cannedprimates/stdlib2/blob/master/src/s2_maybe.erl</a> stdlib2
+library already does this, as well as define the monadic helper called do
+(Though the monad is of the Error-type rather than Option).</p>
+</div>
+<div class="paragraph">
+<p>But I’ve seen:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code>-spec do_x(X) -&gt; ty() | undefined
+  when X :: undefined | integer().
+
+do_x(undefined) -&gt; undefined;
+do_x(I) -&gt; ...I....</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Which leads to complicated code. You need to be 100% in
+control of what values can fail and what values can not. Constructions like the above silently passes undefined on.
+This has its uses—but be wary when you see code like this. The &lt;em class=&#34;markup—​em markup—​p-em&#34;&gt;undefined&lt;/em&gt;
+value is essentially a &lt;em class=&#34;markup—​em markup—​p-em&#34;&gt;NULL&lt;/em&gt;. And those were C.A.R Hoare’s billion dollar
+mistake.</p>
+</div>
+<div class="paragraph">
+<p>The problem is that the above code is nullable. The default in Erlang is that you never have NULL-like values.
+Introducing them again should be used sparingly. You will have to think long and hard because once a value is
+nullable, it is up to you to check this all the time. This tend to make code convoluted and complicated. It is better
+to test such things up front and then leave it out of the main parts of the code base as much as possible.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_open_data_representations">“Open” data representations</h3>
+<div class="paragraph">
+<p>Whenever you have a data structure, there is a set of modules which knows about
+and operates on that data structure. If there is only a single module, you can
+emulate a common pattern from Standard ML or OCaml where the concrete data
+structure representation is abstract for most of the program and only a single
+module can operate on the abstract type.</p>
+</div>
+<div class="paragraph">
+<p>This is not entirely true in Erlang, where anyone can introspect any data. But
+keeping the illusion is handy for maintainability.</p>
+</div>
+<div class="paragraph">
+<p>The more modules that can manipulate a data structure, the harder it is to alter
+that data structure. Consider this when putting a record in a header file. There
+are two levels of possible creeping insanity:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>You put the record definition in a header file in <code>src</code>. In this case only the
+application itself can see the records, so they don’t leak out.</p>
+</li>
+<li>
+<p>You put the record definition in a header file in <code>include</code>. In this case the
+record can leak out of the application and often will.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>A good example is the HTTP server cowboy where its request object is manipulated
+through the cowboy_req module. This means the internal representation can change
+while keeping the rest of the world stable on the module API.</p>
+</div>
+<div class="paragraph">
+<p>There are cases where it makes sense to export records. But think before doing
+so. If a record is manipulated by several modules, chances are that you can win
+a lot by re-thinking the structure of the program.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_the_values_true_and_false_are_of_typeatom">The values ‘true’ and ‘false’ are of type atom()</h3>
+<div class="paragraph">
+<p>As a final little nod, I see too much code looking like</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code>f(X, Y, true, false, true, true),</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Which is hard to read. Since this is Erlang, you can just use a better name for
+the true and false values. Just pick an atom which makes sense and then produce
+that atom. It also has the advantage to catch more bugs early on if arguments
+get swapped by accident. Also note you can bind information to the result, by
+passing tuples. There is much to be said about the concept of boolean blindness
+which in typical programs means to rely too much on boolean() values. The
+problem is that if you get a true say, you don’t know why it was true. You want
+evidence as to its truth. And this can be had by passing this evidence in a
+tuple. As an example, we can have a function like this:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code>case api:resource_exists(ID) of
+    true -&gt; Resource = api:fetch_resource(ID), ...;
+    false -&amp;gt; ...
+end.</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>But we could also write it in a more direct style:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code>case api:fetch_resource(ID) of
+    {ok, Resource} -&gt; ...;
+    not_found -&gt; ...
+end.</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>(Edit: I originally used the function name <code>resource_exists</code> above but Richard Carlsson correctly points out this is
+a misleading name. So I changed it to something with a better name)</p>
+</div>
+<div class="paragraph">
+<p>which in the long run is less error prone. We can’t by accident call the
+fetch_resource call and if we look up the resource, we also get hold of the
+evidence of what the resource is. If we don’t really want to use the resource,
+we can just throw it away.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_closing_remarks">Closing remarks</h3>
+<div class="paragraph">
+<p>Rules of thumb exists to be broken. So once in a while they must be broken.
+However, I hope you learnt something or had to stop and reflect on something if
+you happened to get here (unless you scrolled past all the interesting stuff).</p>
+</div>
+<div class="paragraph">
+<p>I am also interested in Pet-peeves of yours, if I am missing some. The way to
+become a better programmer is to study the style of others.</p>
+</div>
+</div>
+</div>
+</div>
+
+
+</article>
+
+
+<section class="post-nav">
+    <ul>
+        
+        <li>
+            <a href="https://jlouis.github.io/posts/erlang-string-handling/"><i class="fa fa-chevron-circle-left"></i> Erlang String Handling</a>
+        </li>
+        
+        
+        <li>
+            <a href="https://jlouis.github.io/posts/joe-goodbye/">{&#39;EXIT&#39;, joe, goodbye} <i class="fa fa-chevron-circle-right"></i> </a>
+        </li>
+        
+    </ul>
+</section>
+  
+    
+    
+  
+
+
+
+
+
+</main>
+    <footer>
+        <h6> |
+            Rendered by <a href="https://gohugo.io" title="Hugo">Hugo</a> |
+            <a href="https://jlouis.github.ioindex.xml">Subscribe </a></h6>
+    </footer>
+</div>
+<script src="/js/scripts.js"></script>
+
+
+</body>
+
+</html>
+

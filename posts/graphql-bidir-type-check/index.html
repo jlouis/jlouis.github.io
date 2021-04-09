@@ -8,17 +8,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="description" content="The HTML5 Herald" />
 <meta name="author" content="Jesper Louis Andersen" /><meta property="og:title" content="Experience Report: Bidirectional type checking of GraphQL" />
-<meta property="og:description" content="The core idea of GraphQL is this: let clients have a small, typed, total, functional (declarative) language where they can push programs to the server side. The server then interprets these programs and provides data to the client. The natural core for this is a lambda calculus: a GraphQL fragment is a lambda over the free variables of that fragment, for instance. A query is also a lambda, but no variables are free, and it is &#8220;exported&#8221; for others to use." />
+<meta property="og:description" content="The core idea of GraphQL is this: let clients have a small, typed, total, functional (declarative) language where they can push programs to the server side. The server then interprets these programs and provides data to the client. The natural core for this is a lambda calculus: a GraphQL fragment is a lambda over the free variables of that fragment, for instance. A query is also a lambda, but no variables are free, and it is “exported” for others to use." />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://jlouis.github.io/posts/graphql-bidir-type-check/" />
-<meta property="article:published_time" content="2019-04-28T00:00:00+00:00" />
-<meta property="article:modified_time" content="2019-04-28T00:00:00+00:00" />
+<meta property="og:url" content="https://jlouis.github.io/posts/graphql-bidir-type-check/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2019-04-28T00:00:00&#43;00:00" />
+<meta property="article:modified_time" content="2019-04-28T00:00:00&#43;00:00" />
+
 
 <meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="Experience Report: Bidirectional type checking of GraphQL"/>
-<meta name="twitter:description" content="The core idea of GraphQL is this: let clients have a small, typed, total, functional (declarative) language where they can push programs to the server side. The server then interprets these programs and provides data to the client. The natural core for this is a lambda calculus: a GraphQL fragment is a lambda over the free variables of that fragment, for instance. A query is also a lambda, but no variables are free, and it is &#8220;exported&#8221; for others to use."/>
+<meta name="twitter:description" content="The core idea of GraphQL is this: let clients have a small, typed, total, functional (declarative) language where they can push programs to the server side. The server then interprets these programs and provides data to the client. The natural core for this is a lambda calculus: a GraphQL fragment is a lambda over the free variables of that fragment, for instance. A query is also a lambda, but no variables are free, and it is “exported” for others to use."/>
 
-<meta name="generator" content="Hugo 0.74.3" />
+<meta name="generator" content="Hugo 0.82.0" />
     
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" integrity="sha256-l85OmPOjvil/SOvVt3HnSSjzF1TUMyT9eV0c2BzEGzU=" crossorigin="anonymous" />
@@ -33,7 +34,7 @@
   <div id="container">
     <header>
       <h1>
-                <a href="/">jlouis&rsquo; Ramblings</a>
+                <a href="/">jlouis' Ramblings</a>
             </h1>
 
       <ul id="social-media">
@@ -77,10 +78,11 @@
             <time class="post-date" datetime="2019-04-28T00:00:00Z">Apr 28, 2019</time>
         </li>
         
+        
 
         
 
-        <li>7 minutes read</li>
+        <li>7 minute read</li>
     </ul>
 </aside>
 
@@ -96,8 +98,8 @@ the server side. The server then interprets these programs and
 provides data to the client. The natural core for this is a lambda
 calculus: a GraphQL <em>fragment</em> is a lambda over the free variables of
 that fragment, for instance. A <em>query</em> is also a lambda, but no
-variables are free, and it is &#8220;exported&#8221; for others to use. The only
-reason it <em>isn&#8217;t</em> a full functional core is because the current
+variables are free, and it is “exported” for others to use. The only
+reason it <em>isn’t</em> a full functional core is because the current
 language is more familiar to typical client programmers.</p>
 </div>
 <div class="sidebarblock">
@@ -151,12 +153,12 @@ you have any distributed access in the query, that is going to be
 where time is spent. The only counter-example is when you have all
 data in memory on the Erlang node, readily available. In principle,
 you could pre-compile an execution to Erlang code, and then directly
-execute said code if this proved to be too slow. But we aren&#8217;t there
+execute said code if this proved to be too slow. But we aren’t there
 yet in the current implementation.</p>
 </div>
 <div class="paragraph">
 <p>The Erlang implementation currently uses interpretation directly on
-the AST and doesn&#8217;t compile via a Lambda calculus core. This, I think,
+the AST and doesn’t compile via a Lambda calculus core. This, I think,
 is mostly a mistake to be fixed at a later point in time.</p>
 </div>
 <div class="sect1">
@@ -173,7 +175,7 @@ the validation into a proper checking phase in the engine.</p>
 <p>In hindsight, we think this has been the correct choice. The language
 is quite amenable to a classic operational semantics on its types. The
 transformation into a proper logic uncovered many corner cases in the
-specification which needed clarification. Also, we&#8217;ve given opinions
+specification which needed clarification. Also, we’ve given opinions
 from time to time on the specification based on what is possible in a
 logic, and also what is easy to implement in a logic. This helps
 coherence of the language quite a bit.</p>
@@ -188,7 +190,7 @@ the process. At this point, we had a sizable test suite, so a rewrite
 would not introduce too many futher faults.</p>
 </div>
 <div class="paragraph">
-<p>I&#8217;m pretty sure bidirectional type checking is part of the folk-lore,
+<p>I’m pretty sure bidirectional type checking is part of the folk-lore,
 but there are some really good expositions on them. One is written by
 David R. Christensen, and another by Frank Pfenning:</p>
 </div>
@@ -223,16 +225,16 @@ negative mode):</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Synthesis/Inference: <code>G+ |- e+ &#8658; t-</code> given an environment <code>G</code> and an
+<p>Synthesis/Inference: <code>G+ |- e+ ⇒ t-</code> given an environment <code>G</code> and an
 expression <code>e</code>, we figure out a type for it, <code>t</code>.</p>
 </li>
 <li>
-<p>Checking: <code>G+ |- e+ &#8656; t+</code> check that the expression has given type
+<p>Checking: <code>G+ |- e+ ⇐ t+</code> check that the expression has given type
 <code>t</code></p>
 </li>
 <li>
 <p>Subsumption: <code>sub t+ s+</code> check that the type <code>t</code> is a subtype of
-<code>s</code>. That is that <code>t</code> &#8220;fits inside&#8221; <code>s</code> in an obvious fashion.</p>
+<code>s</code>. That is that <code>t</code> “fits inside” <code>s</code> in an obvious fashion.</p>
 </li>
 </ul>
 </div>
@@ -243,13 +245,13 @@ down information you have into subexpressions, and then use synthesis
 on the way to switch judgement mode and gather knowledge about types.
 This pendulum of back-and forth between the two building blocks makes
 a lot of type checking rules simple. The subtype relation is used to
-verify you don&#8217;t break rules along the way.</p>
+verify you don’t break rules along the way.</p>
 </div>
 <div class="paragraph">
 <p><em>Example:</em> If we have a type which is non-nullable in GraphQL: <code>t!</code>
 and we are checking it against a type <code>s</code> which is nullable. Then this
 amounts to ignoring the non-nullability and check <code>t</code> against <code>s</code>.
-This is because a non-nullable value is &#8220;stricter&#8221; than a nullable
+This is because a non-nullable value is “stricter” than a nullable
 one and fits nicely inside it.</p>
 </div>
 <div class="paragraph">
@@ -278,10 +280,10 @@ constant.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Input: Client &#8594; Server (positive flow)</p>
+<p>Input: Client → Server (positive flow)</p>
 </li>
 <li>
-<p>Output: Server &#8594; Client (negative flow)</p>
+<p>Output: Server → Client (negative flow)</p>
 </li>
 </ul>
 </div>
@@ -304,7 +306,7 @@ only interested in what the client wants, so we only check those
 values. If the schema/server provides more values but they are
 illegal, they are ignored since the client did not request them.</p>
 </div>
-<hr>
+<hr/>
 <div class="paragraph">
 <p>Using these observations, it is possible to figure out many questions
 one might have when writing the type checker. Most loops write
@@ -348,7 +350,7 @@ interpreter has to walk over data returned. Factors of 1000:1 in favor
 of the type checker is not unheard of. This argues one should write
 the type checker for simplicity rather than speed.</p>
 </div>
-<hr>
+<hr/>
 </div>
 </div>
 </div>
@@ -388,6 +390,7 @@ the type checker for simplicity rather than speed.</p>
     </footer>
 </div>
 <script src="/js/scripts.js"></script>
+
 
 </body>
 
