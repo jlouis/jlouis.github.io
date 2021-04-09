@@ -1,0 +1,210 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+  <title>Ranking 4 Million Quake Live Duels in 1.5 seconds - jlouis&#39; Ramblings</title>
+  <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="The HTML5 Herald" />
+<meta name="author" content="Jesper Louis Andersen" /><meta property="og:title" content="Ranking 4 Million Quake Live Duels in 1.5 seconds" />
+<meta property="og:description" content="The last couple of days, I’ve been toying with a little hobby project of mine.
+The project is to rank players which player Quake Live duels, and I have reported on it before. I’ve been gathering duels since February 2012 up to now. The project is written as a hybrid. Most of the code for storage, retrieval and presentation is written in Erlang. The ranking code is written in Go." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://jlouis.github.io/posts/ranking-4-million-ql-duels/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2015-01-04T00:00:00&#43;01:00" />
+<meta property="article:modified_time" content="2015-01-04T00:00:00&#43;01:00" />
+
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Ranking 4 Million Quake Live Duels in 1.5 seconds"/>
+<meta name="twitter:description" content="The last couple of days, I’ve been toying with a little hobby project of mine.
+The project is to rank players which player Quake Live duels, and I have reported on it before. I’ve been gathering duels since February 2012 up to now. The project is written as a hybrid. Most of the code for storage, retrieval and presentation is written in Erlang. The ranking code is written in Go."/>
+
+<meta name="generator" content="Hugo 0.82.0" />
+    
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" integrity="sha256-l85OmPOjvil/SOvVt3HnSSjzF1TUMyT9eV0c2BzEGzU=" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://jlouis.github.io/fontawesome/css/all.min.css" />
+  
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Slab|Ruda" />
+  
+  
+  <link rel="stylesheet" type="text/css" href="/css/styles.css" /></head>
+
+<body>
+  <div id="container">
+    <header>
+      <h1>
+                <a href="/">jlouis' Ramblings</a>
+            </h1>
+
+      <ul id="social-media">
+             <li>
+               <a href="https://github.com/jlouis" title="GitHub">
+               <i class="fab fa-github fa-lg"></i>
+               </a>
+             </li>
+             <li>
+               <a href="https://twitter.com/jlouis666" title="Twitter">
+               <i class="fab fa-twitter fa-lg"></i>
+               </a>
+             </li>
+      </ul>
+      
+      <p><em>Musings on tech, software, and other things</em></p>
+      
+    </header>
+
+    
+<nav>
+    <ul>
+        
+    </ul>
+</nav>
+
+
+    <main>
+
+
+
+
+<article>
+
+    <h1>Ranking 4 Million Quake Live Duels in 1.5 seconds</h1>
+
+    
+      <aside>
+    <ul>
+        <li>
+            <time class="post-date" datetime="2015-01-04T00:00:00&#43;01:00">Jan 4, 2015</time>
+        </li>
+        
+        
+
+        
+
+        <li>8 minute read</li>
+    </ul>
+</aside>
+
+    
+
+    
+<div class="featured_image">
+    <a href="https://jlouis.github.io/posts/ranking-4-million-ql-duels/" title="Ranking 4 Million Quake Live Duels in 1.5 seconds">
+        <img src="">
+    </a>
+</div>
+
+
+
+    <p>The last couple of days, I’ve been toying with a little hobby project of mine.</p>
+<p>The project is to rank players which player Quake Live duels, and I have reported on it before. I’ve been gathering duels since February 2012 up to now. The project is written as a hybrid. Most of the code for storage, retrieval and presentation is written in Erlang. The ranking code is written in Go.</p>
+<p>At the moment, I have gathered up exactly 4067842 matches of which I deem 3898355 to be eligible for ranking. Sometimes, Quake Live reports a match to have one player only, and some times, a match only lasted a couple of seconds. I remove these from the ranking as I don’t think they are good enough. There are around 165000 players in the database right now, but the average number of played matches varies a lot from player to player. Some only played one duel while some clock in over 60 duels a week (which is a lot given duels often take 10 minutes).</p>
+<p>Everything is stored in my database of choice, Postgresql. I recently upgraded to 9.4, which meant I could change the internal representation from Erlang’s <code>term_to_binary/1</code>, <code>binary_to_term/1</code> conversions into the <code>jsonb</code> storage type directly in Postgres. The price is storage. Where Erlangs serialization format took up 6.8 gigabytes of disk space, jsonb takes up 9.7 gigabytes. The advantage is ease. I can now do queries directly on the JSON representations in the database; take the query here as an example</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#66d9ef">SELECT</span> id
+<span style="color:#66d9ef">FROM</span> core.raw_match
+<span style="color:#66d9ef">WHERE</span> ((content <span style="color:#f92672">-&gt;&gt;</span> <span style="color:#e6db74">&#39;RANKED&#39;</span>)::int <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>)
+</code></pre></div><p>which will look inside the ‘content’ JSON column and grab rows having a ‘RANKED’ top-level key where it’s integer representation is equal to 0. This simplifies a lot of processing as I can use UPDATE statements to pre-analyze large swaths of duels without having to do low-level work on them in Erlang.</p>
+<h2 id="erlang">Erlang</h2>
+<p>The choice of using Erlang for the processing have proved its worth again and again. Number of restarts due to fatal failures is around 2. The reason is the fault-tolerance of Erlang: small mistakes will not affect the code as a whole. Often, these mistakes is not in our end, but in the end of the <a href="http://quakelive.com">http://quakelive.com</a> (This is now on steam). To handle these, there is a <code>fuse/circuit-breaker</code> installed[0] on the request code, which will clamp down on the operation if the site experiences problems. Either because it is unreachable, or because we trip a timer where requests are too slow to process. This means our end backs off if the Quake Live site experiences trouble.</p>
+<p>In order to limit concurrent access to the QuakeLive site, we have installed the <code>safetyvalve</code> application[1], which defines a request queue and a policy for how fast that request queue will be emptied. This means we can run the Erlang system with an internal concurrency level around 150 outstanding processes which all tries to fetch from QuakeLive. But the queue then controls the policy and sets up limits:</p>
+<ul>
+<li>How many outstanding concurrent requests do we allow?</li>
+<li>Which frequency we start new requests</li>
+</ul>
+<p>In short, Erlang is the right tool of choice for a long-running daemon service which must not go down, even if the database does, or the foreign system on which we rely do. One example of the power is when QuakeLive upgrades their service and takes it down. I had to change 0 lines of code in order to handle that. The fuse simply blows, and the system then rechecks connectivity every 5 minutes.</p>
+<p>Another important design decision were to make all database operations idempotent. Since Postgresql gives us atomic operations, we can simply make sure jobs are idempotent and can be retried later on. The system is always trying to ‘catch up’ to the current state. And the system is always behind real time by some (small) factor. If we should go down, we can handle the situation by catching up and the virtue of idempotence will save us. QuakeLive only removes matches some 4–5 weeks after they have been played (for non-paying customers—I bet they keep them internally). So we have at least 28 days before we have to act on a grave problem.</p>
+<h2 id="go">Go</h2>
+<p>Erlang shines due to the fault tolerance, robustness and by being a nice functional language in which you can write succinct code. Go is somewhat the opposite: imperative, explicit data layout, statically typed with a simple type system. However, Go is compiled to native code, provides good parallelism and has some very nice unique features in interfaces and channel-based-message-passing. Some of the things where I think Go shines are:</p>
+<ul>
+<li>Syntax. For a C-like imperative language it was the first language in about 35 years to actually innovate and simplify the
+language. When writing Go, you only what is necessary and this is important. Another brilliant decision is to get
+rid of semicolons and use a simple layout rule (while still keeping a mostly LALR(1) grammar) and provide the
+excellent ‘go fmt’ tool to re-indent code to a pre-defined default.</li>
+<li>Packages. Go’s way of handling libraries and imported
+code is something other languages should be picking up by now. The trick is that an import statement is a string,
+like “github.com/jlouis/glicko2&quot;, but then an external tool understands how to parse this string and
+automatically fetch the source code for the library and compile it. This coalesces the concept of package
+dependencies into the language itself and removes a lot of external boilerplate management.</li>
+<li>Toolchain. Quick recompilation of software helps a lot
+when developing and removes the overhead of compilation. Coming from other languages with very fast compilers like
+OCaml or Erlang, this is nice. You shouldn’t have to wait on the compiler. One design decision is that transitive
+dependencies doesn’t have to be recompiled. If A depends on B which depends on C. Then when compiling B, everything
+related to C is pulled into the resulting object file. In turn, when compiling A, we only have to look at B and can
+avoid C. This helps compilation times a lot.</li>
+<li>Interfaces. In Go, packages and interfaces are your
+structuring tools which allows you to break a large system into smaller parts. This increases modularity of the code
+base since altering one module of the code is less likely to yield alterations in other modules. Decoupling is by
+far the most important construction for handling large code bases. In Erlang, you write an independent application.
+In OCaml, you create a module or a functor, and in Go, you write a separate package and eventually use an interface.
+The abstraction provided is different from a parameterization as in a Java generic or an OCaml functor. But I have
+not really experienced any limitations of the approach yet.</li>
+</ul>
+<p>In an Earlier post of mine, I looked at Glicko2 rankings for different approaches in different languages[r1]. I ended up choosing Go over OCaml and Erlang. Erlang is not strong at number crunching in the floating point domain. And OCamls current lack of parallelism excluded it. I have recently updated the <code>glicko2</code> Go package[2] so it is better and simpler to use than ever.</p>
+<p>The main interface to the package is the following:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Opponent</span> <span style="color:#66d9ef">interface</span> {
+    <span style="color:#a6e22e">R</span>() <span style="color:#66d9ef">float64</span>
+    <span style="color:#a6e22e">RD</span>() <span style="color:#66d9ef">float64</span>
+    <span style="color:#a6e22e">Sigma</span>() <span style="color:#66d9ef">float64</span>
+    <span style="color:#a6e22e">SJ</span>() <span style="color:#66d9ef">float64</span>
+}
+
+<span style="color:#66d9ef">func</span> <span style="color:#a6e22e">Rank</span>(<span style="color:#a6e22e">r</span>, <span style="color:#a6e22e">rd</span>, <span style="color:#a6e22e">sigma</span> <span style="color:#66d9ef">float64</span>, <span style="color:#a6e22e">opponents</span> []<span style="color:#a6e22e">Opponent</span>, <span style="color:#a6e22e">tau</span> <span style="color:#66d9ef">float64</span>) (<span style="color:#a6e22e">nr</span>, <span style="color:#a6e22e">nrd</span>, <span style="color:#a6e22e">nsigma</span> <span style="color:#66d9ef">float64</span>)
+</code></pre></div><p>To rank a player, you call rank with the player parameters‘r’, ‘rd’ and ‘sigma’, a set of opponents, given as a slice and a configuration parameter for the system called ‘tau’. Opponent is an interface which you have to implement. By making Opponent an interface, we avoid the problem where a caller has to take their code and mangle it to fit our scheme. Rather, they can wrap their data structures and provide Opponent interfaces for them. In turn, we can rank games.</p>
+<p>The code can also optimize the configuration parameters tau and the initial ‘rd’ to use in the system, by running a Nelder-Mead optimization routine[r2][3]. Here, the API is</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">Optimize</span>(<span style="color:#a6e22e">f</span> <span style="color:#66d9ef">func</span>([]<span style="color:#66d9ef">float64</span>) <span style="color:#66d9ef">float64</span>, <span style="color:#a6e22e">start</span> [][]<span style="color:#66d9ef">float64</span>, <span style="color:#a6e22e">cf</span> <span style="color:#66d9ef">func</span>([]<span style="color:#66d9ef">float64</span>)) ([]<span style="color:#66d9ef">float64</span>, <span style="color:#66d9ef">int</span>, <span style="color:#66d9ef">int</span>)
+</code></pre></div><p>where you will optimize the function “f” subject to start values “start” and under constraints “cf”. Note that speed is of no concern here as the overhead is in the “f”function and its computation. To make everything work out, we have adapted a simple parallel variant of ranking computation to speed them up. Full ranking of 150 weeks of matches takes less than 2 seconds. Full optimization is completed in 43 seconds (Core i7–4900MQ, 16 Gigabyte RAM, Lenovo W540). All of the technical code is at [4].</p>
+<h2 id="d3jsthe-nextsteps">D3.js — the next steps</h2>
+<p>The next phase of the project is to employ D3.js in order to provide nice graphical output of the data. I initially tested the output in R with the very nice plotting package“ggplot2” by Hadley Wickham. But in order to make it easier for everyone to use the system, I’ve decided to build a front-end which uses D3.js to plot results. This work is currently ongoing, but once it is done, I should have a way to present the data.</p>
+<h2 id="references">References</h2>
+<p>[0] <a href="https://github.com/jlouis/fuse">https://github.com/jlouis/fuse</a>
+[1] <a href="https://github.com/jlouis/safetyvalve">https://github.com/jlouis/safetyvalve</a>
+[2] <a href="http://godoc.org/github.com/jlouis/glicko2">http://godoc.org/github.com/jlouis/glicko2</a>
+[3] <a href="http://godoc.org/github.com/jlouis/nmoptim">http://godoc.org/github.com/jlouis/nmoptim</a>
+[4] <a href="http://godoc.org/github.com/jlouis/rank">http://godoc.org/github.com/jlouis/rank</a>
+[r1] <a href="https://medium.com/@jlouis666/glicko2-benchmarking-1-548b3f99136e">https://medium.com/@jlouis666/glicko2-benchmarking-1-548b3f99136e</a>
+[r2] <a href="https://medium.com/@jlouis666/glicko2-benchmarking-2-775b573c086f">https://medium.com/@jlouis666/glicko2-benchmarking-2-775b573c086f</a></p>
+
+
+</article>
+
+
+<section class="post-nav">
+    <ul>
+        
+        <li>
+            <a href="https://jlouis.github.io/posts/mnesia-and-cap/"><i class="fa fa-chevron-circle-left"></i> Mnesia and Cap</a>
+        </li>
+        
+        
+        <li>
+            <a href="https://jlouis.github.io/posts/joe-goodbye/">{&#39;EXIT&#39;, joe, goodbye} <i class="fa fa-chevron-circle-right"></i> </a>
+        </li>
+        
+    </ul>
+</section>
+  
+    
+    
+  
+
+
+
+
+
+</main>
+    <footer>
+        <h6> |
+            Rendered by <a href="https://gohugo.io" title="Hugo">Hugo</a> |
+            <a href="https://jlouis.github.ioindex.xml">Subscribe </a></h6>
+    </footer>
+</div>
+<script src="/js/scripts.js"></script>
+
+
+</body>
+
+</html>
+
