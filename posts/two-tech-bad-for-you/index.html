@@ -1,0 +1,189 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+  <title>Two Technologies which are Bad for You - jlouis&#39; Ramblings</title>
+  <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="The HTML5 Herald" />
+<meta name="author" content="Jesper Louis Andersen" /><meta property="og:title" content="Two Technologies which are Bad for You" />
+<meta property="og:description" content="Two technologies which are bad for you For some odd reason, we end up in situations in this industry which looks even more grave than earlier. In this post, I am going to rant. I am going to rant on two things, which I think contributes negatively. I wanted to write a nice clean post, but rants sometimes fits ones mood better, I guess.
+JSON How did we get JSON? Well, we had ASN." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://jlouis.github.io/posts/two-tech-bad-for-you/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2014-09-05T00:00:00&#43;02:00" />
+<meta property="article:modified_time" content="2014-09-05T00:00:00&#43;02:00" />
+
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Two Technologies which are Bad for You"/>
+<meta name="twitter:description" content="Two technologies which are bad for you For some odd reason, we end up in situations in this industry which looks even more grave than earlier. In this post, I am going to rant. I am going to rant on two things, which I think contributes negatively. I wanted to write a nice clean post, but rants sometimes fits ones mood better, I guess.
+JSON How did we get JSON? Well, we had ASN."/>
+
+<meta name="generator" content="Hugo 0.82.0" />
+    
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" integrity="sha256-l85OmPOjvil/SOvVt3HnSSjzF1TUMyT9eV0c2BzEGzU=" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://jlouis.github.io/fontawesome/css/all.min.css" />
+  
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Slab|Ruda" />
+  
+  
+  <link rel="stylesheet" type="text/css" href="/css/styles.css" /></head>
+
+<body>
+  <div id="container">
+    <header>
+      <h1>
+                <a href="/">jlouis' Ramblings</a>
+            </h1>
+
+      <ul id="social-media">
+             <li>
+               <a href="https://github.com/jlouis" title="GitHub">
+               <i class="fab fa-github fa-lg"></i>
+               </a>
+             </li>
+             <li>
+               <a href="https://twitter.com/jlouis666" title="Twitter">
+               <i class="fab fa-twitter fa-lg"></i>
+               </a>
+             </li>
+      </ul>
+      
+      <p><em>Musings on tech, software, and other things</em></p>
+      
+    </header>
+
+    
+<nav>
+    <ul>
+        
+    </ul>
+</nav>
+
+
+    <main>
+
+
+
+
+<article>
+
+    <h1>Two Technologies which are Bad for You</h1>
+
+    
+      <aside>
+    <ul>
+        <li>
+            <time class="post-date" datetime="2014-09-05T00:00:00&#43;02:00">Sep 5, 2014</time>
+        </li>
+        
+        
+
+        
+
+        <li>8 minute read</li>
+    </ul>
+</aside>
+
+    
+
+    
+<div class="featured_image">
+    <a href="https://jlouis.github.io/posts/two-tech-bad-for-you/" title="Two Technologies which are Bad for You">
+        <img src="">
+    </a>
+</div>
+
+
+
+    <h1 id="two-technologies-which-are-bad-for-you">Two technologies which are bad for you</h1>
+<p>For some odd reason, we end up in situations in this industry which looks even more grave than earlier. In this post, I am going to rant. I am going to rant on two things, which I think contributes negatively. I wanted to write a nice clean post, but rants sometimes fits ones mood better, I guess.</p>
+<h2 id="json">JSON</h2>
+<p>How did we get JSON? Well, we had ASN.1 which is a fine format for many things. But the complexity of that format had us rethink the way we do computing. XML was born. XML is arguably the worst format ever. It is expensive to parse. It carries little structure. There are 2–3 ways of encoding the same data. And it has a myriad of complicated layers for which most people can only comprehend a small fraction. At once I knew these intricately — but today I have luckily forgotten most of the details.</p>
+<p>Enter JSON. It is a simple format. Everyone can write a somewhat decent parser/unparser for it. So it won. But JSON is utterly miserable:</p>
+<p>First off, we would have been better off if we locked down the encoding to UTF-8. That is, the media type[0] for JSON documents mandates UTF-8 and then we have separate media types for insane encodings. This would allow us to come with a big hammer and reject any JSON document encoded in other ways.</p>
+<p>Second, JSON inherits all the miserable bad traits from everyones favorite language to hate: javascript.</p>
+<p>In JSON, a number is a crippled IEEE 754 double floating point value (binary64). In 754, we use 52 bits for the significand with an extra bit implicitly present. This gives 53 bits of precision. Thus, up until the value 9007199254740992 we have a precise integer representation, but once we go beyond this, we lose precision. Try storing the above number +1 in a piece of code. It is not representable directly in JSON, which means you have to resort to other solutions. The most common one being to write the string “9007199254740993” into the JSON document. But this only works well for languages with implicit conversions of types. Any other language will not work well for this construction.</p>
+<p>There is no distinction between binary data and string data. Since the encoding is UTF-8 this is important, since there are byte-sequences which are not valid UTF-8. The consequence is that whenever you want to send binary data, you have to encode it, typically in base64 or base85. This leads to each subsystem having to implement the same encoding and agree. Whenever your code has to work with a new kind of JSON data, you have to adhere to its rules which requires more code.</p>
+<p>JSON has a dictionary/object type. This type only allows keys which are strings. That is, the type is (using Erlang spec’s)</p>
+<pre><code>-type json() :: … | [{string(), json()]}.
+</code></pre><p>Storing anything indexed by a non-string family is impossible. No using the values ‘true’, ‘false’ or a number value as the index. This seems oddly limiting. Again, you have to resort to a predetermined encoding as above for integers to make this work out.</p>
+<p>The type Zoo of JSON is extremely weak. There are almost no constructions. Since there is no well-defined way of tagging subtrees in JSON, you can’t really encode things. You need to define encodings that looks like</p>
+<pre><code>[&quot;~#Date&quot;, DateRep]
+</code></pre><p>where the notion “~#Date” says that second element of the array is a representation of dates in some predetermined format.</p>
+<p>Another problem is that JSON has no built-in hyperlink which utterly crippled HATEOAS (see the next section).</p>
+<p>Finally, JSON is expensive to parse. It has a self-describing nature so keys in objects repeats in the data. This leads to having to traverse more bytes leading to slower parses. Furthermore, getting parsing right slows down the parser rather than speeds it up; encouraging hacks of incorrectness.</p>
+<h3 id="the-solution">The Solution!</h3>
+<p>Luckily, the guys at Cognitect thought about this and more. They defined the format Transit[2, 3] in which all of the limitations have been cleared away. While the format still has some way to go, it is a far better solution than what we have now.</p>
+<p>To be viable, Transit needs a more formal specification of its implicit caching. I have spent some time with an OCaml and Erlang implementation (the Erlang implementation together with Isaiah Peng). And we are far from something that is stable enough for daily use. But given enough time, it will eventually improve to the point where it can replace JSON.</p>
+<p>Transit is clever because it reuses JSON (or MsgPack) as the underlying transport. This enables systems to interoperate with Transit, as long as they have a proper Transit library. It also means any new self-describing format can probably used as a transport for Transit. The de-coupling of format from transport is a nice welcome change. The architecture layers nicely.</p>
+<h2 id="rest-httpapis">REST HTTP APIs</h2>
+<p>Here is a recent announcement by Google[4]:</p>
+<blockquote>
+<p>Designed to let you easily deliver Gmail-enabled features, this new API is a standard Google API, which gives RESTful access to a user’s mailbox under OAuth 2.0 authorization. It supports CRUD operations on true Gmail datatypes such as messages, threads, labels and drafts.</p>
+</blockquote>
+<p>Stop right there! This is not a protocol. It is an endpoint in the Google infrastructure which requires the Google infrastructure to operate. If you build anything on this, you tie yourself into that infrastructure, with no way to get out again.</p>
+<p>It is true of any “API” by any company: Micro-soft, Facebook, Twitter. API is originally “Application Programming Interface”. But in this new-fangled context, it is more akin to “Automatic Prison Installation” in which your system becomes part of a walled garden.</p>
+<p>The internet is built on open protocols. But “these are not the protocols you are looking for”. An API is not an open, decentralized protocol. It is a closed environment which is closed for extension. Worse, the success of Javascript and HTTP have forced everyone to speak HTTP to solve their problems. To interact in the modern world is to speak HTTP, preferably with JSON or XML data (oh, the horror!).</p>
+<p>REST is a magnificent idea[5]. But we aren’t doing it. We are doing some subset of what REST entails in many situations. We ignore HATEOAS, mostly because JSON can’t represent links in unique ways. We can’t even agree on a standardized de-facto way of doing pagination in REST environments because so many systems only understands a subset of what it entails. Interaction with old systems has you breaking REST again and again, making it a sorry replacement for the original ideas of Fielding[6].</p>
+<p>The end result is more walled gardens with closed implementations of software. We are tightly coupling our work to the work of the big centralized companies which are only keen on selling information about our behavior to 3rd parties, or doing a business by acting as middlemen, pairing our behavior with 3rd parties.</p>
+<p>What made a protocol like HTTP or TCP beautiful is that they specify a minimal set of requirements for interoperation. TCP is very wide in the sense you can implement it on an Arduino shield with one buffer around 1 kilobyte. And also in hardware on a 40 gigabit Ethernet card. And those two implementations can talk to each other, albeit slowly. TCP is simple enough you can build a conforming implementation on a Commodore 64 or less. Likewise, a minimal HTTP implementation is easily possible.</p>
+<p>The reason this works is because the protocol specify minimal requirements while being open for extension. None of these new APIs do that. Ugh!</p>
+<h3 id="the-solution-1">The solution!</h3>
+<p>We need to go back to our roots and start building protocols again. This change will never come from a large company. It has to rely on an open tinkerer culture. We need well-defined protocols and multiple implementations of these. Protocol design is quickly becoming a lost art. Rather, people are satiated with “APIs” to the point where they can’t recover.</p>
+<p>We need de-centralization. The internet is built on the idea of end-to-end interaction between machines. The current state is more of a client/server infrastructure in which few central entities drive the status quo.</p>
+<p>We need distribution. If we rely on big players, we tie ourselves to their solutions. This will be a bane going forward as we build infrastructure around vendors only interesting in lock-in.</p>
+<p>And finally, we need education. A lot of the current “protocol design” is so bad compared to what can be found in old RFCs. If you want to implement something new, you need to study the past a lot before you build it. If you reject an old idea, you need to explain why. If you reinvent an old idea, you need to know you reinvented it and what happened historically for that idea not to catch on.</p>
+<p>If we don’t do anything, the internet as we know it will be taken from us.</p>
+<p>[0] Some call this MIME-type, but the name was changed a long time ago.
+[1] See <a href="http://en.wikipedia.org/wiki/Double-precision_floating-point_format">http://en.wikipedia.org/wiki/Double-precision_floating-point_format</a>
+[2] See <a href="http://blog.cognitect.com/blog/2014/7/22/transit">http://blog.cognitect.com/blog/2014/7/22/transit</a>
+[3] <a href="https://github.com/cognitect/transit-format">https://github.com/cognitect/transit-format</a>
+[4] <a href="http://googleappsdeveloper.blogspot.dk/2014/06/introducing-new-gmail-api.html">http://googleappsdeveloper.blogspot.dk/2014/06/introducing-new-gmail-api.html</a>
+[5] <a href="http://blog.steveklabnik.com/posts/2011-07-03-nobody-understands-rest-or-http">http://blog.steveklabnik.com/posts/2011-07-03-nobody-understands-rest-or-http</a>
+[6] Roy T. Fielding: <a href="http://en.wikipedia.org/wiki/Roy_Fielding">http://en.wikipedia.org/wiki/Roy_Fielding</a>  —  funnily enough, as of this writing, someone stuck a link to Sinatra on Roy’s wikipedia page. Sinatra is a Ruby-framework for doing “REST”. It is funny because Sinatra is everything — except for being a nice HTTP citizen. If you want a better approach, look at Webmachine or Cowboy-REST (both Erlang projects).</p>
+
+
+</article>
+
+
+<section class="post-nav">
+    <ul>
+        
+        <li>
+            <a href="https://jlouis.github.io/posts/erlang-and-code-style/"><i class="fa fa-chevron-circle-left"></i> Erlang and code style</a>
+        </li>
+        
+        
+        <li>
+            <a href="https://jlouis.github.io/posts/quickcheck-advice/">Quickcheck Advice <i class="fa fa-chevron-circle-right"></i> </a>
+        </li>
+        
+    </ul>
+</section>
+  
+    
+    
+  
+
+
+
+
+
+</main>
+    <footer>
+        <h6> |
+            Rendered by <a href="https://gohugo.io" title="Hugo">Hugo</a> |
+            <a href="https://jlouis.github.ioindex.xml">Subscribe </a></h6>
+    </footer>
+</div>
+<script src="/js/scripts.js"></script>
+
+
+</body>
+
+</html>
+

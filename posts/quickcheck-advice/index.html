@@ -1,0 +1,307 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+  <title>Quickcheck Advice - jlouis&#39; Ramblings</title>
+  <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="The HTML5 Herald" />
+<meta name="author" content="Jesper Louis Andersen" /><meta property="og:title" content="Quickcheck Advice" />
+<meta property="og:description" content="Roberto Aloi has written a nice write-up about QuickCheck with a lot of good advice[0]. This is my attempt to add to those notes and come up with a set of additional advice you can use.
+There is one problem I hear again and again with QC. Which is “How do I start on doing this for this particular project?” The premise is that you have an existing project and want to magically QuickCheck it so you can know that it works." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://jlouis.github.io/posts/quickcheck-advice/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2014-09-13T00:00:00&#43;02:00" />
+<meta property="article:modified_time" content="2014-09-13T00:00:00&#43;02:00" />
+
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Quickcheck Advice"/>
+<meta name="twitter:description" content="Roberto Aloi has written a nice write-up about QuickCheck with a lot of good advice[0]. This is my attempt to add to those notes and come up with a set of additional advice you can use.
+There is one problem I hear again and again with QC. Which is “How do I start on doing this for this particular project?” The premise is that you have an existing project and want to magically QuickCheck it so you can know that it works."/>
+
+<meta name="generator" content="Hugo 0.82.0" />
+    
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" integrity="sha256-l85OmPOjvil/SOvVt3HnSSjzF1TUMyT9eV0c2BzEGzU=" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://jlouis.github.io/fontawesome/css/all.min.css" />
+  
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Slab|Ruda" />
+  
+  
+  <link rel="stylesheet" type="text/css" href="/css/styles.css" /></head>
+
+<body>
+  <div id="container">
+    <header>
+      <h1>
+                <a href="/">jlouis' Ramblings</a>
+            </h1>
+
+      <ul id="social-media">
+             <li>
+               <a href="https://github.com/jlouis" title="GitHub">
+               <i class="fab fa-github fa-lg"></i>
+               </a>
+             </li>
+             <li>
+               <a href="https://twitter.com/jlouis666" title="Twitter">
+               <i class="fab fa-twitter fa-lg"></i>
+               </a>
+             </li>
+      </ul>
+      
+      <p><em>Musings on tech, software, and other things</em></p>
+      
+    </header>
+
+    
+<nav>
+    <ul>
+        
+    </ul>
+</nav>
+
+
+    <main>
+
+
+
+
+<article>
+
+    <h1>Quickcheck Advice</h1>
+
+    
+      <aside>
+    <ul>
+        <li>
+            <time class="post-date" datetime="2014-09-13T00:00:00&#43;02:00">Sep 13, 2014</time>
+        </li>
+        
+        
+
+        
+
+        <li>16 minute read</li>
+    </ul>
+</aside>
+
+    
+
+    
+<div class="featured_image">
+    <a href="https://jlouis.github.io/posts/quickcheck-advice/" title="Quickcheck Advice">
+        <img src="">
+    </a>
+</div>
+
+
+
+    <p>Roberto Aloi has written a nice write-up about QuickCheck with a lot of good advice[0]. This is my attempt to add to those notes and come up with a set of additional advice you can use.</p>
+<p>There is one problem I hear again and again with QC. Which is “How do I start on doing this for this particular project?” The premise is that you have an existing project and want to magically QuickCheck it so you can know that it works. However, this leads to the first problem of writing QC tests: coming up with good models.</p>
+<p>In QC, the model reigns supreme. You can only check those things for which you can define a model. So constructing good models is definitely one of the things you want to cover in any exposition.</p>
+<p>Most model construction currently happens by example. You see one model and this leads you to understand how to build other models. The hope is that cross-pollination between the different examples will lead to a person being able to model on his own.</p>
+<p>It turns out that good model construction is an art form. Much like good code can be beautiful, elegant, and a delight to read, so can a proper QuickCheck model. But the skills you need to create one is somewhat more aligned with math than programming. It has to be approached as a new set of skills you have to train for, as you trained in order to become good at programming in the first place.</p>
+<p>There are still some pitfalls from a more generic viewpoint you may want to think about. That is, by reading, you can accellerate your knowledge—like you can when learning a new programming language or concept.</p>
+<h2 id="common-model-advice">Common Model Advice</h2>
+<p>I think the most common problem is when you try to build a model which is as complicated and complete as the System Under Test (SUT). This never ever works. You want a simple model that cuts corners in some way so you don’t have to re-implement the same solution twice. Furthermore, having two equivalent implementations, one in the model and one in the SUT is not going to be a good use of your time.</p>
+<p>So my advice is: Simplify your models!</p>
+<p>Suppose you are checking a data structure of some kind. There is often a simple implementation with vastly different performance characteristics. A good example is a finite map, which can be implemented as a association list in most languages. The idea then is that your model runs as an association list—parallel to the SUT. And if they disagree you know there is a bug in one of them. This allows you to use a simple model, where lookup is O(n), to test an advanced SUT, where lookup is O(lg n). But your model doesn’t have the complexity of the SUT.</p>
+<p>A common trick I use all the time is to come up with very very trivial models. The most trivial one is the totality model. It basically just does random things to the SUT and verifies the SUT doesn’t fail with an exception or crashes. It makes sure the system is robust against odd inputs.</p>
+<p>Another trick is to dilute the precision of the model:</p>
+<ul>
+<li>If you check a stack or a queue, you can have a model which just models how many elements are in the stack or the queue.</li>
+<li>If you check a queue say, you can simplify the model such that there can be at most one element in the queue.</li>
+<li>Say a configuration parameter can vary from 1 to N. Alter this to vary from 0 to 1.</li>
+<li>Deliberately have the model support a subset of the SUT.</li>
+</ul>
+<p>The goal here is to simplify the model to a point where you can understand it. And then you can “paint” layer on layer and advance the complexity of the model afterwards. A good example is how I built the model for safetyvalve[1]: I started with a model where the queue in the system is empty or full. This simplifies the model a whole lot. Yet this simplified model still found nasty bugs in the implementation.</p>
+<p>Another example is in transit-erlang[2], where the model started out as being able to generate the value ‘null’ only. It generated 100 test cases of the value ‘null’. But then you can gradually extend this. We added UTF-8 Strings, Integers, Timepoints, UUIDs, URIs and so on. When the primitive types worked, we started adding in arrays, maps, lists, sets and so on. Your first version of the model doesn’t have to contain all of the system.</p>
+<h3 id="more-thanone">More than one</h3>
+<p>Use more than a single model! You much rather want 2 or 3 models which are simple and covering than one large model which tries to be everything.“Modularization” is as important in QC code as it is in other code bases. When you model grows and becomes the size of Quviq’s AUTOSAR models, you need to think about how you split up the model into modules and handle things separately. Otherwise it becomes a mess to maintain.</p>
+<p>Layer your models as well. Write small models checking one aspect of the system. And assume that part is right and write a model on top under the assumption. In fuse[3], we plug in a fake/mock timing system so we can control the passing of time (more on this in the next section). This timing model has a separate QC model so we can be sure it is correct when we use it in the larger set of things. You might say that if QuickCheck properties are theorems, the models further down in the layers are lemmas. While this analogy is not true entirely, the similarities in the way you work is striking.</p>
+<h3 id="time">Time</h3>
+<p>Time is a problem in almost all advanced developments where state is part of the system. Once part of the system calls some kind of sleeping or timing library, you have to handle it (In Erlang, a call to ‘timer:sleep/1’ or ‘erlang:now/0’ or a receive clause with an ‘after’ clause is a dead give-away).</p>
+<p>There are two ways to handle time in models: Inject time, or mock time. In the injection solution, you rewrite your SUT such that all calls take an extra parameter, “Now”, and you use this parameter to inject the current time into the system. You can often write your system such that this happens silently to users of your system. Now, since time is injected, it can become part of your model. And your model can choose when it wants to advance time.</p>
+<p>Another solution is to write your code so you can mock timing and plug in another timing module for the normal one. This is what we do in fuse[3]. now, we control the passing of time through the mock, and we can choose when time advances. This means we can reproduce, shrink, and work with time as if it was another parameter of the system.</p>
+<h3 id="rewrite-yoursut">Rewrite your SUT</h3>
+<p>If you have control over the code in the SUT, you can rewrite it. This is often necessary because it can make testing so much easier. Write testable code. Inject parameters rather than call out for them.</p>
+<p>A common rewrite is to add some kind of introspection to the SUT. A call which can expose internal state can be very helpful because it can become part of an invariant check. You want to catch invariant breaches early on so the shrinking can get to work on the right error early on. Safetyvalve[1] exposes internal queue sizes among other things which are then used in postcondition checks.</p>
+<h3 id="algebraic-properties">Algebraic properties</h3>
+<p>Exploit algebraic properties of your data! In transit-erlang[2], we use the algebraic principle of an inverse in one direction:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang">X <span style="color:#f92672">=:=</span> decode(encode(X))
+</code></pre></div><p>This works at the lowest level for any transfer format or any low-level protocol with an obvious inverse. Other good algebraic properties stems from monoids, group theory, category theory and so on. Sometimes the (group) rules of commutativity, associativity, neutral elements and inverses applies. Sometimes you have an isomorphic property to exploit. If the problem you are working with has the triangle-inequality, use this fact in your models.</p>
+<p>If your problem does not have such properties, it often has some kind of monotonicity or balance guarantee. In a monetary transaction involving two accounts, the change has to add to zero. Time can’t flow backwards. Some systems have convergence properties you can exploit. Adding two positive numbers yield a number strictly larger than the largest one.</p>
+<p>Another algebraic property is to use a transformation to another domain. This is what you do in algebraic topology, where you turn a topology into an algebraic structure. If the algebraic structure of topologies X and Y differ, the topologies themselves must differ. You can for instance be working with functors from Top to Grp. In QuickCheck, the same idea can be exploited easily. You can view a system under some kind of transforming functor and verify properties under the functor.</p>
+<h3 id="amplification">Amplification</h3>
+<p>The “trick” with QC is amplification. You want a simple model. And then randomization of that model leads to a model with a much better amplification factor. Where QC excels is, in the words of Torben Hoffman, in the case where you have rather few things you can do to a SUT, but where these things can be composed. The complexity of the possibilities arising from these compositions is exactly what makes it hard to make sure you caught every corner case.</p>
+<p>Transit-erlang[2] is such an example. Whereas it is fairly easy to test some transit-terms, it is hard to make sure you caught all the interactions. Transit comes with a large unit-test base of exemplars on which you can test your implementation. Yet our QC model has found as many additional interaction problems which the unit tests were unable to find. It easily caught a double-escaping problem, which the standard exemplars did not find since there were no input for this interaction.</p>
+<p>To maximize amplification, it is important to build up your system as many small parts which can compose. To do this, you want to think about generators.</p>
+<h3 id="positive--negativetesting">Positive &amp; Negative testing</h3>
+<p>There are two polarities in testing:</p>
+<ul>
+<li>Positive: If we supply valid inputs, the system behaves as it should.</li>
+<li>Negative: If we supply invalid inputs, the system does not misbehave.</li>
+</ul>
+<p>Most testing is positive. But it is important to inject faults into the system now and then and test that the system behaves correctly, even if faults are injected. It can be used to check that the system has certain robustness properties one wants. One common thing is to make sure that the errors the system reports are consistent with the fault that was injected. In other words, you want to test the “happy path” of a system where it proceeds along the successful path. And you also want to test the system when it strays from the “happy path” and steps onto an errornous one.</p>
+<p>When you do negative testing, it is important that your model knows it is injecting a failure. Otherwise, you can’t check the expected output. Again, simple properties can be enough. If you generate an input which is not among the valid inputs, the system MUST generate some kind of error and give it back. A common thing to test for is that the system is stable and doesn’t crash even if it is supplied invalid inputs.</p>
+<p>Negative testing also has similarities to the security scenario. Namely the notion of fuzzing—where you supply data to a system through a stochastic process in order to make it fail. The idea is that once you have an input leading to crashes, you can try altering the input slightly in order to exploit a missing safety property in the underlying language: that there is a buffer overflow, an integer over/underflow, weak type coercion, forced cast[4], or worse.</p>
+<h3 id="on-generators">On Generators</h3>
+<p>The other half of efficient QuickCheck has to do with generators. The idea here is to generate <!-- raw HTML omitted -->interesting<!-- raw HTML omitted --> specimens of data for your random inputs. It is also this which sets apart a good QuickCheck implementations from an excellent one.</p>
+<p>The thing is, you actually do not want uniform generators. You want generators which exploit the fact that some numbers are much more problematic in a system. This is also why it doesn't work to automatically derive generators from algebraic data types. You often want fine-tuning control over the generated values.</p>
+<p>In transit-erlang[2], it turns out that powers of two are interesting. A generator of the form</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang">Sign <span style="color:#f92672">*</span> math:<span style="color:#a6e22e">pow</span>(<span style="color:#ae81ff">2</span>, X) <span style="color:#f92672">+</span> P
+</code></pre></div><p>where X is a natural number, Sign is either 1 or -1 and P is a small pertubation in the range -5..5 is highly useful. It instantly found a bug in the Erlang/OTP implementation. It also found numerous bugs because the interesting things often happens at the powers of two values.</p>
+<p>Of course, we only pick this generator some times. We also pick deliberately small and large values. Because we know there are three ways in Transit which you can use to format numbers and we need to be fairly sure we can round-trip over all of these formatting possibilities.</p>
+<p>The power of a generator can be measured in how fast it can find trouble. Ideally, you want a generator to uncover trouble in 100 test cases or less. If a generator needs several thousand samples to generate trouble, it is weak. The reason being that once you compose several generators, the numbers work against you because they are inherently multiplicative. This makes it much harder to find a problematic case.</p>
+<h3 id="what-togenerate">What to generate</h3>
+<p>It is important to discuss table driven unit tests. A table driven unit test is one where we have a large number of test cases driven by a table: given inputs foo and bar, we expect output baz. These are essentially enumeration generations which tries to generate all possible inputs and check the output.</p>
+<p>Where enumerate generators fall short is when the set of possibilities grows exponentially. That is, when there are so many possibilities, that we cannot hope to list them all in a lifetime. In that case, we want to generate things in a stochastic way and skew the distribution so it tends toward the places we believe are hard to get right. The stochastic process aims to capture the fact that we might forget to generate certain particular states. The randomness of the process then solves this by occasionally generating things we did not think about.</p>
+<p>Thus, we want to weight our generators such that they generate states which occur rarely in a real system. After all, the real system will continously check for the common case in production. So we want the corner case to be exposed in the test. This can amount to the fact, that a certain command can only fire in a rarely occurring state. In this case, we might make the command more likely to occur in that particular state. But one has to be vary of doing so.</p>
+<p>First, if we inflate the chance of running command by a too large factor, then our system will <!-- raw HTML omitted -->always<!-- raw HTML omitted --> generate that command in the state. This means we don’t get to generate other commands in that state, making our model weaker.</p>
+<p>Second, it may be more beneficial to weigh the system such that the state which is rare occurs more often. Then the command doesn't need changing, since the state is now merely uncommon, but not rare.</p>
+<h3 id="measure">Measure</h3>
+<p>The commands ‘aggregate’, ‘classify’ and‘collect’ are there for a reason. To make sure you are generating the right distribution you need to measure if you are generating things like you expect. If the distribution skews too much toward some states, you want to tune the generator. Use the distribution commands to measure that you get the right states.</p>
+<p>Further, you can do as in fuse[3], and add classification to the model. The model records a set of requirements and uses this to verify which requirements are hit in a test run. If a given requirement is not hit, this is bounds for worry. The way this works is that there is a set in the model and each path taken in the model is annotated with the requirements this path covers:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-text" data-lang="text">R01 - Heal non-installed fuse (must never be triggered)
+R02 - Heal installed fuse (only if blown already)
+
+Group install:
+R03 - Installation of a fuse with invalid configuation
+R04 - Installation of a fuse with valid configuration
+
+Group Reset:
+R05 - Reset of an uninstalled fuse
+R06 - Reset of an installed fuse (blown and nonblown)
+
+Group Melt:
+R11 - Melting of an installed fuse
+R12 - Melting of an uninstalled fuse
+
+Group run/2:
+R07 - Use of run/2 on an ok fuse
+R08 - Use of run/2 on a melted fuse
+R09 - Use of run/2 on an ok fuse which is melted in the process
+R10 - Use of run/2 on an uninstalled fuse
+
+Group blow:
+R13 - Blowing a fuse
+R14 - Removing melts from the window by expiry
+
+Group ask/1:
+R15 - Ask on an installed fuse
+R16 - Ask on an uninstalled fuse
+</code></pre></div><p>after a test run, we can see what requirements were hit by that run. This makes it easy to check we are generating the right values.</p>
+<h3 id="shrinking">Shrinking</h3>
+<p>The final key to good generators are to make them shrink well. A failing test is of no use if we can’t figure out what is wrong and fix it. To help with this, it is crucial that when we generate a failing test, we can generate a minimal failing test.</p>
+<p>When building generators, it is worth spending some time on how they will shrink. Roberto’s post[0] has much more detail on how to do this. But one additional trick is to build stuff as (binary) trees rather than as lists and then shrink toward one of the subtrees. This is also good when generating command sequences. From transit-erlang, we have the following snippet, illustrating the idea:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#a6e22e">transit_l</span>(<span style="color:#ae81ff">0</span>, _N, _G) <span style="color:#f92672">-&gt;</span> [];
+<span style="color:#a6e22e">transit_l</span>(<span style="color:#ae81ff">1</span>, N, G) <span style="color:#f92672">-&gt;</span> <span style="color:#f92672">?</span>LET(E, G(N), [E]);
+<span style="color:#a6e22e">transit_l</span>(Sz, N, G) <span style="color:#f92672">-&gt;</span>
+    <span style="color:#f92672">?</span>LETSHRINK([L, R],
+               [transit_l(Sz <span style="color:#f92672">div</span> <span style="color:#ae81ff">2</span>, N <span style="color:#f92672">div</span> <span style="color:#ae81ff">2</span>, G),
+                transit_l(Sz <span style="color:#f92672">div</span> <span style="color:#ae81ff">2</span>, N <span style="color:#f92672">div</span> <span style="color:#ae81ff">2</span>, G)],
+      L <span style="color:#f92672">++</span> R).
+</code></pre></div><p>The idea here is that to generate a list of size Sz, generate two halves, L and R and join them. The ?LETSHRINK combinator then shrinks to either the left or the right subtree. This allows the system to shrink a test case like this:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang">#{<span style="color:#ae81ff">4436653002</span> <span style="color:#f92672">=&gt;</span> ferb,
+  <span style="color:#ae81ff">5011044860</span> <span style="color:#f92672">=&gt;</span> {tagged_value,<span style="color:#f92672">&lt;&lt;</span><span style="color:#960050;background-color:#1e0010">”</span>u<span style="color:#960050;background-color:#1e0010">”</span><span style="color:#f92672">&gt;&gt;</span>,<span style="color:#f92672">&lt;&lt;</span><span style="color:#960050;background-color:#1e0010">”</span>a324f310<span style="color:#f92672">-</span>c501<span style="color:#960050;background-color:#1e0010">–</span><span style="color:#ae81ff">70</span>cd<span style="color:#f92672">-</span>fc42<span style="color:#960050;background-color:#1e0010">–</span><span style="color:#ae81ff">9</span>fa0d338a2be<span style="color:#960050;background-color:#1e0010">”</span><span style="color:#f92672">&gt;&gt;</span>},
+  <span style="color:#ae81ff">7244902917</span> <span style="color:#f92672">=&gt;</span> phineas,
+  <span style="color:#ae81ff">9902687802</span> <span style="color:#f92672">=&gt;</span> <span style="color:#f92672">&lt;&lt;</span><span style="color:#ae81ff">243</span>,<span style="color:#ae81ff">130</span>,<span style="color:#ae81ff">156</span>,<span style="color:#ae81ff">156</span>,<span style="color:#ae81ff">242</span>,<span style="color:#ae81ff">175</span>,<span style="color:#ae81ff">144</span>,<span style="color:#ae81ff">182</span>,<span style="color:#ae81ff">243</span>,<span style="color:#ae81ff">138</span>,<span style="color:#ae81ff">135</span>,<span style="color:#ae81ff">130</span>,<span style="color:#ae81ff">241</span>,<span style="color:#ae81ff">179</span>,<span style="color:#ae81ff">179</span>,<span style="color:#ae81ff">172</span>,<span style="color:#ae81ff">240</span>,<span style="color:#ae81ff">148</span>,
+  <span style="color:#ae81ff">189</span>,<span style="color:#ae81ff">144</span>,<span style="color:#ae81ff">242</span>,<span style="color:#ae81ff">135</span>,<span style="color:#ae81ff">131</span>,<span style="color:#ae81ff">184</span>,<span style="color:#ae81ff">242</span>,<span style="color:#ae81ff">166</span>,<span style="color:#ae81ff">183</span>,<span style="color:#ae81ff">178</span>,<span style="color:#ae81ff">240</span>,<span style="color:#ae81ff">183</span>,<span style="color:#ae81ff">172</span>,<span style="color:#ae81ff">145</span>,<span style="color:#ae81ff">243</span>,<span style="color:#ae81ff">162</span>,<span style="color:#ae81ff">163</span>,<span style="color:#ae81ff">151</span>,
+  <span style="color:#ae81ff">242</span>,<span style="color:#ae81ff">142</span>,<span style="color:#ae81ff">161</span>,<span style="color:#ae81ff">191</span>,<span style="color:#ae81ff">241</span>,<span style="color:#ae81ff">129</span>,<span style="color:#ae81ff">145</span>,<span style="color:#ae81ff">131</span><span style="color:#f92672">&gt;&gt;</span>,
+  <span style="color:#960050;background-color:#1e0010">‘</span>Z<span style="color:#960050;background-color:#1e0010">’</span> <span style="color:#f92672">=&gt;</span> <span style="color:#f92672">&lt;&lt;&gt;&gt;</span>,
+  undefined <span style="color:#f92672">=&gt;</span> ab,
+  {transit_datetime,{<span style="color:#ae81ff">11</span>,<span style="color:#ae81ff">397133</span>,<span style="color:#ae81ff">962000</span>}} <span style="color:#f92672">=&gt;</span> <span style="color:#960050;background-color:#1e0010">‘~</span>n<span style="color:#960050;background-color:#1e0010">’</span>,
+  {transit_datetime,{<span style="color:#ae81ff">20</span>,<span style="color:#ae81ff">604233</span>,<span style="color:#ae81ff">708000</span>}} <span style="color:#f92672">=&gt;</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1702153900</span>,
+  {transit_datetime,{<span style="color:#ae81ff">22</span>,<span style="color:#ae81ff">775839</span>,<span style="color:#ae81ff">627000</span>}} <span style="color:#f92672">=&gt;</span> undefined,
+  {transit_datetime,{<span style="color:#ae81ff">31</span>,<span style="color:#ae81ff">458072</span>,<span style="color:#ae81ff">234000</span>}} <span style="color:#f92672">=&gt;</span> <span style="color:#960050;background-color:#1e0010">‘</span>o<span style="color:#f92672">!</span>,:T(<span style="color:#960050;background-color:#1e0010">\\</span>U<span style="color:#960050;background-color:#1e0010">’</span>,
+  {tagged_value,<span style="color:#f92672">&lt;&lt;</span><span style="color:#960050;background-color:#1e0010">”</span><span style="color:#e6db74">$”</span><span style="color:#f92672">&gt;&gt;</span>,
+  <span style="color:#f92672">&lt;&lt;</span><span style="color:#ae81ff">230</span>,<span style="color:#ae81ff">151</span>,<span style="color:#ae81ff">157</span>,<span style="color:#ae81ff">242</span>,<span style="color:#ae81ff">165</span>,<span style="color:#ae81ff">189</span>,<span style="color:#ae81ff">129</span>,<span style="color:#ae81ff">240</span>,<span style="color:#ae81ff">177</span>,<span style="color:#ae81ff">176</span>,<span style="color:#ae81ff">139</span>,<span style="color:#ae81ff">241</span>,<span style="color:#ae81ff">188</span>,<span style="color:#ae81ff">140</span>,<span style="color:#ae81ff">188</span><span style="color:#f92672">&gt;&gt;</span>} <span style="color:#f92672">=&gt;</span> undefined,
+  {tagged_value,<span style="color:#f92672">&lt;&lt;</span><span style="color:#960050;background-color:#1e0010">”</span><span style="color:#e6db74">$”</span><span style="color:#f92672">&gt;&gt;</span>,
+  <span style="color:#f92672">&lt;&lt;</span><span style="color:#ae81ff">240</span>,<span style="color:#ae81ff">180</span>,<span style="color:#ae81ff">151</span>,<span style="color:#ae81ff">136</span>,<span style="color:#ae81ff">243</span>,<span style="color:#ae81ff">135</span>,<span style="color:#ae81ff">161</span>,<span style="color:#ae81ff">189</span>,<span style="color:#ae81ff">242</span>,<span style="color:#ae81ff">162</span>,<span style="color:#ae81ff">136</span>,<span style="color:#ae81ff">190</span>,<span style="color:#ae81ff">241</span>,<span style="color:#ae81ff">166</span>,<span style="color:#ae81ff">131</span>,
+  <span style="color:#ae81ff">171</span>,<span style="color:#ae81ff">241</span>,<span style="color:#ae81ff">185</span>,<span style="color:#ae81ff">167</span>,<span style="color:#ae81ff">136</span>,<span style="color:#ae81ff">242</span>,<span style="color:#ae81ff">175</span>,<span style="color:#ae81ff">133</span>,<span style="color:#ae81ff">152</span><span style="color:#f92672">&gt;&gt;</span>} <span style="color:#f92672">=&gt;</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">10</span>,
+  {tagged_value,<span style="color:#f92672">&lt;&lt;</span><span style="color:#960050;background-color:#1e0010">”</span><span style="color:#e6db74">$”</span><span style="color:#f92672">&gt;&gt;</span>,
+  <span style="color:#f92672">&lt;&lt;</span><span style="color:#ae81ff">240</span>,<span style="color:#ae81ff">186</span>,<span style="color:#ae81ff">155</span>,<span style="color:#ae81ff">149</span>,<span style="color:#ae81ff">240</span>,<span style="color:#ae81ff">181</span>,<span style="color:#ae81ff">187</span>,<span style="color:#ae81ff">174</span>,<span style="color:#ae81ff">240</span>,<span style="color:#ae81ff">153</span>,<span style="color:#ae81ff">172</span>,<span style="color:#ae81ff">150</span>,<span style="color:#ae81ff">242</span>,<span style="color:#ae81ff">131</span>,<span style="color:#ae81ff">135</span>,
+  <span style="color:#ae81ff">166</span>,<span style="color:#ae81ff">241</span>,<span style="color:#ae81ff">131</span>,<span style="color:#ae81ff">133</span>,<span style="color:#ae81ff">188</span>,<span style="color:#ae81ff">243</span>,<span style="color:#ae81ff">130</span>,<span style="color:#ae81ff">164</span>,<span style="color:#ae81ff">149</span>,<span style="color:#ae81ff">242</span>,<span style="color:#ae81ff">152</span>,<span style="color:#ae81ff">163</span>,<span style="color:#ae81ff">189</span>,<span style="color:#ae81ff">240</span>,<span style="color:#ae81ff">148</span>,
+  <span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">150</span>,<span style="color:#ae81ff">240</span>,<span style="color:#ae81ff">177</span>,<span style="color:#ae81ff">175</span>,<span style="color:#ae81ff">134</span>,<span style="color:#ae81ff">241</span>,<span style="color:#ae81ff">147</span>,<span style="color:#ae81ff">179</span>,<span style="color:#ae81ff">155</span><span style="color:#f92672">&gt;&gt;</span>} <span style="color:#f92672">=&gt;</span> {tagged_value,<span style="color:#f92672">&lt;&lt;</span><span style="color:#960050;background-color:#1e0010">”</span><span style="color:#e6db74">$”</span><span style="color:#f92672">&gt;&gt;</span>,<span style="color:#f92672">&lt;&lt;</span><span style="color:#960050;background-color:#1e0010">”</span>ab<span style="color:#960050;background-color:#1e0010">”</span><span style="color:#f92672">&gt;&gt;</span>},
+  {tagged_value,<span style="color:#f92672">&lt;&lt;</span><span style="color:#960050;background-color:#1e0010">”</span><span style="color:#e6db74">$”</span><span style="color:#f92672">&gt;&gt;</span>,
+  <span style="color:#f92672">&lt;&lt;</span><span style="color:#ae81ff">243</span>,<span style="color:#ae81ff">141</span>,<span style="color:#ae81ff">149</span>,<span style="color:#ae81ff">191</span>,<span style="color:#ae81ff">241</span>,<span style="color:#ae81ff">139</span>,<span style="color:#ae81ff">155</span>,<span style="color:#ae81ff">176</span>,<span style="color:#ae81ff">241</span>,<span style="color:#ae81ff">182</span>,<span style="color:#ae81ff">160</span>,<span style="color:#ae81ff">135</span>,<span style="color:#ae81ff">231</span>,<span style="color:#ae81ff">158</span>,<span style="color:#ae81ff">190</span>,
+  <span style="color:#ae81ff">243</span>,<span style="color:#ae81ff">155</span>,<span style="color:#ae81ff">145</span>,<span style="color:#ae81ff">149</span>,<span style="color:#ae81ff">241</span>,<span style="color:#ae81ff">152</span>,<span style="color:#ae81ff">166</span>,<span style="color:#ae81ff">180</span>,<span style="color:#ae81ff">240</span>,<span style="color:#ae81ff">190</span>,<span style="color:#ae81ff">162</span>,<span style="color:#ae81ff">169</span>,<span style="color:#ae81ff">238</span>,<span style="color:#ae81ff">185</span>,<span style="color:#ae81ff">173</span><span style="color:#f92672">&gt;&gt;</span>} <span style="color:#f92672">=&gt;</span> {transit_datetime,{<span style="color:#ae81ff">20</span>,<span style="color:#ae81ff">448876</span>,<span style="color:#ae81ff">895000</span>}},
+  {tagged_value,<span style="color:#f92672">&lt;&lt;</span><span style="color:#960050;background-color:#1e0010">”</span><span style="color:#e6db74">$”</span><span style="color:#f92672">&gt;&gt;</span>,<span style="color:#f92672">&lt;&lt;</span><span style="color:#ae81ff">243</span>,<span style="color:#ae81ff">174</span>,<span style="color:#ae81ff">183</span>,<span style="color:#ae81ff">155</span>,<span style="color:#ae81ff">241</span>,<span style="color:#ae81ff">133</span>,<span style="color:#ae81ff">153</span>,<span style="color:#ae81ff">138</span>,<span style="color:#ae81ff">242</span>,<span style="color:#ae81ff">150</span>,<span style="color:#ae81ff">149</span>,<span style="color:#ae81ff">184</span><span style="color:#f92672">&gt;&gt;</span>} <span style="color:#f92672">=&gt;</span> {tagged_value,<span style="color:#f92672">&lt;&lt;</span><span style="color:#960050;background-color:#1e0010">”</span><span style="color:#e6db74">$”</span><span style="color:#f92672">&gt;&gt;</span>,
+  <span style="color:#f92672">&lt;&lt;</span><span style="color:#ae81ff">243</span>,<span style="color:#ae81ff">173</span>,<span style="color:#ae81ff">134</span>,<span style="color:#ae81ff">191</span>,<span style="color:#ae81ff">241</span>,<span style="color:#ae81ff">133</span>,<span style="color:#ae81ff">140</span>,<span style="color:#ae81ff">190</span>,<span style="color:#ae81ff">243</span>,<span style="color:#ae81ff">180</span>,<span style="color:#ae81ff">132</span>,<span style="color:#ae81ff">146</span>,<span style="color:#ae81ff">242</span>,<span style="color:#ae81ff">173</span>,<span style="color:#ae81ff">190</span>,
+  <span style="color:#ae81ff">187</span>,<span style="color:#ae81ff">243</span>,<span style="color:#ae81ff">153</span>,<span style="color:#ae81ff">140</span>,<span style="color:#ae81ff">136</span>,<span style="color:#ae81ff">243</span>,<span style="color:#ae81ff">150</span>,<span style="color:#ae81ff">159</span>,<span style="color:#ae81ff">156</span>,<span style="color:#ae81ff">243</span>,<span style="color:#ae81ff">156</span>,<span style="color:#ae81ff">169</span>,<span style="color:#ae81ff">148</span>,<span style="color:#ae81ff">242</span>,<span style="color:#ae81ff">155</span>,
+  <span style="color:#ae81ff">148</span>,<span style="color:#ae81ff">135</span>,<span style="color:#ae81ff">241</span>,<span style="color:#ae81ff">145</span>,<span style="color:#ae81ff">140</span>,<span style="color:#ae81ff">140</span>,<span style="color:#ae81ff">240</span>,<span style="color:#ae81ff">181</span>,<span style="color:#ae81ff">153</span>,<span style="color:#ae81ff">168</span><span style="color:#f92672">&gt;&gt;</span>},
+  {tagged_value,<span style="color:#f92672">&lt;&lt;</span><span style="color:#960050;background-color:#1e0010">”</span>u<span style="color:#960050;background-color:#1e0010">”</span><span style="color:#f92672">&gt;&gt;</span>,<span style="color:#f92672">&lt;&lt;</span><span style="color:#960050;background-color:#1e0010">”</span><span style="color:#ae81ff">08</span>f7fe71<span style="color:#960050;background-color:#1e0010">–</span><span style="color:#ae81ff">1070</span><span style="color:#960050;background-color:#1e0010">–</span><span style="color:#ae81ff">4345</span><span style="color:#f92672">-</span>a252<span style="color:#960050;background-color:#1e0010">–</span><span style="color:#ae81ff">7</span>f0724608fe6<span style="color:#960050;background-color:#1e0010">&amp;</span>quot;<span style="color:#f92672">&gt;&gt;</span>} <span style="color:#f92672">=&gt;</span> {transit_datetime,{<span style="color:#ae81ff">15</span>,<span style="color:#ae81ff">520256</span>,<span style="color:#ae81ff">575000</span>}},
+  {tagged_value,<span style="color:#f92672">&lt;&lt;</span><span style="color:#960050;background-color:#1e0010">”</span>u<span style="color:#960050;background-color:#1e0010">”</span><span style="color:#f92672">&gt;&gt;</span>,<span style="color:#f92672">&lt;&lt;</span><span style="color:#960050;background-color:#1e0010">”</span><span style="color:#ae81ff">4040908</span>a<span style="color:#f92672">-</span><span style="color:#ae81ff">783</span>b<span style="color:#f92672">-</span><span style="color:#ae81ff">47</span>a7<span style="color:#960050;background-color:#1e0010">–</span><span style="color:#ae81ff">9</span>fde<span style="color:#f92672">-</span>fff8040aba59<span style="color:#960050;background-color:#1e0010">&amp;</span>quot;<span style="color:#f92672">&gt;&gt;</span>} <span style="color:#f92672">=&gt;</span> undefined,
+  {tagged_value,<span style="color:#f92672">&lt;&lt;</span><span style="color:#960050;background-color:#1e0010">”</span>u<span style="color:#960050;background-color:#1e0010">”</span><span style="color:#f92672">&gt;&gt;</span>,<span style="color:#f92672">&lt;&lt;</span><span style="color:#960050;background-color:#1e0010">”</span><span style="color:#ae81ff">4236</span>b550<span style="color:#960050;background-color:#1e0010">–</span><span style="color:#ae81ff">00</span>de<span style="color:#f92672">-</span>f0ac<span style="color:#f92672">-</span><span style="color:#ae81ff">3</span>abf<span style="color:#f92672">-</span><span style="color:#ae81ff">14250</span>dc28585<span style="color:#960050;background-color:#1e0010">&amp;</span>quot;<span style="color:#f92672">&gt;&gt;</span>} <span style="color:#f92672">=&gt;</span> {transit_datetime,{<span style="color:#ae81ff">12</span>,<span style="color:#ae81ff">165752</span>,<span style="color:#ae81ff">72000</span>}},
+  {tagged_value,<span style="color:#f92672">&lt;&lt;</span><span style="color:#960050;background-color:#1e0010">”</span>u<span style="color:#960050;background-color:#1e0010">”</span><span style="color:#f92672">&gt;&gt;</span>,<span style="color:#f92672">&lt;&lt;</span><span style="color:#960050;background-color:#1e0010">”</span><span style="color:#ae81ff">706998</span>d9<span style="color:#960050;background-color:#1e0010">–</span><span style="color:#ae81ff">7</span>a0c<span style="color:#f92672">-</span><span style="color:#ae81ff">0</span>a9b<span style="color:#f92672">-</span><span style="color:#ae81ff">17</span>d5<span style="color:#960050;background-color:#1e0010">–</span><span style="color:#ae81ff">1840</span>b630a728<span style="color:#960050;background-color:#1e0010">&amp;</span>quot;<span style="color:#f92672">&gt;&gt;</span>} <span style="color:#f92672">=&gt;</span> {tagged_value,<span style="color:#f92672">&lt;&lt;</span><span style="color:#960050;background-color:#1e0010">”</span><span style="color:#e6db74">$”</span><span style="color:#f92672">&gt;&gt;</span>,<span style="color:#f92672">&lt;&lt;</span><span style="color:#960050;background-color:#1e0010">”</span>bcdefg<span style="color:#960050;background-color:#1e0010">”</span><span style="color:#f92672">&gt;&gt;</span>},
+  {tagged_value,<span style="color:#f92672">&lt;&lt;</span><span style="color:#960050;background-color:#1e0010">”</span>u<span style="color:#960050;background-color:#1e0010">”</span><span style="color:#f92672">&gt;&gt;</span>,<span style="color:#f92672">&lt;&lt;</span><span style="color:#960050;background-color:#1e0010">”</span>b0ea26b5<span style="color:#f92672">-</span>c974<span style="color:#960050;background-color:#1e0010">–</span><span style="color:#ae81ff">813</span>a<span style="color:#f92672">-</span><span style="color:#ae81ff">5</span>be1<span style="color:#f92672">-</span>d7c4fe21a024<span style="color:#960050;background-color:#1e0010">&amp;</span>quot;<span style="color:#f92672">&gt;&gt;</span>} <span style="color:#f92672">=&gt;</span> {tagged_value,<span style="color:#f92672">&lt;&lt;</span><span style="color:#960050;background-color:#1e0010">”</span>u<span style="color:#960050;background-color:#1e0010">”</span><span style="color:#f92672">&gt;&gt;</span>,<span style="color:#f92672">&lt;&lt;</span><span style="color:#960050;background-color:#1e0010">”</span>b4ebcb3<span style="color:#960050;background-color:#1e0010">–</span><span style="color:#ae81ff">0</span>e70<span style="color:#960050;background-color:#1e0010">–</span><span style="color:#ae81ff">8316</span><span style="color:#f92672">-</span>e76f<span style="color:#f92672">-</span>ca463210f38c<span style="color:#960050;background-color:#1e0010">”</span><span style="color:#f92672">&gt;&gt;</span>},
+  {tagged_value,<span style="color:#f92672">&lt;&lt;</span><span style="color:#960050;background-color:#1e0010">”</span>u<span style="color:#960050;background-color:#1e0010">”</span><span style="color:#f92672">&gt;&gt;</span>,<span style="color:#f92672">&lt;&lt;</span><span style="color:#960050;background-color:#1e0010">”</span>c762ae1a<span style="color:#f92672">-</span>f244<span style="color:#960050;background-color:#1e0010">–</span><span style="color:#ae81ff">7</span>d11<span style="color:#960050;background-color:#1e0010">–</span><span style="color:#ae81ff">0</span>e25<span style="color:#f92672">-</span>ac91c48bd9b0<span style="color:#960050;background-color:#1e0010">&amp;</span>quot;<span style="color:#f92672">&gt;&gt;</span>} <span style="color:#f92672">=&gt;</span> {transit_datetime,{<span style="color:#ae81ff">22</span>,<span style="color:#ae81ff">869945</span>,<span style="color:#ae81ff">242000</span>}},
+  {tagged_value,<span style="color:#f92672">&lt;&lt;</span><span style="color:#960050;background-color:#1e0010">”</span>u<span style="color:#960050;background-color:#1e0010">”</span><span style="color:#f92672">&gt;&gt;</span>,<span style="color:#f92672">&lt;&lt;</span><span style="color:#960050;background-color:#1e0010">”</span>ed9327c2<span style="color:#960050;background-color:#1e0010">–</span><span style="color:#ae81ff">618</span>b<span style="color:#f92672">-</span>e07d<span style="color:#f92672">-</span>b94b<span style="color:#f92672">-</span>ba904153af41<span style="color:#960050;background-color:#1e0010">&amp;</span>quot;<span style="color:#f92672">&gt;&gt;</span>} <span style="color:#f92672">=&gt;</span> candace,
+  <span style="color:#f92672">&lt;&lt;&gt;&gt;</span> <span style="color:#f92672">=&gt;</span> {tagged_value,<span style="color:#f92672">&lt;&lt;</span><span style="color:#960050;background-color:#1e0010">”</span><span style="color:#e6db74">$”</span><span style="color:#f92672">&gt;&gt;</span>,<span style="color:#f92672">&lt;&lt;</span><span style="color:#960050;background-color:#1e0010">”</span>candace<span style="color:#960050;background-color:#1e0010">”</span><span style="color:#f92672">&gt;&gt;</span>},
+  <span style="color:#f92672">&lt;&lt;</span><span style="color:#ae81ff">240</span>,<span style="color:#ae81ff">160</span>,<span style="color:#ae81ff">159</span>,<span style="color:#ae81ff">166</span>,<span style="color:#ae81ff">236</span>,<span style="color:#ae81ff">153</span>,<span style="color:#ae81ff">160</span><span style="color:#f92672">&gt;&gt;</span> <span style="color:#f92672">=&gt;</span> <span style="color:#f92672">&lt;&lt;</span><span style="color:#ae81ff">239</span>,<span style="color:#ae81ff">132</span>,<span style="color:#ae81ff">182</span>,<span style="color:#ae81ff">240</span>,<span style="color:#ae81ff">188</span>,<span style="color:#ae81ff">170</span>,<span style="color:#ae81ff">150</span>,<span style="color:#ae81ff">240</span>,<span style="color:#ae81ff">146</span>,<span style="color:#ae81ff">175</span>,<span style="color:#ae81ff">153</span>,<span style="color:#ae81ff">242</span>,<span style="color:#ae81ff">143</span>,<span style="color:#ae81ff">130</span>,<span style="color:#ae81ff">146</span>,<span style="color:#ae81ff">241</span>,<span style="color:#ae81ff">141</span>,<span style="color:#ae81ff">136</span>,
+  <span style="color:#ae81ff">175</span>,<span style="color:#ae81ff">226</span>,<span style="color:#ae81ff">169</span>,<span style="color:#ae81ff">191</span><span style="color:#f92672">&gt;&gt;</span>,
+  <span style="color:#f92672">&lt;&lt;</span><span style="color:#ae81ff">243</span>,<span style="color:#ae81ff">130</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">242</span>,<span style="color:#ae81ff">190</span>,<span style="color:#ae81ff">135</span>,<span style="color:#ae81ff">186</span>,<span style="color:#ae81ff">242</span>,<span style="color:#ae81ff">150</span>,<span style="color:#ae81ff">137</span>,<span style="color:#ae81ff">163</span>,<span style="color:#ae81ff">242</span>,<span style="color:#ae81ff">158</span>,<span style="color:#ae81ff">184</span>,<span style="color:#ae81ff">137</span>,<span style="color:#ae81ff">242</span>,<span style="color:#ae81ff">157</span>,
+  <span style="color:#ae81ff">182</span>,<span style="color:#ae81ff">146</span>,<span style="color:#ae81ff">242</span>,<span style="color:#ae81ff">144</span>,<span style="color:#ae81ff">187</span>,<span style="color:#ae81ff">173</span>,<span style="color:#ae81ff">243</span>,<span style="color:#ae81ff">175</span>,<span style="color:#ae81ff">159</span>,<span style="color:#ae81ff">129</span><span style="color:#f92672">&gt;&gt;</span> <span style="color:#f92672">=&gt;</span> undefined,
+  <span style="color:#f92672">&lt;&lt;</span><span style="color:#ae81ff">243</span>,<span style="color:#ae81ff">161</span>,<span style="color:#ae81ff">177</span>,<span style="color:#ae81ff">185</span>,<span style="color:#ae81ff">241</span>,<span style="color:#ae81ff">137</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">174</span>,<span style="color:#ae81ff">242</span>,<span style="color:#ae81ff">146</span>,<span style="color:#ae81ff">159</span>,<span style="color:#ae81ff">168</span>,<span style="color:#ae81ff">243</span>,<span style="color:#ae81ff">162</span>,<span style="color:#ae81ff">144</span>,<span style="color:#ae81ff">131</span>,<span style="color:#ae81ff">242</span>,<span style="color:#ae81ff">159</span>,
+  <span style="color:#ae81ff">144</span>,<span style="color:#ae81ff">145</span>,<span style="color:#ae81ff">241</span>,<span style="color:#ae81ff">170</span>,<span style="color:#ae81ff">176</span>,<span style="color:#ae81ff">180</span>,<span style="color:#ae81ff">240</span>,<span style="color:#ae81ff">145</span>,<span style="color:#ae81ff">178</span>,<span style="color:#ae81ff">134</span>,<span style="color:#ae81ff">242</span>,<span style="color:#ae81ff">157</span>,<span style="color:#ae81ff">162</span>,<span style="color:#ae81ff">170</span>,<span style="color:#ae81ff">241</span>,<span style="color:#ae81ff">139</span>,<span style="color:#ae81ff">164</span>,<span style="color:#ae81ff">146</span>,
+  <span style="color:#ae81ff">233</span>,<span style="color:#ae81ff">130</span>,<span style="color:#ae81ff">188</span>,<span style="color:#ae81ff">242</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">177</span>,<span style="color:#ae81ff">191</span><span style="color:#f92672">&gt;&gt;</span> <span style="color:#f92672">=&gt;</span> {tagged_value,<span style="color:#f92672">&lt;&lt;</span><span style="color:#960050;background-color:#1e0010">”</span>u<span style="color:#960050;background-color:#1e0010">”</span><span style="color:#f92672">&gt;&gt;</span>,<span style="color:#f92672">&lt;&lt;</span><span style="color:#960050;background-color:#1e0010">”</span>ef5a0950<span style="color:#960050;background-color:#1e0010">–</span><span style="color:#ae81ff">7</span>fbe<span style="color:#f92672">-</span><span style="color:#ae81ff">27</span>bb<span style="color:#f92672">-</span><span style="color:#ae81ff">3</span>fc4<span style="color:#960050;background-color:#1e0010">–</span><span style="color:#ae81ff">94750</span>b80ae64<span style="color:#960050;background-color:#1e0010">&amp;</span>quot;<span style="color:#f92672">&gt;&gt;</span>},
+  <span style="color:#f92672">&lt;&lt;</span><span style="color:#ae81ff">243</span>,<span style="color:#ae81ff">164</span>,<span style="color:#ae81ff">149</span>,<span style="color:#ae81ff">152</span>,<span style="color:#ae81ff">226</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">158</span>,<span style="color:#ae81ff">242</span>,<span style="color:#ae81ff">149</span>,<span style="color:#ae81ff">135</span>,<span style="color:#ae81ff">146</span>,<span style="color:#ae81ff">241</span>,<span style="color:#ae81ff">136</span>,<span style="color:#ae81ff">144</span>,<span style="color:#ae81ff">169</span>,<span style="color:#ae81ff">243</span>,<span style="color:#ae81ff">153</span>,<span style="color:#ae81ff">139</span>,
+  <span style="color:#ae81ff">153</span>,<span style="color:#ae81ff">243</span>,<span style="color:#ae81ff">144</span>,<span style="color:#ae81ff">189</span>,<span style="color:#ae81ff">173</span>,<span style="color:#ae81ff">243</span>,<span style="color:#ae81ff">164</span>,<span style="color:#ae81ff">135</span>,<span style="color:#ae81ff">191</span>,<span style="color:#ae81ff">242</span>,<span style="color:#ae81ff">185</span>,<span style="color:#ae81ff">169</span>,<span style="color:#ae81ff">164</span><span style="color:#f92672">&gt;&gt;</span> <span style="color:#f92672">=&gt;</span> {tagged_value,<span style="color:#f92672">&lt;&lt;</span><span style="color:#960050;background-color:#1e0010">”</span><span style="color:#e6db74">$”</span><span style="color:#f92672">&gt;&gt;</span>,
+  <span style="color:#f92672">&lt;&lt;</span><span style="color:#ae81ff">241</span>,<span style="color:#ae81ff">143</span>,<span style="color:#ae81ff">181</span>,<span style="color:#ae81ff">181</span>,<span style="color:#ae81ff">241</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">158</span>,<span style="color:#ae81ff">186</span>,<span style="color:#ae81ff">240</span>,<span style="color:#ae81ff">145</span>,<span style="color:#ae81ff">132</span>,<span style="color:#ae81ff">143</span>,<span style="color:#ae81ff">242</span>,<span style="color:#ae81ff">146</span>,
+  <span style="color:#ae81ff">157</span>,<span style="color:#ae81ff">179</span>,<span style="color:#ae81ff">242</span>,<span style="color:#ae81ff">130</span>,<span style="color:#ae81ff">150</span>,<span style="color:#ae81ff">132</span><span style="color:#f92672">&gt;&gt;</span>}}
+</code></pre></div><p>Down to this:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang">  #{undefined <span style="color:#f92672">=</span><span style="color:#960050;background-color:#1e0010">&amp;</span>gt; <span style="color:#960050;background-color:#1e0010">‘~^’</span>}
+</code></pre></div><p>which was much easier to work with and figure out.</p>
+<p>This is why proper shrinking matters. Somewhere inside the big blurb of text, a more complicated variant of the simple test is hiding. But if we can’t minimize the input and find it, we will have no chance at catching these kinds of bugs.</p>
+<p>This is also why you should know how combinators for generators shrink. By knowing the minimization patterns, you get a much better generator.</p>
+<p>Parting words This ended up being much longer than I envisioned. It took two hipster-retro lattes, one coffee shop, liqorice, overhearing a conversation about studies, a happy waitress waiting for her boyfriend to get off work, and a rainy day full of downpour to write this. Interestingly, since I forgot my headphones, no music were involved in the making.</p>
+<p>[0] <a href="http://roberto-aloi.com/erlang/notes-on-erlang-quickcheck/">http://roberto-aloi.com/erlang/notes-on-erlang-quickcheck/</a>
+[1] <a href="http://github.com/jlouis/safetyvalve">http://github.com/jlouis/safetyvalve</a>
+[2] <a href="http://github.com/isaiah/transit-erlang">http://github.com/isaiah/transit-erlang</a>
+[3] <a href="http://github.com/jlouis/fuse">http://github.com/jlouis/fuse</a>
+[4] In a way, SQL Injections are just a variant of a weak type coercion, where an SQL expression gets intermingled with a parameter “hole” in that expression. It is most often due to this weak stringly typed identification we see problems with SQL injection.</p>
+
+
+</article>
+
+
+<section class="post-nav">
+    <ul>
+        
+        <li>
+            <a href="https://jlouis.github.io/posts/two-tech-bad-for-you/"><i class="fa fa-chevron-circle-left"></i> Two Technologies which are Bad for You</a>
+        </li>
+        
+        
+        <li>
+            <a href="https://jlouis.github.io/posts/mnesia-and-cap/">Mnesia and Cap <i class="fa fa-chevron-circle-right"></i> </a>
+        </li>
+        
+    </ul>
+</section>
+  
+    
+    
+  
+
+
+
+
+
+</main>
+    <footer>
+        <h6> |
+            Rendered by <a href="https://gohugo.io" title="Hugo">Hugo</a> |
+            <a href="https://jlouis.github.ioindex.xml">Subscribe </a></h6>
+    </footer>
+</div>
+<script src="/js/scripts.js"></script>
+
+
+</body>
+
+</html>
+

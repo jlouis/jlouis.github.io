@@ -1,0 +1,210 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+  <title>Mnesia and Cap - jlouis&#39; Ramblings</title>
+  <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="The HTML5 Herald" />
+<meta name="author" content="Jesper Louis Andersen" /><meta property="og:title" content="Mnesia and Cap" />
+<meta property="og:description" content="We start out with the TL;DR treatise: The mnesia database is not CP, nor AP. And it cannot be CA, because CA doesn’t make any meaningful sense. In short, it is broken with respect to the CAP theorem.
+Note: Things get subtle once you begin digging into the intricacies of the CAP theorem. I am not a native speaker of English, though Danish is “dangerously close”. I apologize in advance for my mistakes, and beg of you to write a correction if I stray too far from understandable prose." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://jlouis.github.io/posts/mnesia-and-cap/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2014-09-23T00:00:00&#43;02:00" />
+<meta property="article:modified_time" content="2014-09-23T00:00:00&#43;02:00" />
+
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Mnesia and Cap"/>
+<meta name="twitter:description" content="We start out with the TL;DR treatise: The mnesia database is not CP, nor AP. And it cannot be CA, because CA doesn’t make any meaningful sense. In short, it is broken with respect to the CAP theorem.
+Note: Things get subtle once you begin digging into the intricacies of the CAP theorem. I am not a native speaker of English, though Danish is “dangerously close”. I apologize in advance for my mistakes, and beg of you to write a correction if I stray too far from understandable prose."/>
+
+<meta name="generator" content="Hugo 0.82.0" />
+    
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" integrity="sha256-l85OmPOjvil/SOvVt3HnSSjzF1TUMyT9eV0c2BzEGzU=" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://jlouis.github.io/fontawesome/css/all.min.css" />
+  
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Slab|Ruda" />
+  
+  
+  <link rel="stylesheet" type="text/css" href="/css/styles.css" /></head>
+
+<body>
+  <div id="container">
+    <header>
+      <h1>
+                <a href="/">jlouis' Ramblings</a>
+            </h1>
+
+      <ul id="social-media">
+             <li>
+               <a href="https://github.com/jlouis" title="GitHub">
+               <i class="fab fa-github fa-lg"></i>
+               </a>
+             </li>
+             <li>
+               <a href="https://twitter.com/jlouis666" title="Twitter">
+               <i class="fab fa-twitter fa-lg"></i>
+               </a>
+             </li>
+      </ul>
+      
+      <p><em>Musings on tech, software, and other things</em></p>
+      
+    </header>
+
+    
+<nav>
+    <ul>
+        
+    </ul>
+</nav>
+
+
+    <main>
+
+
+
+
+<article>
+
+    <h1>Mnesia and Cap</h1>
+
+    
+      <aside>
+    <ul>
+        <li>
+            <time class="post-date" datetime="2014-09-23T00:00:00&#43;02:00">Sep 23, 2014</time>
+        </li>
+        
+        
+
+        
+
+        <li>9 minute read</li>
+    </ul>
+</aside>
+
+    
+
+    
+<div class="featured_image">
+    <a href="https://jlouis.github.io/posts/mnesia-and-cap/" title="Mnesia and Cap">
+        <img src="">
+    </a>
+</div>
+
+
+
+    <p>We start out with the TL;DR treatise: The mnesia database is not CP, nor AP. And it cannot be CA, because CA doesn’t make any meaningful sense. In short, it is broken with respect to the CAP theorem.</p>
+<p>Note: Things get subtle once you begin digging into the intricacies of the CAP theorem. I am not a native speaker of English, though Danish is “dangerously close”. I apologize in advance for my mistakes, and beg of you to write a correction if I stray too far from understandable prose.</p>
+<p>Aside: Some people oppose CAP is a theorem. The argument is based on the inherent informal treatment the theorem gets in literature, and the lack of well-defined premises for the theorem to apply. In spite of that, However, I will use the word “theorem” here. End of aside.</p>
+<p>The subtle thing about the CAP theorem is the ease with which you can misinterpret it. They way you “beat” CAP is by twisting your words until you end up in the land of the informal and then you cheat your way to become a database that beats CAP.</p>
+<p>The CAP theorem is often stated as Consistency, Availability, Partitioning Tolerance—pick two! However, this way of framing CAP is highly misleading. The result is an impossibility result stating that getting those three properties at the same time is impossible. This does not necessarily lead to a situation where a database system can “pick” among the pairs CP, AP and CA. Rather, it turns out that CA doesn’t have any meaningful connotation at all.</p>
+<p>To level the playing field, it is important to note that CAP is a very specific theorem about very specific interactions. The C, consistency, is actually linearizability — a term with very specific meaning and with formal specification. There are numerous good write-ups about CAP out there, and I don’t want to repeat those. Henryr[2] is one, but do read more than one source as this is hard information to convey. Don’t fall into the trap believing this is easy stuff. Also note that there is a complete hierarchy of impossibility results for distributed systems. Of which CAP is the most famous.</p>
+<h2 id="network-partitions">Network partitions</h2>
+<p>A common “trick” is to claim:</p>
+<blockquote>
+<p>We assume network partitions can’t happen. Therefore, our system is CA according to the CAP theorem.</p>
+</blockquote>
+<p>This is a nice little twist. By asserting network partitions cannot happen, you just made your system into one which is not distributed. Hence the CAP theorem doesn’t even apply to your case and anything can happen. Your system may be linearizable. Your system might have good availability. But the CAP theorem doesn’t apply.</p>
+<p>What makes it more odd is that a Postgres cluster together with sharding through PL/Proxy[0] has exactly the same safety semantics as any system as long as there are no network partitions. And if a partition does occur it may even be, depending on configuration, that the PL/Proxy solution falls neatly as CP, whereas your system just loses data.</p>
+<p>In fact, any well-behaved system will be “CA” as long as there are no partitions. This makes the statement of a system being “CA” very weak, because it doesn’t put honesty first. I tries to avoid the hard question, which is how the system operates under failure. By assuming no network partitions, you assume perfect information knowledge in a distributed system. This isn’t the physical reality.</p>
+<p>It is important to understand network partitions not as a discrete “toggle” but as a probability function over the system configuration. Any system has a risk of partitioning due to equipment/hardware failure. The particular configuration defines how risky the system is.</p>
+<p>If you have a 1000+ node cluster over Ethernet, then you can be fairly sure there will be at least one partition going on, all the time. While the risk of a partition between any two machines is rather low, the probabilities team up against us. The reason is that while the risk of a single link fails is low, the risk accumulates when we have many links.</p>
+<p>On the other hand, if you have a 3 node cluster, connected with a dedicated network, then the risk of a partition is much lower. It is not zero. But it may be so low you can accept the risk for your system.</p>
+<p>Beware though. As Peter Bailis and Kyle Kingsbury[1] argues, the risk of a partition is very real. And it is not only limited to hardware only, but can also stem from software—long GC pause times needs specific mention. Large software installations are highly dynamic in nature and their operating point constantly changes. This excerbates the situation a lot.</p>
+<h2 id="axd-301">AXD 301</h2>
+<p>In the Ericsson AXD 301 switch[3], measures are taken such that network reliability is very high. There are two processing boards, connected through a dedicated switch control backplane. If the backplane experiences failure, then chances are that the switch as a whole fails since ATM connections are also moving along the backplane.</p>
+<p>Because of the low number of processors, and the high reliability of backplane, it was deemed unlikely that a switch backplane failure would result in operation termination. Instead, the likely cause for failure is processor error, where one processor dies whereas the other one continues normal operation.</p>
+<p>In such a highly specialized environment, the reliability of the control backplane essentially removes some of the worries which the CAP theorem introduces. In fact, the CAP theorem doesn’t really apply since it can be argued that the system is not even distributed. Risk management would suggest that network partitions are so unlikely that it would not be beneficial to worry about them.</p>
+<h2 id="mnesia">Mnesia</h2>
+<p>Mnesia, running in the AXD 301 switch or on a more unreliable network, protects well against processor failure where one processor board fails in a detectable way while the other continues nominally. In this case, the Mnesia database can be configured to replicate state among both processor boards, and since the other processor board has state, it can take over the operation in the event of a failure.</p>
+<p>However, in the case of a switch fabric failure, mnesia fails to do things correctly.</p>
+<ul>
+<li>Tables configured to live on one node only falls
+into the CP camp. Clients on the wrong side of the partition won’t be able to communicate with the table.
+The other side will have a consistent image though.</li>
+<li>Fragmented (sharded) tables could in principle
+be consistent but not available, so they also fall into the CP camp.</li>
+<li>Replicated tables will throw away data. In the
+split brain scenario, both sides of the partition will keep taking writes. And when the partition heals, you
+will have to pick which side is “correct”. Data from the other side is lost. This is definitely not
+consistent. And arguably, it is not available either: the system accepted a write which it subsequently
+lost. A system like “Jepsen[4]” would easily uncover this situation and show it is very real. We can’t
+automatically heal the system.</li>
+</ul>
+<p>There is a section in mnesias documentation about network failure: “Recovery from Communication Failure” — where it is explicitly stated that in the case of a failure, picking a side from which to recover is outside the scope of mnesia. In other words, we punt the ball and let somebody else worry about this.</p>
+<p>Having established that Mnesia is good at protecting against processor failure, but bad at handling split brain, we have to turn ourselves to the design criteria of mnesia[5]:</p>
+<ul>
+<li>Fast realtime key/value lookup</li>
+<li>Complicated non-realtime queries mainly for
+operation and maintenance</li>
+<li>Distributed data due to distributed
+applications</li>
+<li><em>High fault tolerance</em> [emphasis mine]</li>
+<li>Dynamic re-configuration</li>
+<li>Complex objects</li>
+</ul>
+<p>When designing such a system, trade-offs must invariably be made. The central point for this discussion is high fault tolerance. But it is clear from the document[5] focus were not on handling the split brain scenario at all. Thus, mnesia protects against some failure, but definitely not by taking a stance on the CP/AP choice, which means that network disasters is a manual recovery scenario.</p>
+<p>Mnesia is an excellent database. But it is important to understand it will fall short quickly if you have high data consistency guarantees or if you need an AP split.</p>
+<p>== Solutions</p>
+<p>If you can’t live with the above caveats, pick another database system.</p>
+<p>I’m going to be very partial here. If you need a CP solution on a fairly regular sized data set (less than, say, 5 Terabytes), and can do with Read-Committed isolation levels, pick Postgres.</p>
+<p>If your data set is large, I’m partial to Riak for an AP solution. For a CP solution at large scale, I would probably look at Riak 2.0 right now, plan for a deployment in 6–12 months and have at it.</p>
+<p>In many cases however, it turns out that both of these solutions are overkill.</p>
+<p>If you can manage the risk and disaster recovery, the in-memory properties of Mnesia makes it excellent for many tasks. It does put a size limit on your database since it has to fit in RAM. But for prototypes and smaller system installations it is a very good database solution. You just need to know that it is broken and the ability to scale indefinitely is non-existent.</p>
+<p>Mnesia is excellent for Erlang applications because you keep the database in the same memory space as the application. This makes database queries blazingly fast. It also removes the impedance mismatch since you are storing Erlang terms directly in the database rather than having to traverse a (albeit local) network connection.</p>
+<p>Mnesia is excellent for data which are derivable from somewhere. If you have another database system acting as a low-level log from which you can reconstruct the mnesia data, then it can often simplify a lot of operations.</p>
+<p>I do hope this document clears up some misconceptions about what mnesia is and isn’t. In particular, I want to drive a stake through the virtual vampire that mnesia took a stance w.r.t CAP theorem. In fact, mnesia predates the CAP conjecture itself, so it is logical that another solution was sought. I’m also trying to argue that not heeding CAP isn’t in itself a problem as long as you clearly state that it is so. Many databases out there are broken in some way. Yet they still manage to do good work every day, with few errors in between.</p>
+<p>[0] <a href="https://wiki.postgresql.org/wiki/PL/Proxy">https://wiki.postgresql.org/wiki/PL/Proxy</a>
+[1] <a href="http://queue.acm.org/detail.cfm?id=2655736">http://queue.acm.org/detail.cfm?id=2655736</a> — The Network is Reliable
+[2] <a href="http://henryr.github.io/cap-faq/">http://henryr.github.io/cap-faq/</a>
+[3]There are probably better documents out there, but this one will do: <a href="http://pdf.aminer.org/000/275/505/axe_automatic_quality_of_service_control.pdf">http://pdf.aminer.org/000/275/505/axe_automatic_quality_of_service_control.pdf</a>
+[4] <a href="http://aphyr.com/tags/jepsen">http://aphyr.com/tags/jepsen</a> &amp; <a href="https://github.com/aphyr/jepsen">https://github.com/aphyr/jepsen</a>
+[5] <a href="http://erlang.se/publications/mnesia_overview.pdf">http://erlang.se/publications/mnesia_overview.pdf</a></p>
+
+
+</article>
+
+
+<section class="post-nav">
+    <ul>
+        
+        <li>
+            <a href="https://jlouis.github.io/posts/quickcheck-advice/"><i class="fa fa-chevron-circle-left"></i> Quickcheck Advice</a>
+        </li>
+        
+        
+        <li>
+            <a href="https://jlouis.github.io/posts/joe-goodbye/">{&#39;EXIT&#39;, joe, goodbye} <i class="fa fa-chevron-circle-right"></i> </a>
+        </li>
+        
+    </ul>
+</section>
+  
+    
+    
+  
+
+
+
+
+
+</main>
+    <footer>
+        <h6> |
+            Rendered by <a href="https://gohugo.io" title="Hugo">Hugo</a> |
+            <a href="https://jlouis.github.ioindex.xml">Subscribe </a></h6>
+    </footer>
+</div>
+<script src="/js/scripts.js"></script>
+
+
+</body>
+
+</html>
+
