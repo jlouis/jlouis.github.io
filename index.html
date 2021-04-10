@@ -182,6 +182,38 @@ OTP-13529 Application(s): erts Erlang literals are no longer copied during proce
     
 
     <li >
+      <h1><a href="https://jlouis.github.io/posts/full-queues/" title="Full Queues and Their Woes">Full Queues and Their Woes</a></h1>
+      <aside>
+    <ul>
+        <li>
+            <time class="post-date" datetime="2017-02-18T00:00:00&#43;01:00">Feb 18, 2017</time>
+        </li>
+        
+        
+
+        
+
+        <li>7 minute read</li>
+    </ul>
+</aside>
+
+      
+<div class="featured_image">
+    <a href="https://jlouis.github.io/posts/full-queues/" title="Full Queues and Their Woes">
+        <img src="">
+    </a>
+</div>
+
+
+      <p>Suppose you have a bounded queue of size 10. In a normal setting, you system may load this queue with up to 5 elements. Under load, the queue might increase to say 7 or 8 elements, but you are not going to reach the bound of the queue. Typically the queue is empty, some elements gets added to the queue and then drained again by processing.
+In contrast, suppose the queue is full at 10 elements, and that the load increases on the queue.</p>
+      
+      <a href="/posts/full-queues/">Read more…</a>
+      
+    </li>
+    
+
+    <li >
       <h1><a href="https://jlouis.github.io/posts/ranking-4-million-ql-duels/" title="Ranking 4 Million Quake Live Duels in 1.5 seconds">Ranking 4 Million Quake Live Duels in 1.5 seconds</a></h1>
       <aside>
     <ul>
@@ -334,32 +366,6 @@ JSON How did we get JSON? Well, we had ASN.1 which is a fine format for many thi
       
     </li>
     
-
-    <li >
-      <h1><a href="https://jlouis.github.io/posts/erlang-string-handling/" title="Erlang String Handling">Erlang String Handling</a></h1>
-      <aside>
-    <ul>
-        <li>
-            <time class="post-date" datetime="2014-02-23T00:00:00Z">Feb 23, 2014</time>
-        </li>
-        
-        
-
-        
-
-        <li>14 minute read</li>
-    </ul>
-</aside>
-
-      
-
-      <p>The cat is out of the bag. Now, since WhatsApp had success using Erlang, more people will gravitate toward the platform. One of the common things that will happen as a result is that people who do not understand the string handling capabilities of the Erlang BEAM VM will fail to use it correctly. This costs a lot of unneeded clock cycles and this post aims to thwart it.
- First of all, since this is rather VM specific, it also applies to Elixir users.</p>
-      
-      <a href="/posts/erlang-string-handling/">Read more…</a>
-      
-    </li>
-    
   </ul>
 </section>
 
@@ -378,10 +384,13 @@ JSON How did we get JSON? Well, we had ASN.1 which is a fine format for many thi
     <a class="page-link" href="/page/2/">2</a>
   </li>
   <li class="page-item">
+    <a class="page-link" href="/page/3/">3</a>
+  </li>
+  <li class="page-item">
     <a href="/page/2/" class="page-link" aria-label="Next"><span aria-hidden="true">&raquo;</span></a>
   </li>
   <li class="page-item">
-    <a href="/page/2/" class="page-link" aria-label="Last"><span aria-hidden="true">&raquo;&raquo;</span></a>
+    <a href="/page/3/" class="page-link" aria-label="Last"><span aria-hidden="true">&raquo;&raquo;</span></a>
   </li>
 </ul>
 

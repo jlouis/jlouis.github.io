@@ -1,0 +1,162 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+  <title>Full Queues and Their Woes - jlouis&#39; Ramblings</title>
+  <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="The HTML5 Herald" />
+<meta name="author" content="Jesper Louis Andersen" /><meta property="og:title" content="Full Queues and Their Woes" />
+<meta property="og:description" content="Suppose you have a bounded queue of size 10. In a normal setting, you system may load this queue with up to 5 elements. Under load, the queue might increase to say 7 or 8 elements, but you are not going to reach the bound of the queue. Typically the queue is empty, some elements gets added to the queue and then drained again by processing.
+In contrast, suppose the queue is full at 10 elements, and that the load increases on the queue." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://jlouis.github.io/posts/full-queues/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2017-02-18T00:00:00&#43;01:00" />
+<meta property="article:modified_time" content="2017-02-18T00:00:00&#43;01:00" />
+
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Full Queues and Their Woes"/>
+<meta name="twitter:description" content="Suppose you have a bounded queue of size 10. In a normal setting, you system may load this queue with up to 5 elements. Under load, the queue might increase to say 7 or 8 elements, but you are not going to reach the bound of the queue. Typically the queue is empty, some elements gets added to the queue and then drained again by processing.
+In contrast, suppose the queue is full at 10 elements, and that the load increases on the queue."/>
+
+<meta name="generator" content="Hugo 0.82.0" />
+    
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" integrity="sha256-l85OmPOjvil/SOvVt3HnSSjzF1TUMyT9eV0c2BzEGzU=" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://jlouis.github.io/fontawesome/css/all.min.css" />
+  
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Slab|Ruda" />
+  
+  
+  <link rel="stylesheet" type="text/css" href="/css/styles.css" /></head>
+
+<body>
+  <div id="container">
+    <header>
+      <h1>
+                <a href="/">jlouis' Ramblings</a>
+            </h1>
+
+      <ul id="social-media">
+             <li>
+               <a href="https://github.com/jlouis" title="GitHub">
+               <i class="fab fa-github fa-lg"></i>
+               </a>
+             </li>
+             <li>
+               <a href="https://twitter.com/jlouis666" title="Twitter">
+               <i class="fab fa-twitter fa-lg"></i>
+               </a>
+             </li>
+      </ul>
+      
+      <p><em>Musings on tech, software, and other things</em></p>
+      
+    </header>
+
+    
+<nav>
+    <ul>
+        
+    </ul>
+</nav>
+
+
+    <main>
+
+
+
+
+<article>
+
+    <h1>Full Queues and Their Woes</h1>
+
+    
+      <aside>
+    <ul>
+        <li>
+            <time class="post-date" datetime="2017-02-18T00:00:00&#43;01:00">Feb 18, 2017</time>
+        </li>
+        
+        
+
+        
+
+        <li>7 minute read</li>
+    </ul>
+</aside>
+
+    
+
+    
+<div class="featured_image">
+    <a href="https://jlouis.github.io/posts/full-queues/" title="Full Queues and Their Woes">
+        <img src="">
+    </a>
+</div>
+
+
+
+    <p>Suppose you have a bounded queue of size 10. In a normal setting, you system may load this queue with up to 5 elements. Under load, the queue might increase to say 7 or 8 elements, but you are not going to reach the bound of the queue. Typically the queue is empty, some elements gets added to the queue and then drained again by processing.</p>
+<p>In contrast, suppose the queue is full at 10 elements, and that the load increases on the queue. The additional load has to be dropped, and this is a nice feedback mechanism which tells the caller that you have an overload situation. But also note, that you losing information: namely how much additional load that were added on the system. Unless you add some kind of ghost-counter to your queue, so you know how much data you dropped recently, you have no idea of the load situation apart from the fact that the system is over its load capacity.</p>
+<p>There are many situations in software engineering where this basic principle applies to your organization. Your queues can’t run at the full capacity because then you lose the ability to see what fluctuations are happening. A solution is to track “ghost entries” of your queues. That is, track elements beyond the queue limit with a count only and a timestamp, not storing data. When consuming a ghost-entry, it is consumed immediately, its processing time not counted against the normal processing time. Above a certain amount of ghost entries, you stop caring about them, but it allows you to answer the question of what would happen should you increase the queue a bit in size.</p>
+<p>I claim full queues tend to be a pattern to avoid in software engineering. When you reach the bound, something is amiss in your internals, and you better engineer yourself around that than letting the queue bound be the controller of the flow. When a value is at its maximum, you can’t measure what lies beyond. Interestingly, there are many similar situations, where the concept of a“full” resource blinds you to information that would otherwise have been useful.</p>
+<p>One example is the recently developed BBR congestion control mechanism for TCP[0]. Standing network buffers as queues has been a bane of modern networks for a while now (see BufferBloat). The problem is that in order to stop packet loss, manufacturers add yet more buffers to their equipment and the result is that the TCP algorithm fills up these queues. When this happens, we see increased latency and jitter in our TCP connections, which makes the internet unsuitable for low-latency operations. Luckily BBR is a promising fix for these problems.</p>
+<p>In the BBR-algorithm, it is noted that if a TCP link runs at the full bandwidth utilization, it is impossible to detect a standing queue in the network. In order to optimize latency, the algorithm periodically lowers the bandwidth in order to detect if there is a queue which should be drained in the network. This is exactly the problem of an overflowing queue as above. At the maximal bandwidth, data enters the queue at exactly the same rate as it leaves. So we can’t detect if there is a standing queue in the system. But if we lower the bandwidth utilization, we run the risk of less efficiency in the link. So hence the periodic probing.</p>
+<p>Another example is to run your development team at 100% utilization. If something unforeseen emerges, there is no slack utilization to use, and hence someone has to work overtime to handle the situation or you have to move a deadline. You are essentially in an overflow situation, and thus you can’t detect and react to events beyond the barrier. Had you dropped utilization to, say, 60–80%, then emergencies can be handled as they appear. This is also an example of a “full queue” which permits no flexibility. What usually happens is that the deadline gets moved. And now everyone is unhappy because the deadline was moved.</p>
+<p>Worse, good ideas doesn’t happen at 100% utilization. They happen when you have some slack in the schedule and can spend some extra time tuning parts of the system as it goes along. In any kind of process planning in a factory, people know the price of running the plant at 100% utilization: it gets sensitive to small errors. So nobody does that.</p>
+<p>The same applies to consultancy: run your consultants at 100% utilization, and there will be no way your consultants can stay ahead of the curve by gaining new knowledge. Worse, it is often hard to spread information between consultants when they are all working at 100%. This means knowledge doesn’t get anchored in the business and you lose valuable information you learned on a project.</p>
+<p>A full queue in a Go program means that you have a critical path blocking the speed of the program. But it has no dualized shadow-pricing[1]: if the impeding path is unblocked or removed, you don’t know where the next bottleneck is going to be. If the queue is not full, you can measure the relative change in the queue which can tell you where to worry next.</p>
+<p>If a system is at 70% CPU load, you know that it can handle more work before succumbing to increased processing latency. But at 100% CPU load, you don’t know if your system is overloaded and thus queuing work, or if it is an Erlang system that is just using the additional resources for background processing work. The former is probably bad.</p>
+<p>Another applicability of the idea is that of Netflix“Chaos Monkey”. A system with 100% uptime over a period will not probe any kind of recovery scenario. Thus, your environment is blind to partial failure of subsystems. The Chaos Monkey introduces errors in the system which then works as “checks &amp; balances” making sure other subsystems can cope with partial failure. Amazon’s AWS also seems to be using fault injection methods to make sure systems running on their infrastructure can cope with transient errors[2]. Suppose that the normal injection rate is 1 in a 1,000,000. Then if the error rate increases to 1 in a 1,000 suddenly, the systems will still cope.</p>
+<p>As already written, this insight is well-known. Don Reinertsen[3] has addressed this over the course of many years. At high levels of use, the system can’t cope with more load and it becomes more sensitive. In turn, productivity of the system as a whole tend to falter when this happens. The principles, as this post hopes to show, are widely applicable to more than a single field. The whole concept of “overflow” is dangerous in systems. It is also a good reason for being wary about “bounded queues”. It is better to build a load regulation system on top of an unbounded queue than it is to hard limit the queue bound. It solves the problem, but it pries you from valuable information. At the very least, use something like a ghost-list or provide a warning whenever a queue grows full.</p>
+<p>The ghost-list idea on queues are taken from the ARC cache of ZFS. Starting from the well-known LRU cache, where we knock out the least recently used element from a full cache, we start with an observation: entries which are only referenced once in the LRU cache are wasted space. The 2Q cache solves this by having two caches. One cache runs as an LRU cache, but elements are promoted to the second cache if they have been referenced more than once. It only takes a single bit to handle this, and it wipes out the lone stragglers in the LRU cache.</p>
+<p>ARC improves on the 2Q scheme by observing that the sizes of the 2 caches are static in 2Q. A ghost entry is an entry in the cache referenced by key only. It doesn’t take up much space. Whenever we boot out an element, we keep a ghost key for that element. By keeping ghost-entries for each cache, it is possible for ARC to answer the question “if we had a bit more cache space, would we have been able to successfully hit this element?” And that can guide automatic sizing of the two caches in a 2Q cache (this is a much condensed description, papers have the details).</p>
+<p>[0] Cardwell, Cheng, Gunn, Yeganeh, and Jacobson <a href="http://queue.acm.org/detail.cfm?id=3022184">http://queue.acm.org/detail.cfm?id=3022184</a>
+[1] In linear and mixed-integer programming, this is often used in order to build “what-if” scenarios.
+[2] This is based on intuition on my part. Their network engineers are way better than the fault rate we are seeing, so we can only assume they have built the system to inject faults.
+[3] <a href="https://www.amazon.com/Principles-Product-Development-Flow-Generation/dp/1935401009">https://www.amazon.com/Principles-Product-Development-Flow-Generation/dp/1935401009</a></p>
+
+
+</article>
+
+
+<section class="post-nav">
+    <ul>
+        
+        <li>
+            <a href="https://jlouis.github.io/posts/ranking-4-million-ql-duels/"><i class="fa fa-chevron-circle-left"></i> Ranking 4 Million Quake Live Duels in 1.5 seconds</a>
+        </li>
+        
+        
+        <li>
+            <a href="https://jlouis.github.io/posts/an-erlang-otp-20-0-optimization/">An Erlang/OTP 20.0 optimization <i class="fa fa-chevron-circle-right"></i> </a>
+        </li>
+        
+    </ul>
+</section>
+  
+    
+    
+  
+
+
+
+
+
+</main>
+    <footer>
+        <h6> |
+            Rendered by <a href="https://gohugo.io" title="Hugo">Hugo</a> |
+            <a href="https://jlouis.github.io/index.xml">Subscribe </a></h6>
+    </footer>
+</div>
+<script src="/js/scripts.js"></script>
+
+
+</body>
+
+</html>
+
