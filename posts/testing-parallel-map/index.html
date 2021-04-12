@@ -1,0 +1,234 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+  <title>Testing a Parallel map implementation - jlouis&#39; Ramblings</title>
+  <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="The HTML5 Herald" />
+<meta name="author" content="Jesper Louis Andersen" /><meta property="og:title" content="Testing a Parallel map implementation" />
+<meta property="og:description" content="Erlang programs, often have a a list comprehension which implements the ubiquitous serial map of functional programming:
+map(F, Xs) -&gt; [F(X) || X &lt;- Xs] If, however, the function given as F blocks, then the map function blocks as well. This is not a desirable situation if the elements in Xs are truly independent. We could run all of the comprehension in parallel and then collect the data afterwards. This is the purpose of the pmap function:" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://jlouis.github.io/posts/testing-parallel-map/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2015-10-20T00:00:00&#43;02:00" />
+<meta property="article:modified_time" content="2015-10-20T00:00:00&#43;02:00" />
+
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Testing a Parallel map implementation"/>
+<meta name="twitter:description" content="Erlang programs, often have a a list comprehension which implements the ubiquitous serial map of functional programming:
+map(F, Xs) -&gt; [F(X) || X &lt;- Xs] If, however, the function given as F blocks, then the map function blocks as well. This is not a desirable situation if the elements in Xs are truly independent. We could run all of the comprehension in parallel and then collect the data afterwards. This is the purpose of the pmap function:"/>
+
+<meta name="generator" content="Hugo 0.82.0" />
+    
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" integrity="sha256-l85OmPOjvil/SOvVt3HnSSjzF1TUMyT9eV0c2BzEGzU=" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://jlouis.github.io/fontawesome/css/all.min.css" />
+  
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Slab|Ruda" />
+  
+  
+  <link rel="stylesheet" type="text/css" href="/css/styles.css" /></head>
+
+<body>
+  <div id="container">
+    <header>
+      <h1>
+                <a href="/">jlouis' Ramblings</a>
+            </h1>
+
+      <ul id="social-media">
+             <li>
+               <a href="https://github.com/jlouis" title="GitHub">
+               <i class="fab fa-github fa-lg"></i>
+               </a>
+             </li>
+             <li>
+               <a href="https://twitter.com/jlouis666" title="Twitter">
+               <i class="fab fa-twitter fa-lg"></i>
+               </a>
+             </li>
+      </ul>
+      
+      <p><em>Musings on tech, software, and other things</em></p>
+      
+    </header>
+
+    
+<nav>
+    <ul>
+        
+    </ul>
+</nav>
+
+
+    <main>
+
+
+
+
+<article>
+
+    <h1>Testing a Parallel map implementation</h1>
+
+    
+      <aside>
+    <ul>
+        <li>
+            <time class="post-date" datetime="2015-10-20T00:00:00&#43;02:00">Oct 20, 2015</time>
+        </li>
+        
+        
+
+        
+
+        <li>6 minute read</li>
+    </ul>
+</aside>
+
+    
+
+    
+<div class="featured_image">
+    <a href="https://jlouis.github.io/posts/testing-parallel-map/" title="Testing a Parallel map implementation">
+        <img src="">
+    </a>
+</div>
+
+
+
+    <p>Erlang programs, often have a a list comprehension which implements the ubiquitous serial map of functional programming:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#a6e22e">map</span>(F, Xs) <span style="color:#f92672">-&gt;</span>
+  [F(X) || X <span style="color:#f92672">&lt;-</span> Xs]
+</code></pre></div><p>If, however, the function given as <code>F</code> blocks, then the map function blocks as well. This is not a desirable situation if the elements in <code>Xs</code> are truly independent. We could run all of the comprehension in parallel and then collect the data afterwards. This is the purpose of the pmap function:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#a6e22e">pmap</span>(F, Es) <span style="color:#f92672">-&gt;</span>
+     Parent <span style="color:#f92672">=</span> self(),
+     Running <span style="color:#f92672">=</span> [
+           spawn_monitor(<span style="color:#66d9ef">fun</span>() <span style="color:#f92672">-&gt;</span> Parent <span style="color:#f92672">!</span> {self(), F(E)} <span style="color:#66d9ef">end</span>)
+         || E <span style="color:#f92672">&lt;-</span> Es],
+     collect(Running, <span style="color:#ae81ff">5000</span>).
+</code></pre></div><p>The idea here is we spawn each work unit as a function, and attach a monitor to the spawned function. Once the computation is done, we send the result back to the invoker of pmap/2 together with the pid() of the spawned function. This monitor/pid acts like a future[0] which we can use to later collect the running processes:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#a6e22e">collect</span>([], _Timeout) <span style="color:#f92672">-&gt;</span> [];
+  collect([{Pid, MRef} | Next], Timeout) <span style="color:#f92672">-&gt;</span>
+    <span style="color:#66d9ef">receive</span>
+      {Pid, Res} <span style="color:#f92672">-&gt;</span>
+        erlang:demonitor(MRef, [flush]),
+        [{ok, Res} | collect(Next, Timeout)];
+      {<span style="color:#960050;background-color:#1e0010">‘</span>DOWN<span style="color:#960050;background-color:#1e0010">’</span>, MRef, process, Pid, Reason} <span style="color:#f92672">-&gt;</span>
+        [{error, Reason} | collect(Next, Timeout)]
+    <span style="color:#66d9ef">after</span> Timeout <span style="color:#f92672">-&gt;</span>
+      exit(pmap_timeout)
+    <span style="color:#66d9ef">end</span>.
+</code></pre></div><p>There are two cases of collection. Either there are no processes spawned, in which case we can return the empty list. Or we have a pair of a PID and a MonitorRef. In this case, we do a selective recieve from the mailbox in which we expect a result containing the PID. This ought to force the order in which we receive answers to be the same as the order in which the worker processes were invoked.</p>
+<p>Once we have the result, we remove the monitor and set the ‘flush’ option to make sure it gets wiped from our mailbox as well should it have made its way in there. Then we recursively collect more results.</p>
+<p>Two error paths exist, which we must handle. If the call F(X) in the process fails to return, then we must handle this error. Since we have a monitor on the process, this will result in an asynchronous ‘DOWN’ message sent into our mailbox. So we grab that and return it as an error.</p>
+<p>Finally, if we are blocked for more than Timeout milli-seconds, we regard the computation as a whole as an error and crash ourselves. Your mileage may vary here, but for my purpose this is an adequate assumption to make.</p>
+<hr>
+<p>Writing the function is only half the battle. How do we test it? There are three major properties of the parallel map function which makes it fairly easy to write a test for:</p>
+<ul>
+<li>It should behave the same as the serial version of a map, as written above.</li>
+<li>The fact that we are concerned about blocking behavior is not important in the test.</li>
+<li>It has the signature of a purely functional function. Even though its implementation internals are not, any user of the function can regard it as being a purely functional implementation. Had this been OCaml or Standard ML, the module abstraction would be able to hide the fact we are using parallel invocation behind the scenes.</li>
+</ul>
+<p>However, there is also a property which makes it fairly hard to write a test for: if running a test case, it is very likely we will get the same schedule every time we run. So unless we block in the <code>F</code> function, we can’t test alternative schedules.</p>
+<p>Blocking in a test case makes it slow. So now we have the option of not testing alternative schedules, or slowing down the tests it seems. There is a way around this in Erlang which is to start the VM with the <code>+T</code> flag. This flag will randomize the scheduler and if we then run many tests back to back, we will eventually get alternative schedules.</p>
+<p>In this exposition, we will explore another path: Quickcheck and PULSE[1]. We note that we can write a fully stateless test for the parallel map function, and then we can use PULSE to randomize the scheduler of Erlang. An added benefit of this approach is that PULSE automatically compresses time: if every process under its control are sleeping, it will “forward” time to the next point at which something interesting happens. We start out by writing a testing module:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang">-module(dht_par_eqc).
+  <span style="color:#f92672">-</span>compile(export_all).
+  <span style="color:#f92672">-</span>include_lib(<span style="color:#960050;background-color:#1e0010">“</span>eqc<span style="color:#f92672">/</span>include<span style="color:#f92672">/</span>eqc.hrl<span style="color:#960050;background-color:#1e0010">”</span>).
+  <span style="color:#f92672">-</span>include_lib(<span style="color:#960050;background-color:#1e0010">“</span>pulse<span style="color:#f92672">/</span>include<span style="color:#f92672">/</span>pulse.hrl<span style="color:#960050;background-color:#1e0010">”</span>).
+</code></pre></div><p>And then we write down a crasher function:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#a6e22e">crasher</span>() <span style="color:#f92672">-&gt;</span>
+     <span style="color:#f92672">?</span>LET(F, function1(int()),
+       <span style="color:#66d9ef">fun</span>
+         (<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>) <span style="color:#f92672">-&gt;</span> timer:<span style="color:#a6e22e">sleep</span>(<span style="color:#ae81ff">6000</span>); <span style="color:#75715e">%% Fail by timing out
+</span><span style="color:#75715e"></span>         (<span style="color:#ae81ff">0</span>) <span style="color:#f92672">-&gt;</span> exit(err); <span style="color:#75715e">%% Fail by crashing
+</span><span style="color:#75715e"></span>         (X) <span style="color:#f92672">-&gt;</span> F(X) <span style="color:#75715e">%% Run normally
+</span><span style="color:#75715e"></span>       <span style="color:#66d9ef">end</span>).
+</code></pre></div><p>The idea of this function is that it generates a random function F and then alters it slightly: Giving it -1 will have it sleep for 6000ms. Giving it 0 will have it crash. And every other value it will behave as F.</p>
+<p>We can also write down a function which explains the expected result of running the parallel map function:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#a6e22e">expected_result</span>(F, Xs) <span style="color:#f92672">-&gt;</span>
+      <span style="color:#66d9ef">case</span> [X || X <span style="color:#f92672">&lt;-</span> Xs, X <span style="color:#f92672">==</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>] <span style="color:#66d9ef">of</span>
+          [] <span style="color:#f92672">-&gt;</span>
+            [<span style="color:#66d9ef">case</span> X <span style="color:#66d9ef">of</span>
+               <span style="color:#ae81ff">0</span> <span style="color:#f92672">-&gt;</span> {error, err};
+               N <span style="color:#f92672">-&gt;</span> {ok, F(N)} <span style="color:#66d9ef">end</span>
+             || X <span style="color:#f92672">&lt;-</span> Xs];
+          [_|_] <span style="color:#f92672">-&gt;</span>
+              {&#39;EXIT&#39;, pmap_timeout}
+      <span style="color:#66d9ef">end</span>.
+</code></pre></div><p>We look for a value of -1. If this value is present, we expect the result to be a pmap_timeout. Otherwise, we run through the <code>Xs</code> and analyze them one by one through a simple list comprehension, reflecting the responses from the crasher function.</p>
+<p>The function here calculates the result as if it had been run serially. This ensures we verify that our parallel version has the same behaviour and interface as the serial version, with the small change that the function <code>F</code> is run in a crash-resistent manner and errors are caught and transformed into terms.</p>
+<p>Now, we can write down the main property. The idea is to generate a list of inputs in which error cases are present, but fairly rare. Once generated, we use the ?PULSE macro to run the parallel map under control of PULSE. Once we have a Result, we can verify that the result matches the expected output:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#a6e22e">prop_pmap</span>() <span style="color:#f92672">-&gt;</span>
+      <span style="color:#f92672">?</span>FORALL([F, Xs],
+              [crasher(),
+               list( frequency([
+                       {<span style="color:#ae81ff">10</span>,<span style="color:#ae81ff">0</span>},
+                       {<span style="color:#ae81ff">1</span>, <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>},
+                       {<span style="color:#ae81ff">1000</span>, nat()} ]) ) ],
+        <span style="color:#f92672">?</span>PULSE(Result, (<span style="color:#66d9ef">catch</span> dht_par:<span style="color:#a6e22e">pmap</span>(F, Xs)),
+          <span style="color:#66d9ef">begin</span>
+              Expected <span style="color:#f92672">=</span> expected_result(F, Xs),
+              equals(Result, Expected)
+          <span style="color:#66d9ef">end</span>)).
+</code></pre></div><p>We can use this to run numeruos test cases. Here we run the checker for 2 minutes:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#ae81ff">25</span><span style="color:#f92672">&gt;</span> eqc:<span style="color:#a6e22e">module</span>({testing_time, <span style="color:#ae81ff">120</span>}, dht_par_eqc).
+prop_pmap: ................................................
+.........................................................(x10)
+...........................................................
+.........................................(x100)............
+...........................................................
+.............................(x1000).......................
+...........................................(x100).......
+Time limit reached: <span style="color:#ae81ff">120</span>.<span style="color:#ae81ff">0</span> seconds.
+
+OK, passed <span style="color:#ae81ff">77800</span> tests
+[]
+</code></pre></div><p>In two minutes, we have generated 77800 test cases. Far more than we would have been able to with blocking calls in there. The power of PULSE shows itself since it realizes that the processes under its control can’t continue without time passing and then it automatically forwards time to the next event point.</p>
+<p>[0] Note the notions of future and promise are not set entirely in stone. Here, a future is used in the meaning of a read-only value.</p>
+<p>[1] PULSE is a scheduler randomizer. It will explore random schedules rather than use the standard Erlang schedule. It transforms Erlang code such that it runs under a manager process that control in which order processes are going to run. This allows you to weed out parallel bugs in the code base which are due to races in concurrent invocation.</p>
+
+
+</article>
+
+
+<section class="post-nav">
+    <ul>
+        
+        <li>
+            <a href="https://jlouis.github.io/posts/scalability-capacity-sensitivity/"><i class="fa fa-chevron-circle-left"></i> On Scalability, Capacity, and Sensitivity</a>
+        </li>
+        
+        
+        <li>
+            <a href="https://jlouis.github.io/posts/full-queues/">Full Queues and Their Woes <i class="fa fa-chevron-circle-right"></i> </a>
+        </li>
+        
+    </ul>
+</section>
+  
+    
+    
+  
+
+
+
+
+
+</main>
+    <footer>
+        <h6> |
+            Rendered by <a href="https://gohugo.io" title="Hugo">Hugo</a> |
+            <a href="https://jlouis.github.io/index.xml">Subscribe </a></h6>
+    </footer>
+</div>
+<script src="/js/scripts.js"></script>
+
+
+</body>
+
+</html>
+

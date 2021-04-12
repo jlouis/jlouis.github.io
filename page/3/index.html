@@ -72,6 +72,57 @@
     
 
     <li class="first" >
+      <h1><a href="https://jlouis.github.io/posts/why-erlang-mk/" title="Why I use erlang.mk">Why I use erlang.mk</a></h1>
+      <aside>
+    <ul>
+        <li>
+            <time class="post-date" datetime="2013-10-28T00:00:00Z">Oct 28, 2013</time>
+        </li>
+        
+        
+
+        
+
+        <li>2 minute read</li>
+    </ul>
+</aside>
+
+      
+
+      <p>Here is our typical Erlang project. And note we are on a pretty slow Mac OSX filesystem and a 5400 RPM disk. Not the fastest in the world. If I run a rebar-compile from cold, we get the following a timing of 26 seconds. Doing the same with erlang.mk is 24 seconds. Note that erlang.mk only uses one thread, whereas rebar is parallelizing the build and is using all 4 cores in the machine.</p>
+      
+      <a href="/posts/why-erlang-mk/">Read more…</a>
+      
+    </li>
+    
+
+    <li >
+      <h1><a href="https://jlouis.github.io/posts/evil-postgres-bug/" title="An Evil Postgres Bug">An Evil Postgres Bug</a></h1>
+      <aside>
+    <ul>
+        <li>
+            <time class="post-date" datetime="2013-10-07T00:00:00Z">Oct 7, 2013</time>
+        </li>
+        
+        
+
+        
+
+        <li>3 minute read</li>
+    </ul>
+</aside>
+
+      
+
+      <p>So, I have this QLGlicko project. It consists of a web scraper which takes in duel matches played in the game of Quake Live—and stores them in a Postgres database. These duels are then analyzed and I run the Glicko 2 (see http://glicko.net/) ranking system on them to tell people who are currently the best player on a given map.
+ The system works well, but I was tired of maintaining it on a Linux machine for several reasons.</p>
+      
+      <a href="/posts/evil-postgres-bug/">Read more…</a>
+      
+    </li>
+    
+
+    <li >
       <h1><a href="https://jlouis.github.io/posts/an-initial-post/" title="An Initial Post">An Initial Post</a></h1>
       <aside>
     <ul>
