@@ -1,0 +1,342 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+  <title>ProgLang design with evidence - jlouis&#39; Ramblings</title>
+  <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="The HTML5 Herald" />
+<meta name="author" content="Jesper Louis Andersen" /><meta property="og:title" content="ProgLang design with evidence" />
+<meta property="og:description" content="Let us assume the programming language market is effective and free. In this case, the best programming languages are the most popular ones: PHP, Javascript, Java, C#, C, C&#43;&#43; and so on. By definition, fringe languages can’t be the best languages. New fringe languages, like Go and Rust still has a chance in this world order, but long-time languages like Common Lisp, Haskell and OCaml are all dead. They have tried to show their worth for real-world development, but have been forever displaced into the dark corners of academia." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://jlouis.github.io/posts/proglang-design-evidence/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2014-12-05T00:00:00&#43;01:00" />
+<meta property="article:modified_time" content="2014-12-05T00:00:00&#43;01:00" />
+
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="ProgLang design with evidence"/>
+<meta name="twitter:description" content="Let us assume the programming language market is effective and free. In this case, the best programming languages are the most popular ones: PHP, Javascript, Java, C#, C, C&#43;&#43; and so on. By definition, fringe languages can’t be the best languages. New fringe languages, like Go and Rust still has a chance in this world order, but long-time languages like Common Lisp, Haskell and OCaml are all dead. They have tried to show their worth for real-world development, but have been forever displaced into the dark corners of academia."/>
+
+<meta name="generator" content="Hugo 0.82.0" />
+    
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" integrity="sha256-l85OmPOjvil/SOvVt3HnSSjzF1TUMyT9eV0c2BzEGzU=" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://jlouis.github.io/fontawesome/css/all.min.css" />
+  
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Slab|Ruda" />
+  
+  
+  <link rel="stylesheet" type="text/css" href="/css/styles.css" /></head>
+
+<body>
+  <div id="container">
+    <header>
+      <h1>
+                <a href="/">jlouis' Ramblings</a>
+            </h1>
+
+      <ul id="social-media">
+             <li>
+               <a href="https://github.com/jlouis" title="GitHub">
+               <i class="fab fa-github fa-lg"></i>
+               </a>
+             </li>
+             <li>
+               <a href="https://twitter.com/jlouis666" title="Twitter">
+               <i class="fab fa-twitter fa-lg"></i>
+               </a>
+             </li>
+      </ul>
+      
+      <p><em>Musings on tech, software, and other things</em></p>
+      
+    </header>
+
+    
+<nav>
+    <ul>
+        
+    </ul>
+</nav>
+
+
+    <main>
+
+
+
+
+<article>
+
+    <h1>ProgLang design with evidence</h1>
+
+    
+      <aside>
+    <ul>
+        <li>
+            <time class="post-date" datetime="2014-12-05T00:00:00&#43;01:00">Dec 5, 2014</time>
+        </li>
+        
+        
+
+        
+
+        <li>17 minute read</li>
+    </ul>
+</aside>
+
+    
+
+    
+<div class="featured_image">
+    <a href="https://jlouis.github.io/posts/proglang-design-evidence/" title="ProgLang design with evidence">
+        <img src="">
+    </a>
+</div>
+
+
+
+    <p>Let us assume the programming language market is effective and free. In this case, the best programming languages are the most popular ones: PHP, Javascript, Java, C#, C, C++ and so on. By definition, fringe languages can’t be the best languages. New fringe languages, like Go and Rust still has a chance in this world order, but long-time languages like Common Lisp, Haskell and OCaml are all dead. They have tried to show their worth for real-world development, but have been forever displaced into the dark corners of academia.</p>
+<p>The problem, by far, is that we don’t design languages based on evidence, but design them based on whim. New programming languages are designed by looking at existing languages and re-hashing the ideas. Only rarely does a language introduce a genuinely new concept from research. There has been some initial work by Andreas Stefik et.al, in the language <a href="http://quorunlanguage.com">Quorum</a> where language constructs are designed by evidence. This means that until you have a stastistical significant test for a given construct, it is not included.</p>
+<p>But most languages are designed at random based on other constructions:</p>
+<ul>
+<li>
+<p>Standard ML has a formal specification, which is as close to being mechanized (In Twelf) as you can get. This means the language bases itself under an assumption of “Logic is a good guide for language design”. In the world of proof assistants and very formal settings, this is almost unvariably true. There is no way you can get a system like Coq, Twelf, or Agda to work without using the knowledge of Logic. Otherwise, encoding logic and mathematics would be almost impossible.</p>
+</li>
+<li>
+<p>Haskell and OCaml are functional languages, picking typical functional features. Both languages have a tiny kernel doing the base computation. But also, both languages are growing bigger and bigger with every new release. Learning all parts of the languages will take time.</p>
+</li>
+</ul>
+<p>Essentially, this is the school of language academia. By alluding to logic and math, the hope is to get good, elegant and productive programming languages. The problem however, is that we have no evidence. There are relatively few controlled experiments, and those which exist have several shortcomings.</p>
+<p>On the contrary, most industrial languages are rehashes of older languages. You can trace most modern languages back to C[0]. And a lot of the language designs are influenced by a few ideas: imperative execution, and object oriented programming. Even modern variants of the strain, Go and Rust, takes inspiration from the world of the well-known, rather than inventing something truly new. The traits of these languages are:</p>
+<ul>
+<li>
+<p>Each new generation is a rehash of an older generation with ideas systematically cherry-picked from academia: Garbage collection, lambda-expressions, parametric polymorphism (generics), structural subtyping to name a few examples.</p>
+</li>
+<li>
+<p>A distinct industry-focus: large and comprehensive standard libraries with support for the data format of the decade: XML, JSON, or ASN.1. Large IDEs that support the development effort. Eco-systems for todays technology. Debuggers, profilers, linters and static analysis tools to make up for the shortcomings of the language.</p>
+</li>
+<li>
+<p>Large development teams, spending efforts on maximizing the language performance, often paid for by the industry.</p>
+</li>
+<li>
+<p>Development effort does not focus on research and features, but on stability and robustness.</p>
+</li>
+<li>
+<p>The programmer is expendable to a certain extent. It is more imporant getting 100 people to work together than to get each one to perform at their optimum.</p>
+</li>
+</ul>
+<p>To a certain extent, the industry will find an optimal language for programmers. The inputs deciding the language will be many, some of which will be highly doubtful: programmer availability, programmer expendability, safety in numbers, nobody ever got fired for choosing IBM.</p>
+<p>But an optimal language could be a locally extreme value. It may be there are other languages out there which are far better for the industry, but random process would have we ended up picking a weaker language as the language we choose.</p>
+<p>Worse, in industry, you may have a selection bias against the best language. Managers measure their power in the size of their staff. A better language means you need a smaller staff to carry out the task, which is in opposition to gaining power within the corporate structure. Consultants have a harder time working on projects with fewer oppurtunities for fixing errors. Employees lose their sense of value if they can’t fix the bugs the programming language inadvertedly introduce for them. Certain programmers take pride in solving deep complex shared-state bugs by lurking over a debugging screen for days.</p>
+<p>In the following I revisit old behemoths of discussion. My purpose is to make it obvious that there are many good questions to ask in the design of programming languages. I am not viewing language design from a theoretic perspective, nor am I viewing it entirely from a question of practicality. That is, the language design doesn’t stop at the construction of an operational semantics specification. And likewise, you can’t say you define a language by its sole implementation and thus define how it operates.</p>
+<h2 id="types">Types</h2>
+<p>With respect to types, there are two major claims:</p>
+<ul>
+<li>Static typing makes the programmers more effective and productive.</li>
+<li>Dynamic typing makes the programmers more effective and productive.</li>
+</ul>
+<p>The experiment here has a null hypothesis:</p>
+<blockquote>
+<p>There are no measureable difference in programmer productivity in a controlled experiment where we evaluate a dynamic vs static typing discipline.</p>
+</blockquote>
+<p>If there is a difference, it doesn’t matter that much to which side it falls in the first place. Just that there is a measurable difference in itself would be interesting.</p>
+<p>It is not a priori obvious what works best. There are good arguments for and against the static/dynamic typing discipline question. What makes it hard to answer decisively is that the experience of different programmers are varying to a large degree.</p>
+<p>As an example, proponents of static typing often cite that it works well for large programs, since it captures bugs in the large. Yet, the key of software modularity is to split up programs in small modules which then can work independently. And modularity works in a dynamic typing discipline as well; weakening the claim considerably.</p>
+<p>On the other hand, proponents of dynamic typing often cite the added tediousness of adding types to code as a slowdown in productivity. Yet, type inference automatically discovers types, and constructions like “open types” and “polymorphic variants” in OCaml can simplify many situations where the use of static typing would normally require a lot of ascriptional work of relating type to value.</p>
+<p>Dan Luu has done a magnificent job. His post “<a href="http://danluu.com/empirical-pl/">The Empirical Evidence That Types Affect Productivity and Correctness</a>” summarizes a large set of papers and goes through each one in order to describe what it is trying to measure and how well it does it. In almost every paper, he has valid critique of the experiment, methodology and approach.</p>
+<p>The point is that while these papers shows almost no effect in either direction, they are often used to “Justify your view” in one direction or the other. At best, many of these studies are inconclusive. And unfortunately, few people read the underlying papers, which means more misinformation.</p>
+<p>There are other interesting questions to ask inside the umbrella of types. For instance:</p>
+<ul>
+<li>
+<p>The language will automatically convert values of differing types under certain operators. A good example is promotion of integers to floats in C, integer size conversions in C, or the automatic conversion of integers to strings in string concatenation in Javascript. Commonly this is called weak typing, but other names exist for the concept.</p>
+</li>
+<li>
+<p>The language disallows automatic conversion and forces the programmer to convert between types. This is true in Python, Ruby, Go, OCaml, Haskell, Erlang and a whole other slew of languages. Often this is called strong typing.</p>
+</li>
+</ul>
+<p>Again, it is a toss-up what is the most effective. Certainly, weak typing is beneficial when the programmer gets to type less and the conversions work like they should. Given this view, strong typing feels like a nuisance and a source of irritation. On the other hand, the automatic conversion sometimes introduces subtle bugs in the program which will not occur in a language with manual type conversion.</p>
+<h2 id="null">NULL</h2>
+<p>Many languages include a “NULL” or “nil” value, which is represented as a pointer to the address of zero. In the Java platform, the dreaded NullPointerException rears its ugly head whenever you try to dereference such a value.</p>
+<p>Many academic languages, and a few industrial ones (Erlang for example), has no concept of a nil value. Instead, you have to explicitly nominate when a value can be invalid. This default is akin to defining all your database columns as NOT NULL.</p>
+<p>Again, we have a relevant question: is there a statistically significant difference in the error rate of languages with a NULL default compared to a NOT NULL default.</p>
+<h2 id="garbage-collection">Garbage collection</h2>
+<p>Does a garbage collector improve productivity? And for what kind of programs? Certainly, not having to manually work with memory is helpful in many situations. But it is also true that a garbage collector doesn’t automatically remove memory leaks. Bad programming can still make the program use up more memory than it should. And a logical memory leak is still possible. Haskell for instance—with its lazy evaluation model—is prone to leaking computation into memory in what could be called a thunk-leak.</p>
+<p>The benefit of faster development due to Garbage collection must be measured against the time used for tuning the GC algorithm of the program running in production. Increased service latency due to long GC pause times is a very real problem and it is not a priori clear the inclusion of garbage collection by default is a step in the right direction.</p>
+<h2 id="persistentephemeral-data">Persistent/ephemeral data</h2>
+<p>In programs, data are either persistent (immutable) or ephemeral (mutable). Functional programming languages usually default on using persistent data structures, eschewing the ephemeral ones in the process. It is not that you can’t get access to mutable structure when you need it. It is simply not the default mode of operation. In such languages a question arises:</p>
+<blockquote>
+<p>Null hypothesis: there are no measurable difference between programs written with mutable data structures and immutable data structures.</p>
+</blockquote>
+<p>Another worthy hypothesis to ask is if there is a measurable difference in the efficiency of the executing software, depending on data structure choice. The answer is usually yes, but a more interesting question is wether in practice the choice between an O(n) ephemeral structure and a O(n lg n) persistent ditto matters much. And what robustness guarantees are obtained by picking one over the other.</p>
+<h2 id="other-questions">Other questions</h2>
+<p>While I have only picked a few questions, here are some other interesting questions, I like:</p>
+<ul>
+<li>
+<p>Does exceptions help or hinder the programmer in producing correct programs.</p>
+</li>
+<li>
+<p>Are generics valuable in an OO-style language, or do they just add so much complexity it hurts the programmer.</p>
+</li>
+<li>
+<p>Does syntax matter? And how much?</p>
+</li>
+<li>
+<p>Many operating systems provide memory protection between executing programs by means of using the hardware MMU for the purpose. To what extent would it help to add such a construction to a language design?</p>
+</li>
+<li>
+<p>Does size limits on integers like int32 and int64 by default lead to bugs? How much slower are arbitrarily sized integers by default in large programs?</p>
+</li>
+<li>
+<p>To what extent can a well-designed standard library and 3rd party library availability cover for a badly designed language? (Note: this is a fun experiment. Kill npm and have Node.js people implement everything from scratch. Compare to Python. Compare to Go. Compare to OCaml)</p>
+</li>
+<li>
+<p>Does compilation speed affect programmer productivity?</p>
+</li>
+<li>
+<p>Is there any measurable advantage in having a REPL for the language?</p>
+</li>
+<li>
+<p>Will full, global, ubiquitous introspection capability help the programmer under development? Under production?</p>
+</li>
+<li>
+<p>If we measure how well a program performs over its lifetime (analysis, design, development, deployment and most important maintenance under production), is there any difference?</p>
+</li>
+<li>
+<p>Is there any correlation between language choice and development time?</p>
+</li>
+<li>
+<p>Is there any correlation between language choice and error rate?</p>
+</li>
+<li>
+<p>Is there any correlation between language choice and execution efficiency?</p>
+</li>
+<li>
+<p>Does language choice affect time-to-alteration for an existing program of a certain size.</p>
+</li>
+</ul>
+<h2 id="a-critique-of-current-experiments">A critique of current experiments</h2>
+<p>Currently, our experiments are weak and use some dubious methodology when carrying out experiments of programming languages.</p>
+<p>It is important to stress the activity of programming is one involving human beings. That is, the programming language is the ultimate test of user experience (UX) for a computer. The programming language interface to the computer is the universal one which lets you write anything you want. In contrast to many normal programs which are about limiting the experience to a few well-defined things you can do, the idea of programming languages falls in the opposite category, where the goal is to be able to extend the existing machine. And do so with maximal efficiency and productivity.</p>
+<p>Because it is a human activity, it has to involve human beings. This means we have to select a sample of programmers to test our hypothesis on.</p>
+<p>It is here we see, what I often deem to be an almost universal weakness: test on freshmen. The problem with undergraduates in the 1st year is variance. Some will have seen programming languages for the first time when they enter the study. And some will have been programming for 5–10 years in advance. This variant diversity hurts your statistical models since you need far larger groups to show a difference. In fact, it may be you can avoid a lot of the problems by only selecting those students with no to little prior programming experience.</p>
+<p>The other weakness of freshmen are the lack of experience they may have. Some people claim that while dynamic typing is easier to learn, static typing is only appreciated when you have written code for some time. If true, this will affect your experiments.</p>
+<p>Another weakness is not to control for language difference. Comparing Standard ML to Python for instance:</p>
+<ul>
+<li>
+<p>Python has a vast large standard library. Standard ML does not. You will have to cripple Pythons Stdlib so it is on par with SML or extend the SML library to the same extent as Pythons.</p>
+</li>
+<li>
+<p>Python has built-in hash-tables in the form of “dictionaries”. You will have to provide the same structure to users of Standard ML. Otherwise, you risk the availability of dictionaries in Python to be a confounding variable in your experiment.</p>
+</li>
+<li>
+<p>How do people interact with Python? If they have access to an IDE providing automatic help for programming, it will confound the experiment.</p>
+</li>
+</ul>
+<p>While it may seem unfair to artificially cripple one language to match it to the other language, it is important to ask “what are you measuring?”. Any experiment is about controlling for weaknesses in the method used. And ignorance is the fastest way to a wrong conclusion.</p>
+<p>The question of generic programmer variance is also up in the open. There is an oft cited paper, “<a href="http://www.dtic.mil/dtic/tr/fulltext/u2/645438.pdf">EXPLORATORY EXPERIMENTAL STUDIES COMPARING ONLINE AND OFFLINE PROGRAMING PERFORMANCE</a>”, from 1966. The paper is often cited in the scope of the 10x programmer myth: “some programmers are 10 times as effective as their colleagues”. In reality the paper is sound statistical work providing two major insights at the time:</p>
+<ul>
+<li>
+<p>Programmers would either write their programs on punched cards with no help from a computer, or their would develop the program “online”directly on the computer. The former, offline, method was argued to be better by some because it forced the programmer to think before writing code. The study found that online editing is significantly better. At the time, this was a trade-off since time on the computer was expensive and limited. Today, this limitation is non-existent.</p>
+</li>
+<li>
+<p>Programmers writing in higher-level languages (JOVIAL Time-sharing System—JTS) were significantly faster at solving the task compared to programmers writing in a low-level language.</p>
+</li>
+</ul>
+<p>In passing, the paper mentions the large variance between programmers and invites more research in that area. It would seem this kind of research is still up for grabs for any interested party.</p>
+<p>Furthermore, it would be interesting to see if programming variance changes with experience. Clearly, freshmen, one with 2 months of programming experience, the other with 10 years would likely be different. The programmer with 10 years of experience is more skilled. Even in the event where the language in which they are writing is a new language. Writing code in different languages have a peculiar overlap and learning a new language becomes easier the more languages you happen to know.</p>
+<p>But take the same two people as graduates and 3–4 years of experience in industry. Is the variance still large, or has it changed in any way?</p>
+<p>The kind of tasks in the tests also needs some work. A large chunk of modern programming is not about building something genuinely new, but rather to glue together existing systems. A lot of programmer productivity today can be measured on how well code fit together. Interestingly, a language like Go seem to focus much more on seamless implicit glueing of code than many other languages. I’d love to see an experiment where one is to integrate with existing code.</p>
+<p>Another experiment I would like to see is the solution of a typical industrial problem with industrial and academic languages in the experiment. Implementing a spelling checker, while interesting, is not the typical task of a modern programmer.</p>
+<p>It is my hope we see more falsifying experiments. We need experiments that soundly attempt to disprove certain commonly held beliefs. It would seems that we are a point where we have lots of questions and relatively few sound answers. Starting in the small by destroying some common myths would be a good way to move us foward.</p>
+<p>The purpose of science is surprise. We want to have studies which surprises us and shows us something deeper about the world we did not know. I’d love repeated experiments which fails to reject to null hypothesis that static/dynamic languages are equally productive. That would argue the discussion is pointless. Or perhaps that there is a significant difference, which also makes the discussion pointless. It would move us forward and we could start looking at other merits of static/dynamic typing.</p>
+<p>Language design is not additive. Like genes, changing one aspect of a language may affect other aspects. Rob Pike put it succinctly in “<a href="http://commandcenter.blogspot.dk/2012/06/less-is-exponentially-more.html">Less is exponentially more</a>”, where he makes the argument that it is the sum and not the individual parts which makes up a language design.</p>
+<p>In this light, I also hope for surprising outcomes:</p>
+<ul>
+<li>
+<p>The execution efficency of programs doesn’t matter as much as proper software design. Efficient parallelism is more important than single-core execution speed.</p>
+</li>
+<li>
+<p>Logic programming in Prolog or Mercury yields significantly fewer program errors than writing in Haskell. The programs also run faster.</p>
+</li>
+<li>
+<p>Dependent types are found to slow down the programmer too much. Hindley-milner inference turns out to be the soft-spot providing the best of all worlds.</p>
+</li>
+<li>
+<p>There is no measurable advantage of writing unit tests for a statically typed language.</p>
+</li>
+<li>
+<p>In practice, QuickCheck finds all the bugs which was found by formal verification in Coq—and did so in 10 times less development effort.</p>
+</li>
+<li>
+<p>Modern C static checkers: flexelint, coverity, address sanitization, and valgrind can find any bug in practice so it doesn’t matter C has undefined behaviour.</p>
+</li>
+<li>
+<p>Functional programming in the large is more memory efficient than imperative programming and thus executes faster on modern memory-constrained machines.</p>
+</li>
+<li>
+<p>Using formal parser and grammar theory can eliminate all security bugs w.r.t input parsing.</p>
+</li>
+<li>
+<p>DSLs are easier to write in homoiconic languages, especially Clojure. It is found that they are far harder to write in Haskell.</p>
+</li>
+<li>
+<p>Experiments show message passing is more correct and more efficient than shared-memory methods of software-transactional-memory, mutexes and lock free data structures.</p>
+</li>
+<li>
+<p>The myth of garbage collection pauses is dispelled and garbage collection can be used for hard realtime systems.</p>
+</li>
+<li>
+<p>Over a large experiment, it is shown that there is a frequency-dependent system in which most people prefer imperative languages, but a small size of the population thrives on using functional programming. There is no hope in forcing one group to use the tools of the other group.</p>
+</li>
+<li>
+<p>An experiment connects the aptitude of natural language to the aptitude of programming languages. As a corollary, women—usually outpacing men in language-based tests—happens to be the better programmers on average.</p>
+</li>
+<li>
+<p>It is shown that the 10x-programmers outperform others not due to their ability to program, but because they have a much better understanding of human sociology.</p>
+</li>
+</ul>
+<p>[0] The right root is perhaps ALGOL68, but certainly, the syntax and semantics of C permeate almost all modern programs written.</p>
+
+
+</article>
+
+
+<section class="post-nav">
+    <ul>
+        
+        <li>
+            <a href="https://jlouis.github.io/posts/mnesia-and-cap/"><i class="fa fa-chevron-circle-left"></i> Mnesia and Cap</a>
+        </li>
+        
+        
+        <li>
+            <a href="https://jlouis.github.io/posts/ranking-4-million-ql-duels/">Ranking 4 Million Quake Live Duels in 1.5 seconds <i class="fa fa-chevron-circle-right"></i> </a>
+        </li>
+        
+    </ul>
+</section>
+  
+    
+    
+  
+
+
+
+
+
+</main>
+    <footer>
+        <h6> |
+            Rendered by <a href="https://gohugo.io" title="Hugo">Hugo</a> |
+            <a href="https://jlouis.github.io/index.xml">Subscribe </a></h6>
+    </footer>
+</div>
+<script src="/js/scripts.js"></script>
+
+
+</body>
+
+</html>
+
