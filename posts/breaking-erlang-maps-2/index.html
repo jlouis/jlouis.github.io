@@ -1,0 +1,463 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+  <title>Breaking Erlang Maps #2 - jlouis&#39; Ramblings</title>
+  <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="The HTML5 Herald" />
+<meta name="author" content="Jesper Louis Andersen" /><meta property="og:title" content="Breaking Erlang Maps #2" />
+<meta property="og:description" content="This is part 2 in my work on using QuickCheck for Erlang to find errors in maps. I assume the reader is familiar with the first part, though I’ll start with a quick recap.
+From where we came In the first part, we built a generator which could generate data to put into maps. When we request something of type map_term(), we get a random term we can push into a map." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://jlouis.github.io/posts/breaking-erlang-maps-2/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2015-03-31T00:00:00&#43;02:00" />
+<meta property="article:modified_time" content="2015-03-31T00:00:00&#43;02:00" />
+
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Breaking Erlang Maps #2"/>
+<meta name="twitter:description" content="This is part 2 in my work on using QuickCheck for Erlang to find errors in maps. I assume the reader is familiar with the first part, though I’ll start with a quick recap.
+From where we came In the first part, we built a generator which could generate data to put into maps. When we request something of type map_term(), we get a random term we can push into a map."/>
+
+<meta name="generator" content="Hugo 0.82.0" />
+    
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" integrity="sha256-l85OmPOjvil/SOvVt3HnSSjzF1TUMyT9eV0c2BzEGzU=" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://jlouis.github.io/fontawesome/css/all.min.css" />
+  
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Slab|Ruda" />
+  
+  
+  <link rel="stylesheet" type="text/css" href="/css/styles.css" /></head>
+
+<body>
+  <div id="container">
+    <header>
+      <h1>
+                <a href="/">jlouis' Ramblings</a>
+            </h1>
+
+      <ul id="social-media">
+             <li>
+               <a href="https://github.com/jlouis" title="GitHub">
+               <i class="fab fa-github fa-lg"></i>
+               </a>
+             </li>
+             <li>
+               <a href="https://twitter.com/jlouis666" title="Twitter">
+               <i class="fab fa-twitter fa-lg"></i>
+               </a>
+             </li>
+      </ul>
+      
+      <p><em>Musings on tech, software, and other things</em></p>
+      
+    </header>
+
+    
+<nav>
+    <ul>
+        
+    </ul>
+</nav>
+
+
+    <main>
+
+
+
+
+<article>
+
+    <h1>Breaking Erlang Maps #2</h1>
+
+    
+      <aside>
+    <ul>
+        <li>
+            <time class="post-date" datetime="2015-03-31T00:00:00&#43;02:00">Mar 31, 2015</time>
+        </li>
+        
+        
+
+        
+
+        <li>18 minute read</li>
+    </ul>
+</aside>
+
+    
+
+    
+<div class="featured_image">
+    <a href="https://jlouis.github.io/posts/breaking-erlang-maps-2/" title="Breaking Erlang Maps #2">
+        <img src="">
+    </a>
+</div>
+
+
+
+    <p>This is part 2 in my work on using QuickCheck for Erlang to find errors in maps. I assume the reader is familiar with the first part, though I’ll start with a quick recap.</p>
+<h4 id="from-where-wecame">From where we came</h4>
+<p>In the first part, we built a generator which could generate data to put into maps. When we request something of type map_term(), we get a random term we can push into a map. We also have ways to create maps out of map terms.</p>
+<p>We showed simple stateless tests for maps, including one which found a bug in 17.4.1 with respect to binary_to_term/1 and term_to_binary/2.</p>
+<h2 id="quickcheck-statemachines">QuickCheck State Machines</h2>
+<p>To write stateful models, we will use QuickCheck’s state machine features. In these tests, we run the test as a state machine “one level up”. That is, we will use the state machine to generate random commands we can execute towards a map. And we will use generators from part #1 to generate arguments to these commands.</p>
+<p>The reason we need a state machine is that some commands might only be eligible in certain states. Furthermore, the response from a command might depend on what state we are in — that is, what commands we already executed. Suppose we execute</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang">maps:<span style="color:#a6e22e">is_key</span>(K, Map).
+</code></pre></div><p>for a generated key K. This will return true, if the key is in the map, and false otherwise. But this result depends on what we already put inside the map and hence what commands we already run towards the map. This is why we need a model where a state machine keeps track of what is inside the map so we can check the response correctly.</p>
+<p>Our strategy for the model is this: we define a model state where a field, ‘contents’, represents the underlying map as a list of K/V pairs. Suppose that the map is the following:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang">Map <span style="color:#f92672">=</span> #{ <span style="color:#ae81ff">123</span> <span style="color:#f92672">=&gt;</span> <span style="color:#ae81ff">42</span>, sand <span style="color:#f92672">=&gt;</span> <span style="color:#e6db74">&#34;hello&#34;</span> }
+</code></pre></div><p>then the model will be:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang">State <span style="color:#f92672">=</span> #state { contents <span style="color:#f92672">=</span> [{<span style="color:#ae81ff">123</span>, <span style="color:#ae81ff">42</span>}, {sand, <span style="color:#e6db74">&#34;hello&#34;</span>}] }
+</code></pre></div><p>If we then execute the command maps:put(5, 1, Map), we update the contents of the state correspondingly:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang">Cs <span style="color:#f92672">=</span> State#state.contents,
+State#state { contents <span style="color:#f92672">=</span> Cs <span style="color:#f92672">++</span> [{<span style="color:#ae81ff">5</span>, <span style="color:#ae81ff">1</span>}] }
+</code></pre></div><p>Of course replacing an existing K/V pair if needed through, e.g., the equivalent of a lists:keyreplace/4.</p>
+<p>We aim for the model state to correctly track the underlying map precisely, so we can answer any query on the map correctly, like for the is_key/2 example above.</p>
+<p>Here is the simplified property of ‘maps_eqc’:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#a6e22e">prop_map</span>() <span style="color:#f92672">-&gt;</span>
+    <span style="color:#f92672">?</span>SETUP(<span style="color:#66d9ef">fun</span>() <span style="color:#f92672">-&gt;</span>
+        {ok, Pid} <span style="color:#f92672">=</span> maps_runner:<span style="color:#a6e22e">start_link</span>(),
+        <span style="color:#66d9ef">fun</span>() <span style="color:#f92672">-&gt;</span> exit(Pid, kill) <span style="color:#66d9ef">end</span>
+    <span style="color:#66d9ef">end</span>,
+      <span style="color:#f92672">?</span>FORALL(Cmds, commands(<span style="color:#f92672">?</span>MODULE),
+        <span style="color:#66d9ef">begin</span>
+          maps_runner:<span style="color:#a6e22e">reset</span>(),
+          {H,S,R} <span style="color:#f92672">=</span> run_commands(<span style="color:#f92672">?</span>MODULE, Cmds),
+          pretty_commands(<span style="color:#f92672">?</span>MODULE, Cmds, {H,S,R}, R <span style="color:#f92672">==</span> ok)
+        <span style="color:#66d9ef">end</span>)).
+</code></pre></div><p>The property beings with a ?SETUP phase. It starts a separate process, the ‘maps_runner’. This is a gen_server which holds the state of the map in between calls. When we want to call, is_key/2 on the map, we call the maps runner:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#a6e22e">is_key</span>(K) <span style="color:#f92672">-&gt;</span>
+    maps_runner:<span style="color:#a6e22e">is_key</span>(K).
+</code></pre></div><p>note we don’t have to supply the map since the‘maps_runner’ keeps track of the internal map state for us. The ‘maps_runner’ implements all the commands in the ‘maps’ module in this manner, tracking a map internally and returning the result of executing a command back to the caller.</p>
+<p>Next we have ?FORALL(Cmds, commands(?MODULE), …) which is the first phase in a state-machine model. We generate a random set of commands, where the command rules are in ?MODULE (in this case ?MODULE = maps_eqc). QuickCheck will look for commands in the module and then build up a sequential set of commands by executing the state machine symbolically.</p>
+<p>Now, with a specific set of commands in hand, we reset the ‘maps_runner’ so it has an empty map as contents. The next call, run_commands(?MODULE, Cmds) executes the state machine in dynamic mode, where the commands are replayed against the real system. It returns a History, a final State and a final Result. The final line in the property verifies that the result is ‘ok’ and will pretty-print the error if it is not.</p>
+<p>The non-simplified version of the property looks like this:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#a6e22e">prop_map</span>() <span style="color:#f92672">-&gt;</span>
+      <span style="color:#f92672">?</span>SETUP(<span style="color:#66d9ef">fun</span>() <span style="color:#f92672">-&gt;</span>
+          {ok, Pid} <span style="color:#f92672">=</span> maps_runner:<span style="color:#a6e22e">start_link</span>(),
+          <span style="color:#66d9ef">fun</span>() <span style="color:#f92672">-&gt;</span> exit(Pid, kill) <span style="color:#66d9ef">end</span>
+      <span style="color:#66d9ef">end</span>,
+        <span style="color:#f92672">?</span>FORALL(Cmds, more_commands(<span style="color:#ae81ff">2</span>, commands(<span style="color:#f92672">?</span>MODULE)),
+          <span style="color:#66d9ef">begin</span>
+            maps_runner:<span style="color:#a6e22e">reset</span>(),
+            {H,S,R} <span style="color:#f92672">=</span> run_commands(<span style="color:#f92672">?</span>MODULE, Cmds),
+            collect(eqc_lib:<span style="color:#a6e22e">stem_and_leaf</span>(&#39;Final map size&#39;),
+                    model_size(S),
+            collect(eqc_lib:<span style="color:#a6e22e">stem_and_leaf</span>(&#39;Command Length&#39;),
+                    length(Cmds),
+            aggregate(with_title(&#39;Commands&#39;), command_names(Cmds),
+            aggregate(with_title(&#39;Features&#39;), call_features(H),
+                pretty_commands(<span style="color:#f92672">?</span>MODULE, Cmds, {H,S,R}, R <span style="color:#f92672">==</span> ok)))))
+          <span style="color:#66d9ef">end</span>)).
+</code></pre></div><p>It generates longer command sequences through invocation of more_commands/2, and it collects/aggregates statistics about a run. This allows us to look at the histogram of several runs so we can see if we cover all commands, or if final map sizes are too small. Statistics generation is often important in order to answer the question “did we cover all possibilities?”</p>
+<h2 id="symbolicdynamic-execution">Symbolic/Dynamic execution</h2>
+<p>It is important to stress how the system executes. We first generate commands, symbolically, without even invoking the system-under-test (SUT). Then, once we have a valid command sequence, we replay it against the SUT by executing the system in dynamic mode. It is only here we learn what the system does.</p>
+<p>In particular, because we don’t invoke the SUT while generating commands,</p>
+<blockquote>
+<p>We can’t use the concrete result of executing a command from the SUT to guide command generation.</p>
+</blockquote>
+<p>At most, we can record that the SUT returns an opaque value, which we can store, but we can’t scrutinize the contents of that value. So all command generation has to rely on the model, and the model only. A common mistake by newcomers is to intermingle the symbolic/dynamic execution modes and this won’t work. When writing models, it is important to understand which parts of the model executes in symbolic mode, which executes in dynamic mode, and which executes in both. To illustrate what is going on, we can use this diagram:</p>
+<p><img src="/posts/breaking-erlang-maps/state.png" alt="state transition diagram illustrating how abstract values are first generated, then replayed"></p>
+<p>What happens first is that the blue states S1, …, S4 are generated. Each state is generated by figuring, at random, what command Cmd to run and then calculate the next (blue) model state based on the command. Once we have the blue chain, we run the system again, but now we make a call to the SUT at each state, depicted by the red circles. Each call to the SUT is associated with a postcondition. This checks if the real return value from the SUT is in correspondance with the model.</p>
+<p>In our model, we can always calculate an expected return value from the model state. So we can handle all postconditions with a common postcondition:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#a6e22e">postcondition_common</span>(S, Call, Res) <span style="color:#f92672">-&gt;</span>
+      eq(Res, return_value(S, Call)).
+</code></pre></div><p>That is, in a given state, S, executing a Call with return value Res, we expect the result to be the same as the calculated return_value with respect to the state and the call executed.</p>
+<h2 id="is_key1">is_key/1</h2>
+<p>The commands in the model is written in the so-called grouped style where an Erlang parse transformation reads the file and alters it before the compiler gets its hands on it. The grouped style is nice because it groups a given command so data pertaining to that command is close. There is an older, transposed format, which is much harder to read, and if you look at older models you may see it. They are equivalent and the parse transform transforms one to the other, essentially.</p>
+<p>Let us start with a simple command, is_key, which checks if a key is present in the map and returns a boolean value:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#a6e22e">is_key</span>(K) <span style="color:#f92672">-&gt;</span>
+    maps_runner:<span style="color:#a6e22e">is_key</span>(K).
+</code></pre></div><p>This defines the command to run. It simply calls through to the maps_runner.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#a6e22e">is_key_args</span>(#state { contents <span style="color:#f92672">=</span> C }) <span style="color:#f92672">-&gt;</span>
+      frequency(
+           [{<span style="color:#ae81ff">10</span>,
+         <span style="color:#f92672">?</span>LET(Pair, elements(C), [element(<span style="color:#ae81ff">1</span>, Pair)])} || C <span style="color:#f92672">/=</span> [] ] <span style="color:#f92672">++</span>
+       [{<span style="color:#ae81ff">1</span>, <span style="color:#f92672">?</span>SUCHTHAT([K], [map_key()], find(K, <span style="color:#ae81ff">1</span>, C) <span style="color:#f92672">==</span> false)}]).
+</code></pre></div><p>The grouped style parse transformation understands functions ending in certain code words and treads the specially. In this case COMMAND_args/1 is a generator for the arguments to COMMAND. Here, we are generating commands with a certain frequency. We are generating elements which are already present in the map. But we have wrapped this as a list comprehension which makes sure this only gets generated if there are elements in the contents/map in the first place. If the map is currently empty, this line, with frequency 10, will never be genereated.</p>
+<p>The ?SUCHTHAT line constructs a map_key() which is not present in the current contents. The frequency ensures that if there are keys in the map, it is more likely to generate requests for those keys. But once in a while, we want a key which is not there, to check for negative elements.</p>
+<p>Such positive/negative testing is common in QuickCheck models. We want to check for both Type I and Type II errors: false positives and false negatives. So we generate both kinds. Checking what is present is rather easy:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#a6e22e">is_key_return</span>(S, [K]) <span style="color:#f92672">-&gt;</span>
+    member(K, S).
+
+<span style="color:#75715e">%% The following two functions are helpers:
+</span><span style="color:#75715e"></span><span style="color:#a6e22e">member</span>(K, #state { contents <span style="color:#f92672">=</span> C }) <span style="color:#f92672">-&gt;</span>
+      member(K, <span style="color:#ae81ff">1</span>, C).
+<span style="color:#a6e22e">member</span>(_T, _Pos, []) <span style="color:#f92672">-&gt;</span> false;
+  member(T, Pos, [Tup|Next]) <span style="color:#f92672">-&gt;</span>
+       <span style="color:#66d9ef">case</span> element(Pos, Tup) <span style="color:#f92672">=:=</span> T <span style="color:#66d9ef">of</span>
+           true <span style="color:#f92672">-&gt;</span> true;
+           false <span style="color:#f92672">-&gt;</span> member(T, Pos, Next)
+       <span style="color:#66d9ef">end</span>.
+</code></pre></div><p>The expected return from is_key/1 is simply a membership on the models list. We have to write our own variant because the lists modules keyfind/3 function considers 0 and 0.0 to be equivalent and we don’t want that here.</p>
+<p>How can we be sure our test case actually tests both positive and negative variants of is_key/1? To answer the question, we can use a features function,</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#a6e22e">is_key_features</span>(_S, [_K], true) <span style="color:#f92672">-&gt;</span>
+      [<span style="color:#e6db74">&#34;R001: is_key/2 on a present key&#34;</span>];
+<span style="color:#a6e22e">is_key_features</span>(_S, [_K], false) <span style="color:#f92672">-&gt;</span>
+      [<span style="color:#e6db74">&#34;R002: is_key/2 on a non-existing key&#34;</span>].
+</code></pre></div><p>which is run in dynamic execution of the state machine. It defines a list of features that the test case hits. So if the function returns ‘true’ we know we have hit feature R001 and if it returns false, we know we have hit feature R002. The full model has close to 40 features it checks for. And it provides statistics as to how often features are hit.</p>
+<h2 id="put2">put/2</h2>
+<p>while is_key/1 is a query-style command that won’t alter the model state, we have not seen how to write a case where the model state is altered. A good simple example of such a state is the put/2 command:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang">put(Key, Value) <span style="color:#f92672">-&gt;</span>
+      maps_runner:put(Key, Value).
+</code></pre></div><p>Generating arguments for put/2 is very straightforward, since we already have generators for keys and values:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#a6e22e">put_args</span>(_S) <span style="color:#f92672">-&gt;</span>
+      [map_key(), map_value()].
+</code></pre></div><p>However, putting a new K/V pair into the map alters the state. To track this, we define a _next/3 function which tracks that the map got new contents, or overwrote existing content:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#a6e22e">put_next</span>(#state { contents <span style="color:#f92672">=</span> C } <span style="color:#f92672">=</span> State, _, [K, V]) <span style="color:#f92672">-&gt;</span>
+      State#state { contents <span style="color:#f92672">=</span> add_contents(K, V, C) }.
+</code></pre></div><p>The _next/3 state is special because it is executed both in symbolic and in dynamic mode. First it is used to build up the command model, and then it is used to understand what the results of replaying the model against the SUT is.</p>
+<p>The return value of a put command is the new map. To check this, we use the state and the new K/V pair to generate a map which can be tested for equality:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#a6e22e">put_return</span>(#state { contents <span style="color:#f92672">=</span> C}, [K, V]) <span style="color:#f92672">-&gt;</span>
+      maps:<span style="color:#a6e22e">from_list</span>(add_contents(K, V, C)).
+</code></pre></div><p><em>Note:</em> The input to return is the state prior to executing the command. So we have to track that the new K/V pair was added to that state before constructing the expected map. Many QuickCheck commands runs under this assumption in state machine models[0].</p>
+<p>Finally, we define the feature set of putting data into the map:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#a6e22e">put_features</span>(S, [K, _Value], _Res) <span style="color:#f92672">-&gt;</span>
+      <span style="color:#66d9ef">case</span> member(K, S) <span style="color:#66d9ef">of</span>
+          true <span style="color:#f92672">-&gt;</span> [<span style="color:#e6db74">&#34;R003: put/3 on existing key&#34;</span>];
+          false <span style="color:#f92672">-&gt;</span> [<span style="color:#e6db74">&#34;R004: put on a new key&#34;</span>]
+      <span style="color:#66d9ef">end</span>.
+</code></pre></div><h2 id="preconditions">Preconditions</h2>
+<p>The full model contains 24 commands, hence we won’t explain all of them. Most of them are similar to the above, albeit they work for other ‘maps’ commands. A commonality among commands are that they can always be executed. There are no conditional limit that says “in this state, you can’t execute command X”. Hence, the model doesn’t really use the stateful features up to this point. But there is something I call meta-commands in the model as well.</p>
+<p>A meta-command encodes a property of maps which can’t be tested as part of calling a ‘maps’ function. In functional languages, maps have to be persistent. That is, if we remember a version of the map in a variable, and later refer to that older version, then it should persistent. Newer data must not interfere in a destructive way.</p>
+<p>We handle this, by extending the state of‘maps_eqc’ to also contain a persistence table:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang">-record(state,
+      { contents <span style="color:#f92672">=</span> [] :: list_map(), <span style="color:#75715e">%% The current contents
+</span><span style="color:#75715e"></span>        persist <span style="color:#f92672">=</span> [] :: list({reference(), list_map()}) <span style="color:#75715e">%% Remembered
+</span><span style="color:#75715e"></span>      }).
+</code></pre></div><p>And then we define a command which can“remember” a map in a given state:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#a6e22e">remember</span>(Ref) <span style="color:#f92672">-&gt;</span>
+      maps_runner:<span style="color:#a6e22e">remember</span>(Ref).
+
+<span style="color:#a6e22e">remember_args</span>(_S) <span style="color:#f92672">-&gt;</span> [make_ref()].
+
+<span style="color:#a6e22e">remember_next</span>(#state { contents <span style="color:#f92672">=</span> Cs,
+                         persist <span style="color:#f92672">=</span> Ps } <span style="color:#f92672">=</span> State, _, [Ref]) <span style="color:#f92672">-&gt;</span>
+      State#state { persist <span style="color:#f92672">=</span>
+                       lists:<span style="color:#a6e22e">keystore</span>(Ref, <span style="color:#ae81ff">1</span>, Ps, {Ref, Cs}) }.
+
+<span style="color:#a6e22e">remember_return</span>(_S, [_Ref]) <span style="color:#f92672">-&gt;</span>
+      ok.
+</code></pre></div><p>Now, the rule is, that if we at any point“recall” one of the remembered states, it should return exactly the same data as the remembered version in the model. But note, that in order to “recall” a map we must first have it remembered. That is, we can only recall, if a “remember” were among the earlier commands. This is typical conditional command generation in state machine models. We encode this as a precondition on the model state:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#a6e22e">recall</span>(Ref) <span style="color:#f92672">-&gt;</span>
+      maps_runner:<span style="color:#a6e22e">recall</span>(Ref).
+
+<span style="color:#75715e">%% Can only recall when there are persisted maps to recall
+</span><span style="color:#75715e"></span><span style="color:#a6e22e">recall_pre</span>(#state { persist <span style="color:#f92672">=</span> Ps }) <span style="color:#f92672">-&gt;</span> Ps <span style="color:#f92672">/=</span> [].
+</code></pre></div><p>This makes the recall/1 command illegal in any state where there is no persisted map. And the symbolic command generator will avoid generating such a command. Defining the _args/1 function is straightforward, since we can assume there is something in the persistence table to pick:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#a6e22e">recall_args</span>(#state { persist <span style="color:#f92672">=</span> Ps }) <span style="color:#f92672">-&gt;</span>
+      <span style="color:#f92672">?</span>LET(Pair, elements(Ps),
+         [element(<span style="color:#ae81ff">1</span>, Pair)]).
+
+  recall_pre(#state { persist <span style="color:#f92672">=</span> Ps}, [Ref]) <span style="color:#f92672">-&gt;</span>
+      lists:<span style="color:#a6e22e">keyfind</span>(Ref,<span style="color:#ae81ff">1</span>,Ps) <span style="color:#f92672">/=</span> false.
+</code></pre></div><p>Note there are two precondition commands. The <code>_pre/1</code> command is called before argument generation, and <code>_pre/2</code> is called after. The second precondition command helps with shrinking, which is why it is here. It makes sure we can’t shrink away a reference we are going to use later. Having both preconditions can speed up command generation a lot if it is expensive the generate arguments, which is why you have the _pre/1 variant.</p>
+<p>The return and feature set is as expected:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#a6e22e">recall_return</span>(#state { persist <span style="color:#f92672">=</span> Ps }, [Ref]) <span style="color:#f92672">-&gt;</span>
+      {Ref, Cs} <span style="color:#f92672">=</span> lists:<span style="color:#a6e22e">keyfind</span>(Ref, <span style="color:#ae81ff">1</span>, Ps),
+      {ok, maps:<span style="color:#a6e22e">from_list</span>(Cs)}.
+
+  recall_features(_S, _, _) <span style="color:#f92672">-&gt;</span>
+      [<span style="color:#e6db74">&#34;R038: Recalled a persisted version of the map successfully&#34;</span>].
+</code></pre></div><h2 id="map-andfold">Map and Fold</h2>
+<p>The full model is more involved:</p>
+<ul>
+<li>
+<p>It uses a “become” command to become and older version of the map to test persistence fully.</p>
+</li>
+<li>
+<p>It roundtrips maps back and forth between processes to test for messaging correctness.</p>
+</li>
+<li>
+<p>It populates empty maps to verify that from_list/1 works correctly.</p>
+</li>
+<li>
+<p>It uses weight/2 to make map-altering commands more likely than query-commands. The idea that if a query goes wrong, it is probably due to some alteration, so we check alteration more than query-style commands.</p>
+</li>
+</ul>
+<p>An interesting thing happens with checking map and fold though. When you want to check maps:map/2, you need a function which works on any map term and returns deterministic values. It turns out QuickCheck has such a function and can generate them for us. Calling function2(int()) generates a function of type (term(), term()) -&gt; int() which behaves deterministically: given the same input, it returns the same output. Hence testing map is easy:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#a6e22e">map_args</span>(_S) <span style="color:#f92672">-&gt;</span>
+    <span style="color:#f92672">?</span>LET(F, function2(map_value()), [F]).
+</code></pre></div><p>and then we can just check the expected return of calling maps:map(F, Map):</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#a6e22e">map_return</span>(#state { contents <span style="color:#f92672">=</span> Cs }, [F]) <span style="color:#f92672">-&gt;</span>
+      NCs <span style="color:#f92672">=</span> lists:<span style="color:#a6e22e">map</span>(<span style="color:#66d9ef">fun</span>({K, V}) <span style="color:#f92672">-&gt;</span> {K, F(K,V)} <span style="color:#66d9ef">end</span>, Cs),
+      maps:<span style="color:#a6e22e">from_list</span>(NCs).
+</code></pre></div><p>For fold, however, one might think it is much harder. Not so! It turns out that one function is enough:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#a6e22e">fold</span>() <span style="color:#f92672">-&gt;</span>
+      Res <span style="color:#f92672">=</span> maps_runner:<span style="color:#a6e22e">fold</span>(<span style="color:#66d9ef">fun</span>(K, V, L) <span style="color:#f92672">-&gt;</span> [{K, V} | L] <span style="color:#66d9ef">end</span>, []),
+      sort(Res).
+</code></pre></div><p>This fold function “blits” the map as were it a list. If we sort that list, we have a unique canonical representation of the map. If we duplicate a K/V pair, or miss one, in the maps:fold/3 implementation, this function will find it. Hence, testing fold is, surprisingly, trivial:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#a6e22e">fold_args</span>(_S) <span style="color:#f92672">-&gt;</span> [].
+
+<span style="color:#a6e22e">fold_return</span>(#state { contents <span style="color:#f92672">=</span> Cs }, _) <span style="color:#f92672">-&gt;</span>
+      sort(Cs).
+
+<span style="color:#a6e22e">fold_features</span>(_S, _, _) <span style="color:#f92672">-&gt;</span>
+      [<span style="color:#e6db74">&#34;R027: traverse over the map by fold/3&#34;</span>].
+</code></pre></div><h2 id="running-themodel">Running the model</h2>
+<p>Executing this model on 18.0-rc1 + patches is currently safe:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#ae81ff">2</span><span style="color:#f92672">&gt;</span> eqc:<span style="color:#a6e22e">module</span>(maps_eqc).
+  Starting Quviq QuickCheck version <span style="color:#ae81ff">1</span>.<span style="color:#ae81ff">33</span>.<span style="color:#ae81ff">3</span>
+     (compiled at {{<span style="color:#ae81ff">2015</span>,<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">9</span>},{<span style="color:#ae81ff">14</span>,<span style="color:#ae81ff">18</span>,<span style="color:#ae81ff">24</span>}})
+  Licence for Private Licences reserved until {{<span style="color:#ae81ff">2015</span>,<span style="color:#ae81ff">3</span>,<span style="color:#ae81ff">31</span>},{<span style="color:#ae81ff">19</span>,<span style="color:#ae81ff">5</span>,<span style="color:#ae81ff">8</span>}}
+  prop_map: ....................................................................................................
+  OK, passed <span style="color:#ae81ff">100</span> tests
+
+  Final map size
+
+  Stem | Leaf
+  <span style="color:#f92672">----------------</span>
+     <span style="color:#ae81ff">0</span> | <span style="color:#ae81ff">000000000111122222233344555677899999</span>
+     <span style="color:#ae81ff">1</span> | <span style="color:#ae81ff">0022666788</span>
+     <span style="color:#ae81ff">2</span> | <span style="color:#ae81ff">0122567899</span>
+     <span style="color:#ae81ff">3</span> | <span style="color:#ae81ff">0122556</span>
+     <span style="color:#ae81ff">4</span> | <span style="color:#ae81ff">124888</span>
+     <span style="color:#ae81ff">5</span> | <span style="color:#ae81ff">1123559999</span>
+     <span style="color:#ae81ff">6</span> | <span style="color:#ae81ff">12</span>
+     <span style="color:#ae81ff">7</span> | <span style="color:#ae81ff">23588</span>
+     <span style="color:#ae81ff">8</span> | <span style="color:#ae81ff">128</span>
+     <span style="color:#ae81ff">9</span> | <span style="color:#ae81ff">269</span>
+    <span style="color:#ae81ff">10</span> | <span style="color:#ae81ff">37</span>
+    <span style="color:#ae81ff">11</span> | <span style="color:#ae81ff">34599</span>
+    <span style="color:#ae81ff">12</span> | <span style="color:#ae81ff">7</span>
+</code></pre></div><p>Here we see the output from the Steam &amp; Leaf plots[1]. It tells us there were exactly 3 maps around size 80–90: 81, 82, and 88. The largest map where of size 127. The next section gives us the command size:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang">Command Length
+
+  Stem | Leaf
+  <span style="color:#f92672">----------------</span>
+     <span style="color:#ae81ff">0</span> | <span style="color:#ae81ff">0111111111222222333333344445555566777788889999</span>
+     <span style="color:#ae81ff">1</span> | <span style="color:#ae81ff">011223344445555666778899</span>
+     <span style="color:#ae81ff">2</span> | <span style="color:#ae81ff">00012223458889999</span>
+     <span style="color:#ae81ff">3</span> | <span style="color:#ae81ff">03489</span>
+     <span style="color:#ae81ff">4</span> | <span style="color:#ae81ff">1125</span>
+     <span style="color:#ae81ff">5</span> | <span style="color:#ae81ff">9</span>
+     <span style="color:#ae81ff">6</span> | <span style="color:#ae81ff">4</span>
+     <span style="color:#ae81ff">7</span> | <span style="color:#ae81ff">04</span>
+</code></pre></div><p>Most command sequences are rather small, but there are serious command sequences in between. Had we requested a budget of an hour for the test, we would have a much longer command sequences and a completely different spread. 100 tests, as run here, is good while wanting fast feedback when developing, but before release you probably want a good night of extensive test runs.</p>
+<p>Next section breaks down commands:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang">Commands
+  <span style="color:#ae81ff">9</span>.<span style="color:#ae81ff">9</span><span style="color:#75715e">% {maps_eqc,remove,1}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">9</span>.<span style="color:#ae81ff">8</span><span style="color:#75715e">% {maps_eqc,put,2}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">9</span>.<span style="color:#ae81ff">6</span><span style="color:#75715e">% {maps_eqc,merge,1}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">9</span>.<span style="color:#ae81ff">5</span><span style="color:#75715e">% {maps_eqc,update,2}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">6</span>.<span style="color:#ae81ff">2</span><span style="color:#75715e">% {maps_eqc,populate,2}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">5</span>.<span style="color:#ae81ff">3</span><span style="color:#75715e">% {maps_eqc,to_list,0}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">4</span>.<span style="color:#ae81ff">9</span><span style="color:#75715e">% {maps_eqc,values,0}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">4</span>.<span style="color:#ae81ff">8</span><span style="color:#75715e">% {maps_eqc,m_get,1}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">4</span>.<span style="color:#ae81ff">4</span><span style="color:#75715e">% {maps_eqc,keys,0}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">4</span>.<span style="color:#ae81ff">3</span><span style="color:#75715e">% {maps_eqc,remember,1}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">4</span>.<span style="color:#ae81ff">3</span><span style="color:#75715e">% {maps_eqc,find,1}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">4</span>.<span style="color:#ae81ff">1</span><span style="color:#75715e">% {maps_eqc,is_key,1}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">3</span>.<span style="color:#ae81ff">9</span><span style="color:#75715e">% {maps_eqc,fold,0}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">3</span>.<span style="color:#ae81ff">8</span><span style="color:#75715e">% {maps_eqc,size,0}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">3</span>.<span style="color:#ae81ff">6</span><span style="color:#75715e">% {maps_eqc,m_get_default,2}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">2</span>.<span style="color:#ae81ff">4</span><span style="color:#75715e">% {maps_eqc,roundtrip,0}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">2</span>.<span style="color:#ae81ff">4</span><span style="color:#75715e">% {maps_eqc,extract,0}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">2</span>.<span style="color:#ae81ff">0</span><span style="color:#75715e">% {maps_eqc,without_q,1}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">2</span>.<span style="color:#ae81ff">0</span><span style="color:#75715e">% {maps_eqc,with_q,1}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">1</span>.<span style="color:#ae81ff">7</span><span style="color:#75715e">% {maps_eqc,recall,1}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">0</span>.<span style="color:#ae81ff">4</span><span style="color:#75715e">% {maps_eqc,without,1}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">0</span>.<span style="color:#ae81ff">4</span><span style="color:#75715e">% {maps_eqc,with,1}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">0</span>.<span style="color:#ae81ff">3</span><span style="color:#75715e">% {maps_eqc,become,1}
+</span></code></pre></div><p>The weighting makes sure altering commands are more common than query style commands. The “become” command, which essentially resets the map back to an older version is deliberately made unlikely as to test for other things more frequently.</p>
+<p>The keen eye will note that map/2 is disabled for this test run. The reason is that 0.0 and 0.0/-1 causes trouble for the function generators, so we are currently running without it.</p>
+<p>Finally, we list the covered features:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang">Features
+  <span style="color:#ae81ff">9</span>.<span style="color:#ae81ff">9</span><span style="color:#75715e">% {{maps_eqc,merge,1},&#34;R019: Merging two maps&#34;}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">9</span>.<span style="color:#ae81ff">0</span><span style="color:#75715e">% {{maps_eqc,put,2},&#34;R004: put on a new key&#34;}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">7</span>.<span style="color:#ae81ff">7</span><span style="color:#75715e">% {{maps_eqc,update,2},&#34;R015: update/3 on an existing key&#34;}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">7</span>.<span style="color:#ae81ff">7</span><span style="color:#75715e">% {{maps_eqc,remove,1},&#34;R011: remove/2 of present key&#34;}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">5</span>.<span style="color:#ae81ff">4</span><span style="color:#75715e">% {{maps_eqc,to_list,0},&#34;R013: to_list/1 called on map&#34;}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">5</span>.<span style="color:#ae81ff">0</span><span style="color:#75715e">% {{maps_eqc,values,0},&#34;R014: values/1 called on map&#34;}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">4</span>.<span style="color:#ae81ff">5</span><span style="color:#75715e">% {{maps_eqc,keys,0},&#34;R010: Calling keys/1 on the map&#34;}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">4</span>.<span style="color:#ae81ff">1</span><span style="color:#75715e">% {{maps_eqc,m_get,1},&#34;R023: get on a successful key&#34;}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">4</span>.<span style="color:#ae81ff">0</span><span style="color:#75715e">% {{maps_eqc,fold,0},&#34;R027: traverse over the map by fold/3&#34;}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">3</span>.<span style="color:#ae81ff">5</span><span style="color:#75715e">% {{maps_eqc,is_key,1},&#34;R001: is_key/2 on a present key&#34;}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">3</span>.<span style="color:#ae81ff">3</span><span style="color:#75715e">% {{maps_eqc,populate,2},&#34;R017: populating an empty map with from_list/1&#34;}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">3</span>.<span style="color:#ae81ff">2</span><span style="color:#75715e">% {{maps_eqc,find,1},&#34;R021: find on an existing key&#34;}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">3</span>.<span style="color:#ae81ff">0</span><span style="color:#75715e">% {{maps_eqc,populate,2},&#34;R018: populating an empty map with put/2&#34;}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">2</span>.<span style="color:#ae81ff">8</span><span style="color:#75715e">% {{maps_eqc,m_get_default,2},&#34;R024: get/3 on an existing key&#34;}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">2</span>.<span style="color:#ae81ff">5</span><span style="color:#75715e">% {{maps_eqc,remove,1},&#34;R012: remove/2 of non-present key&#34;}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">2</span>.<span style="color:#ae81ff">5</span><span style="color:#75715e">% {{maps_eqc,roundtrip,0},
+</span><span style="color:#75715e"></span>        <span style="color:#e6db74">&#34;R037: Maps sent roundtrip through another process are reflexive&#34;</span>}
+  <span style="color:#ae81ff">2</span>.<span style="color:#ae81ff">4</span><span style="color:#75715e">% {{maps_eqc,extract,0},
+</span><span style="color:#75715e"></span>        <span style="color:#e6db74">&#34;R036: Maps are consistent when sending them to another process&#34;</span>}
+  <span style="color:#ae81ff">2</span>.<span style="color:#ae81ff">1</span><span style="color:#75715e">% {{maps_eqc,update,2},&#34;R016: update/3 on a non-existing key&#34;}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">2</span>.<span style="color:#ae81ff">0</span><span style="color:#75715e">% {{maps_eqc,without_q,1},&#34;R031: withtout/2 query on non-existing keys&#34;}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">1</span>.<span style="color:#ae81ff">9</span><span style="color:#75715e">% {{maps_eqc,with_q,1},&#34;R029: with/2 query on non-existing keys&#34;}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">1</span>.<span style="color:#ae81ff">8</span><span style="color:#75715e">% {{maps_eqc,recall,1},
+</span><span style="color:#75715e"></span>        <span style="color:#e6db74">&#34;R038: Recalled a persisted version of the map successfully&#34;</span>}
+  <span style="color:#ae81ff">1</span>.<span style="color:#ae81ff">7</span><span style="color:#75715e">% {{maps_eqc,size,0},&#34;R007: size/1 on a 16+ map&#34;}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">1</span>.<span style="color:#ae81ff">4</span><span style="color:#75715e">% {{maps_eqc,size,0},&#34;R009: size/1 on a small non-empty map&#34;}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">1</span>.<span style="color:#ae81ff">2</span><span style="color:#75715e">% {{maps_eqc,find,1},&#34;R020: find on a non-existing key&#34;}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">1</span>.<span style="color:#ae81ff">1</span><span style="color:#75715e">% {{maps_eqc,put,2},&#34;R003: put/3 on existing key&#34;}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">0</span>.<span style="color:#ae81ff">9</span><span style="color:#75715e">% {{maps_eqc,m_get_default,2},&#34;R025: get/3 on a non-existing key&#34;}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">0</span>.<span style="color:#ae81ff">8</span><span style="color:#75715e">% {{maps_eqc,m_get,1},&#34;R022: get/2 on a non-existing key&#34;}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">0</span>.<span style="color:#ae81ff">8</span><span style="color:#75715e">% {{maps_eqc,with_q,1},&#34;R028: with/2 query on present keys&#34;}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">0</span>.<span style="color:#ae81ff">7</span><span style="color:#75715e">% {{maps_eqc,without_q,1},&#34;R030: withtout/2 query on present keys&#34;}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">0</span>.<span style="color:#ae81ff">7</span><span style="color:#75715e">% {{maps_eqc,size,0},&#34;R006: size/1 on a 64+ map&#34;}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">0</span>.<span style="color:#ae81ff">7</span><span style="color:#75715e">% {{maps_eqc,is_key,1},&#34;R002: is_key/2 on a non-existing key&#34;}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">0</span>.<span style="color:#ae81ff">5</span><span style="color:#75715e">% {{maps_eqc,with,1},&#34;R033: with/2 on non-existing keys&#34;}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">0</span>.<span style="color:#ae81ff">4</span><span style="color:#75715e">% {{maps_eqc,without,1},&#34;R035: withtout/2 on non-existing keys&#34;}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">0</span>.<span style="color:#ae81ff">3</span><span style="color:#75715e">% {{maps_eqc,become,1},
+</span><span style="color:#75715e"></span>        <span style="color:#e6db74">&#34;R039: Refocus and </span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74">become</span><span style="color:#ae81ff">\&#34;</span><span style="color:#e6db74"> an old version of the map&#34;</span>}
+  <span style="color:#ae81ff">0</span>.<span style="color:#ae81ff">2</span><span style="color:#75715e">% {{maps_eqc,without,1},&#34;R034: withtout/2 on present keys&#34;}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">0</span>.<span style="color:#ae81ff">2</span><span style="color:#75715e">% {{maps_eqc,with,1},&#34;R032: with/2 on present keys&#34;}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">0</span>.<span style="color:#ae81ff">1</span><span style="color:#75715e">% {{maps_eqc,size,0},&#34;R008: size/1 on an empty (0) map&#34;}
+</span><span style="color:#75715e"></span>  <span style="color:#ae81ff">0</span>.<span style="color:#ae81ff">1</span><span style="color:#75715e">% {{maps_eqc,size,0},&#34;R005: size/1 on a 128+ map&#34;}
+</span><span style="color:#75715e"></span>  []
+</code></pre></div><p>We can see for this run, that there is not much confidence in calls to maps:size/1, but most of the calls have a nice spread.</p>
+<h2 id="limits-of-themodel">Limits of the model</h2>
+<p>Are maps now correct in 18.0-rc1 + patches? No. We have established confidence that small maps, those with few elements, are relatively safe due to the model. But we have not covered all of what HAMT maps entail. In the HAMT, we hash values and collisions on hashes is a central thing. The hash space is vast, at least 32 bit in size, so the chance of getting a collision in a small map is fairly low. Björn-Egil Dahlberg has found and fixed bugs with collisions which this model did not find, because he needed maps in the vicinity of 150.000 elements. At that size, collisions are more common and so it is possible to find bugs. The current QuickCheck model generates elements close to the size of 400 elements at most, so the birthday paradox is not rolling the dice as we would like.</p>
+<p>The author plans to run BEAM under coverage checking and then see what parts of the HAMT code isn’t hit with the above model. This can then guide the construction of ‘maps_large_eqc’ which can check such large maps with thousands of keys. Hopefully the two tests together will provide decent coverage of the HAMT code and weed out the remaining bugs, even for those maps which are large. Alternatively, I’ll weaken the hash function to collide almost everything.</p>
+<p>We also expect the code around maps to change. Having a QuickCheck model which does random changes to maps is a help when this happens. Even for a small number of runs, it is a good verifier of obvious mistakes in code bases.</p>
+<p>Also, a quick Cost/Benefit analysis says it took around 10 hours of work to build the model, and perhaps a bit more in “analytic thinking time”. Given its current coverage, it would have taken at least 100 hours writing unit tests with the same coverage. And it wouldn’t scale if a new command was added to the ‘maps’ module.</p>
+<p>This post was based on commit ID <a href="https://github.com/jlouis/maps_eqc">4344b287a4c98</a></p>
+<p>[0] QuickCheck supports several different kinds of state machine models. One of these, the component model, can delimit internal state transitions, so complex transitions can be split into several smaller steps. But the statem model cannot.</p>
+<p>[1] Stem and leaf plots are not part of QuickCheck, but is an extension present in jlouis/eqc_lib at Github. It also contains other useful helpers for QuickCheck models.</p>
+
+
+</article>
+
+
+<section class="post-nav">
+    <ul>
+        
+        <li>
+            <a href="https://jlouis.github.io/posts/breaking-erlang-maps-1/"><i class="fa fa-chevron-circle-left"></i> Breaking Erlang Maps #1</a>
+        </li>
+        
+        
+        <li>
+            <a href="https://jlouis.github.io/posts/scalability-capacity-sensitivity/">On Scalability, Capacity, and Sensitivity <i class="fa fa-chevron-circle-right"></i> </a>
+        </li>
+        
+    </ul>
+</section>
+  
+    
+    
+  
+
+
+
+
+
+</main>
+    <footer>
+        <h6> |
+            Rendered by <a href="https://gohugo.io" title="Hugo">Hugo</a> |
+            <a href="https://jlouis.github.io/index.xml">Subscribe </a></h6>
+    </footer>
+</div>
+<script src="/js/scripts.js"></script>
+
+
+</body>
+
+</html>
+
