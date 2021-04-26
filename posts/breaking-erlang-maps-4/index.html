@@ -1,0 +1,261 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+  <title>Breaking Erlang Maps #4 - jlouis&#39; Ramblings</title>
+  <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="The HTML5 Herald" />
+<meta name="author" content="Jesper Louis Andersen" /><meta property="og:title" content="Breaking Erlang Maps #4" />
+<meta property="og:description" content="In Part 1, we set up the basic generators. In Part 2, we introduced the use of a stateful model to track what happens “inside” the map, as we generate and execute random tests. In Part 3, we addressed a major problem in a Map-implementation: how it handles key collisions.
+The power of having a model for a subsystem is layering. Whenever you get a new idea on how you can improve the model, that improvement gets mixed in with every other idea you’ve had automatically." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://jlouis.github.io/posts/breaking-erlang-maps-4/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2015-04-09T00:00:00&#43;02:00" />
+<meta property="article:modified_time" content="2015-04-09T00:00:00&#43;02:00" />
+
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Breaking Erlang Maps #4"/>
+<meta name="twitter:description" content="In Part 1, we set up the basic generators. In Part 2, we introduced the use of a stateful model to track what happens “inside” the map, as we generate and execute random tests. In Part 3, we addressed a major problem in a Map-implementation: how it handles key collisions.
+The power of having a model for a subsystem is layering. Whenever you get a new idea on how you can improve the model, that improvement gets mixed in with every other idea you’ve had automatically."/>
+
+<meta name="generator" content="Hugo 0.82.0" />
+    
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" integrity="sha256-l85OmPOjvil/SOvVt3HnSSjzF1TUMyT9eV0c2BzEGzU=" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://jlouis.github.io/fontawesome/css/all.min.css" />
+  
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Slab|Ruda" />
+  
+  
+  <link rel="stylesheet" type="text/css" href="/css/styles.css" /></head>
+
+<body>
+  <div id="container">
+    <header>
+      <h1>
+                <a href="/">jlouis' Ramblings</a>
+            </h1>
+
+      <ul id="social-media">
+             <li>
+               <a href="https://github.com/jlouis" title="GitHub">
+               <i class="fab fa-github fa-lg"></i>
+               </a>
+             </li>
+             <li>
+               <a href="https://twitter.com/jlouis666" title="Twitter">
+               <i class="fab fa-twitter fa-lg"></i>
+               </a>
+             </li>
+      </ul>
+      
+      <p><em>Musings on tech, software, and other things</em></p>
+      
+    </header>
+
+    
+<nav>
+    <ul>
+        
+    </ul>
+</nav>
+
+
+    <main>
+
+
+
+
+<article>
+
+    <h1>Breaking Erlang Maps #4</h1>
+
+    
+      <aside>
+    <ul>
+        <li>
+            <time class="post-date" datetime="2015-04-09T00:00:00&#43;02:00">Apr 9, 2015</time>
+        </li>
+        
+        
+
+        
+
+        <li>7 minute read</li>
+    </ul>
+</aside>
+
+    
+
+    
+<div class="featured_image">
+    <a href="https://jlouis.github.io/posts/breaking-erlang-maps-4/" title="Breaking Erlang Maps #4">
+        <img src="">
+    </a>
+</div>
+
+
+
+    <p>In Part 1, we set up the basic generators. In Part 2, we introduced the use of a stateful model to track what happens “inside” the map, as we generate and execute random tests. In Part 3, we addressed a major problem in a Map-implementation: how it handles key collisions.</p>
+<p>The power of having a model for a subsystem is layering. Whenever you get a new idea on how you can improve the model, that improvement gets mixed in with every other idea you’ve had automatically. It improves correctness of an implementation because any discrepancy is quickly found. Seemingly small changes can have profound effects because the change propagates into areas of the code base where you had no idea it would cause trouble.</p>
+<p>Also, resource-wise, the payoff is we don’t have to write a separate test for every combination we come up with. While QuickCheck modeling is not free, the time spent writing such a model is a fraction of the time you need to write the full test suite. And as you layer more ideas on top, the time-to-mix-in is constant, rather than exponential.</p>
+<h2 id="improving-thecollider">Improving the collider</h2>
+<p>The collision generator used in Part 3 is running on a single core only, and it is run for a short amount of time. Thus, it only generates colliding sibling pairs, [K1, K2]. We would like to generate larger sibling sets, [K1, K2, …, Ki]. The way to do this is to parallelize the computation. First, we note that most of the work on the ETS table will be failing reads on slots. Thus, we configure the ETS table in the collision system to have read_concurrency which means there is a group of RW-lock on it so we don’t block threads from each other:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang">Table <span style="color:#f92672">=</span> ets:<span style="color:#a6e22e">new</span>(generator_table,
+                [bag, {read_concurrency, true}, public]),
+</code></pre></div><p>and then we populate the table with 256.000 elements generated from a PRNG. For finding collisions, we write an iterator which is given a unique random seed. Whenever one is found, it writes that to the table invoking the Write-part of the RW-lock on the ETS table:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#a6e22e">iterate_init</span>(Table) <span style="color:#f92672">-&gt;</span>
+    RandSeed <span style="color:#f92672">=</span> rand:<span style="color:#a6e22e">seed_s</span>(exs64, unique_value()),
+    iterate(Table, RandSeed, <span style="color:#f92672">?</span>ITERATIONS).
+
+<span style="color:#a6e22e">iterate</span>(_Table, _Seed, <span style="color:#ae81ff">0</span>) <span style="color:#f92672">-&gt;</span> ok;
+<span style="color:#a6e22e">iterate</span>(Table, Seed, K) <span style="color:#f92672">-&gt;</span>
+    {I, NextSeed} <span style="color:#f92672">=</span> rand:<span style="color:#a6e22e">uniform_s</span>(<span style="color:#f92672">?</span>RANGE, Seed),
+    Hash <span style="color:#f92672">=</span> internal_hash(I),
+    <span style="color:#66d9ef">case</span> ets:<span style="color:#a6e22e">member</span>(Table, Hash) <span style="color:#66d9ef">of</span>
+        true <span style="color:#f92672">-&gt;</span>
+            ets:<span style="color:#a6e22e">insert</span>(Table, {Hash, I}),
+            ok;
+        false <span style="color:#f92672">-&gt;</span>
+            ok
+    <span style="color:#66d9ef">end</span>,
+    iterate(Table, NextSeed, K<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>).
+</code></pre></div><p>Next, we spawn workers doing this and await their completion:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#a6e22e">fanout</span>(Table, Cores) <span style="color:#f92672">-&gt;</span>
+    collect([spawn_monitor(
+                   <span style="color:#66d9ef">fun</span>() <span style="color:#f92672">-&gt;</span>
+                   iterate_init(Table)
+               <span style="color:#66d9ef">end</span>) || _ <span style="color:#f92672">&lt;-</span> lists:<span style="color:#a6e22e">seq</span>(<span style="color:#ae81ff">1</span>, Cores)]).
+
+<span style="color:#a6e22e">collect</span>([]) <span style="color:#f92672">-&gt;</span> ok;
+<span style="color:#a6e22e">collect</span>([{_Pid, Ref} | Monitored]) <span style="color:#f92672">-&gt;</span>
+   <span style="color:#66d9ef">receive</span>
+       {&#39;DOWN&#39;, Ref, _, _, normal} <span style="color:#f92672">-&gt;</span>
+           collect(Monitored);
+       {&#39;DOWN&#39;, Ref, _, _, Otherwise} <span style="color:#f92672">-&gt;</span>
+           exit(Otherwise)
+   <span style="color:#66d9ef">end</span>.
+</code></pre></div><p>This generates a far nastier set of collisions, where there are many siblings present for each value:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang">[[<span style="color:#ae81ff">49527266765044</span>,<span style="color:#ae81ff">90940896816021</span>,<span style="color:#ae81ff">20062927283041</span>,<span style="color:#ae81ff">267080852079651</span>],
+ [<span style="color:#ae81ff">249858369443708</span>,<span style="color:#ae81ff">206247021789428</span>,<span style="color:#ae81ff">20287304470696</span>,<span style="color:#ae81ff">25847120931175</span>],
+ [<span style="color:#ae81ff">10645228898670</span>,<span style="color:#ae81ff">224705626119556</span>,<span style="color:#ae81ff">267405565521452</span>,<span style="color:#ae81ff">258214397180678</span>],
+ [<span style="color:#ae81ff">264783762221048</span>,<span style="color:#ae81ff">166955943492306</span>,<span style="color:#ae81ff">98802957003141</span>,<span style="color:#ae81ff">102012488332476</span>],
+ [<span style="color:#ae81ff">69425677456944</span>,<span style="color:#ae81ff">177142907243411</span>,<span style="color:#ae81ff">137138950917722</span>,<span style="color:#ae81ff">228865047699598</span>],
+ [<span style="color:#ae81ff">116031213307147</span>,<span style="color:#ae81ff">29203342183358</span>,<span style="color:#ae81ff">37406949328742</span>,<span style="color:#ae81ff">255198080174323</span>],
+ [<span style="color:#ae81ff">200358182338308</span>,<span style="color:#ae81ff">235207156008390</span>,<span style="color:#ae81ff">120922906095920</span>,<span style="color:#ae81ff">116215987197289</span>],
+ [<span style="color:#ae81ff">58728890318426</span>,<span style="color:#ae81ff">68877471005069</span>,<span style="color:#ae81ff">176496507286088</span>,<span style="color:#ae81ff">221041411345780</span>],
+ [<span style="color:#ae81ff">91094120814795</span>,<span style="color:#ae81ff">50665258299931</span>,<span style="color:#ae81ff">256093108116737</span>,<span style="color:#ae81ff">19777509566621</span>],
+ [<span style="color:#ae81ff">74646746200247</span>,<span style="color:#ae81ff">98350487270564</span>,<span style="color:#ae81ff">154448261001199</span>,<span style="color:#ae81ff">39881047281135</span>],
+ [<span style="color:#ae81ff">23408943649483</span>,<span style="color:#ae81ff">164410325820923</span>,<span style="color:#ae81ff">248161749770122</span>,<span style="color:#ae81ff">274558342231648</span>],
+ [<span style="color:#ae81ff">169531547115055</span>,<span style="color:#ae81ff">213630535746863</span>,<span style="color:#ae81ff">235098262267796</span>,<span style="color:#ae81ff">200508473898303</span>],
+ [<span style="color:#ae81ff">235098564415817</span>,<span style="color:#ae81ff">85039146398174</span>,<span style="color:#ae81ff">51721575960328</span>,<span style="color:#ae81ff">173069189684390</span>],
+ [<span style="color:#ae81ff">176136386396069</span>,<span style="color:#ae81ff">155368359051606</span>,<span style="color:#ae81ff">147817099696487</span>,<span style="color:#ae81ff">265419485459634</span>],
+ [<span style="color:#ae81ff">137542881551462</span>,<span style="color:#ae81ff">40028925519736</span>,<span style="color:#ae81ff">70525669519846</span>,<span style="color:#ae81ff">63445773516557</span>],
+ [<span style="color:#ae81ff">173854695142814</span>,<span style="color:#ae81ff">114282444507812</span>,<span style="color:#ae81ff">149945832627054</span>,<span style="color:#ae81ff">99605565798831</span>],
+ [<span style="color:#ae81ff">177686773562184</span>,<span style="color:#ae81ff">127158716984798</span>,<span style="color:#ae81ff">132495543008547</span>],
+ [<span style="color:#ae81ff">227073396444896</span>,<span style="color:#ae81ff">139667311071766</span>,<span style="color:#ae81ff">158915951283562</span>],
+ [<span style="color:#ae81ff">26212438434289</span>,<span style="color:#ae81ff">94902985796531</span>,<span style="color:#ae81ff">198145776057315</span>],
+ [<span style="color:#ae81ff">266279278943923</span>,<span style="color:#ae81ff">58550737262493</span>,<span style="color:#ae81ff">74297973216378</span>],
+ [<span style="color:#ae81ff">32373606512065</span>,<span style="color:#ae81ff">131854353044428</span>,<span style="color:#ae81ff">184642643042326</span>],
+ [<span style="color:#ae81ff">34335377662439</span>,<span style="color:#ae81ff">85341895822066</span>,<span style="color:#ae81ff">273492717750246</span>],...
+</code></pre></div><p>Running with this new collision set on the Erlang/OTP tree at that point in time, lead to a segmentation fault, on an unknown map: when the segfault occurs, we have no way to know which map invoked the system fault since it is gone with the crash.</p>
+<h2 id="distribution-to-therescue">Distribution to the rescue</h2>
+<p>Much of Erlangs semantics are constrained by its support for seamless distribution. It is a very powerful concept since the program you are running can be spread out over multiple nodes. The nodes can live on the same machine, or they can be spread out over multiple physical machines.</p>
+<p>People have asked me why I introduced the maps_runner process to run the map rather than simply doing it in the model itself. At that time, it was an intuitive hunch, but now I have a real use for the split. We run the maps code on a separate <code>node()</code>. By splitting the model and the map over two nodes, a crash of one node, due to a segfault, can be handled gracefully. We just need our system to use Erlangs global process registry for handling the name of the ‘maps_runner’. Then the system can look up where the map is currently living in the distributed cloud and proceed to talk with it.</p>
+<p>We just alter the maps runner, so it understands it needs to register itself globally:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#a6e22e">start_link</span>() <span style="color:#f92672">-&gt;</span>
+    gen_server:<span style="color:#a6e22e">start_link</span>({global, <span style="color:#f92672">?</span>MODULE}, <span style="color:#f92672">?</span>MODULE, [], []).
+</code></pre></div><p>and that you call it by looking up where it is in the ‘global’ registry:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#a6e22e">call</span>(X) <span style="color:#f92672">-&gt;</span>
+    gen_server:<span style="color:#a6e22e">call</span>({global, <span style="color:#f92672">?</span>MODULE}, X).
+</code></pre></div><p>Now, to make sure the maps_runner is started, we implement a function which requires a reply from the other side and retries a number of times:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#a6e22e">ensure_started</span>(_Node, <span style="color:#ae81ff">0</span>) <span style="color:#f92672">-&gt;</span> exit(gave_up_starting);
+<span style="color:#a6e22e">ensure_started</span>(Node, K) <span style="color:#f92672">-&gt;</span>
+    ReplyPid <span style="color:#f92672">=</span> self(),
+    Pid <span style="color:#f92672">=</span> spawn(Node,
+      <span style="color:#66d9ef">fun</span>() <span style="color:#f92672">-&gt;</span>
+        start(),
+        timer:<span style="color:#a6e22e">sleep</span>(<span style="color:#ae81ff">10</span>),
+        ReplyPid <span style="color:#f92672">!</span> {started, self()}
+      <span style="color:#66d9ef">end</span>),
+    <span style="color:#66d9ef">receive</span>
+        {started, Pid} <span style="color:#f92672">-&gt;</span> ok
+    <span style="color:#66d9ef">after</span> <span style="color:#ae81ff">500</span> <span style="color:#f92672">-&gt;</span>
+        ensure_started(Node, K<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>)
+    <span style="color:#66d9ef">end</span>,
+    global:<span style="color:#a6e22e">sync</span>(),
+    reset(),
+    ok.
+</code></pre></div><p>Now, if the node on which the maps_runner is living crashes and comes up again, the test can establish the guarantee that there is a runner available before it proceeds to carry out the test. This happens under test case shrinking, where the runner node will crash thousands of times and get restarted. But the model, running on another node, will be intact and since it doesn’t invoke the failing maps code, it will survive and proceed to minimize the test case.</p>
+<p>To use it, you simply start two nodes, and put one under Erlangs “heart” program, which monitors the node with heartbeats and restarts it under crashes. And that is all there is to it! Now test cases can be minimized — even if the C code has errors — and we can obtain good small counterexamples.</p>
+<p>The result was that we found some very subtle C promotion rule faults, where certain types did not retain the correct sign — and it was fixed in hours by the OTP team. The following counter example crashed the system:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang">L <span style="color:#f92672">=</span>
+    [{<span style="color:#ae81ff">58550737262493</span>, <span style="color:#f92672">&lt;&lt;&gt;&gt;</span>},
+     {<span style="color:#f92672">&lt;&lt;&gt;&gt;</span>, foo},
+     {<span style="color:#ae81ff">85341895822066</span>, <span style="color:#f92672">&lt;&lt;&gt;&gt;</span>}, {<span style="color:#ae81ff">19777509566621</span>, <span style="color:#f92672">&lt;&lt;&gt;&gt;</span>},
+     {<span style="color:#ae81ff">51721575960328</span>, <span style="color:#ae81ff">0</span>}, {<span style="color:#ae81ff">58550737262493</span>, <span style="color:#ae81ff">0</span>.<span style="color:#ae81ff">0</span>},
+     {<span style="color:#f92672">&lt;&lt;&gt;&gt;</span>, false}, {<span style="color:#ae81ff">0</span>.<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">97</span>}, {<span style="color:#f92672">&lt;&lt;&gt;&gt;</span>, <span style="color:#f92672">&lt;&lt;&gt;&gt;</span>}, {<span style="color:#ae81ff">97</span>, flower},
+     {<span style="color:#ae81ff">74297973216378</span>, []}, {<span style="color:#f92672">&lt;&lt;&gt;&gt;</span>, <span style="color:#ae81ff">0</span>.<span style="color:#ae81ff">0</span>},
+     {<span style="color:#ae81ff">58550737262493</span>, foo},
+     {<span style="color:#f92672">&lt;&lt;&gt;&gt;</span>, <span style="color:#ae81ff">97</span>}, {<span style="color:#ae81ff">0</span>.<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">97</span>},
+     {<span style="color:#ae81ff">63445773516557</span>, foo},
+     {<span style="color:#ae81ff">273492717750246</span>, <span style="color:#f92672">&lt;&lt;&gt;&gt;</span>}, {flower, <span style="color:#f92672">&lt;&lt;&gt;&gt;</span>},
+     {<span style="color:#f92672">&lt;&lt;&gt;&gt;</span>, flower}, {<span style="color:#ae81ff">266279278943923</span>, <span style="color:#f92672">&lt;&lt;&gt;&gt;</span>},
+     {<span style="color:#ae81ff">224705626119556</span>, <span style="color:#ae81ff">0</span>}, {<span style="color:#f92672">&lt;&lt;&gt;&gt;</span>, false}, {<span style="color:#ae81ff">97</span>, foo},
+     {<span style="color:#ae81ff">31395337272657</span>, <span style="color:#f92672">&lt;&lt;&gt;&gt;</span>}, {<span style="color:#ae81ff">31395337272657</span>, <span style="color:#ae81ff">0</span>},
+     {<span style="color:#ae81ff">20062927283041</span>, false}, {<span style="color:#ae81ff">184642643042326</span>, <span style="color:#f92672">&lt;&lt;&gt;&gt;</span>},
+     {<span style="color:#ae81ff">94403308189279</span>, <span style="color:#f92672">&lt;&lt;&gt;&gt;</span>}, {<span style="color:#f92672">&lt;&lt;&gt;&gt;</span>, false}, {<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">97</span>},
+     {<span style="color:#ae81ff">10645228898670</span>, <span style="color:#ae81ff">97</span>}, {<span style="color:#ae81ff">0</span>, <span style="color:#f92672">&lt;&lt;&gt;&gt;</span>},
+     {<span style="color:#ae81ff">177142907243411</span>, foo}].
+M <span style="color:#f92672">=</span> maps:<span style="color:#a6e22e">from_list</span>(L).
+Segmentation fault (core dumped)
+</code></pre></div><p>The layering power is apparent here. We’ve had extensive tests of ‘maps:from_list/1’ already. Yet, that is where the error shows itself. Had we not generated the test cases, it would have been likely we would not have checked this particular pairing, simply because it would take too long to write the test cases for all invocation combinations.</p>
+<h2 id="coverage-checking">Coverage checking</h2>
+<p>We have also compiled the Erlang run-time to execute under gcov and have verified the current coverage of the code base. It is around 85% and we have not done anything specifically to get it high. The coverage run gave some hints on something we wanted to test however.</p>
+<p>When doing tests, I’ve noted the importance of negative testing. If you give bad input to a function, you must check that it crashes. We have added a command which deliberately generates illegal input to all ‘maps’ module functions. It then verifies the function returns {error, badarg} or similar upon failure. This did not uncover any bugs, but it acts as a tracking point if/when the error reason changes, which it is destined to do in 18.0 before release. A bad key lookup will return ‘{badkey, K}’ for instance, so you know what key you looked up as part of the error. Having nailed down the errors also verified that there are no change from 17.5 to 18.0-rc1 in the return values currently.</p>
+<p>This post was based on git Commit-ID <a href="https://github.com/jlouis/maps_eqc/tree/1bcf39b8156ead129030079fc2e1843d56bb2998">1bcf39b8156</a>.</p>
+
+
+</article>
+
+
+<section class="post-nav">
+    <ul>
+        
+        <li>
+            <a href="https://jlouis.github.io/posts/breaking-erlang-maps-3/"><i class="fa fa-chevron-circle-left"></i> Breaking Erlang Maps #3</a>
+        </li>
+        
+        
+        <li>
+            <a href="https://jlouis.github.io/posts/scalability-capacity-sensitivity/">On Scalability, Capacity, and Sensitivity <i class="fa fa-chevron-circle-right"></i> </a>
+        </li>
+        
+    </ul>
+</section>
+  
+    
+    
+  
+
+
+
+
+
+</main>
+    <footer>
+        <h6> |
+            Rendered by <a href="https://gohugo.io" title="Hugo">Hugo</a> |
+            <a href="https://jlouis.github.io/index.xml">Subscribe </a></h6>
+    </footer>
+</div>
+<script src="/js/scripts.js"></script>
+
+
+</body>
+
+</html>
+

@@ -1,0 +1,180 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+  <title>Breaking Erlang Maps #3 - jlouis&#39; Ramblings</title>
+  <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="The HTML5 Herald" />
+<meta name="author" content="Jesper Louis Andersen" /><meta property="og:title" content="Breaking Erlang Maps #3" />
+<meta property="og:description" content="Easter hacking on the Maps Erlang QuickCheck model is progressing nicely. And I have new interesting findings to report. I started by trying to generate very large maps, in order to get some collisions on the underlying hash value. At 25.000 elements and a 32-bit hash, we can approximate the chance of a collision by a Taylor expansion of the birthday paradox. If we take
+n = 25000 k = 65536 * 65536 C = 1-exp(-(n*(n-1)/2)/k) and my approximation calculation is right, then C is 0." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://jlouis.github.io/posts/breaking-erlang-maps-3/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2015-04-05T00:00:00&#43;02:00" />
+<meta property="article:modified_time" content="2015-04-05T00:00:00&#43;02:00" />
+
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Breaking Erlang Maps #3"/>
+<meta name="twitter:description" content="Easter hacking on the Maps Erlang QuickCheck model is progressing nicely. And I have new interesting findings to report. I started by trying to generate very large maps, in order to get some collisions on the underlying hash value. At 25.000 elements and a 32-bit hash, we can approximate the chance of a collision by a Taylor expansion of the birthday paradox. If we take
+n = 25000 k = 65536 * 65536 C = 1-exp(-(n*(n-1)/2)/k) and my approximation calculation is right, then C is 0."/>
+
+<meta name="generator" content="Hugo 0.82.0" />
+    
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" integrity="sha256-l85OmPOjvil/SOvVt3HnSSjzF1TUMyT9eV0c2BzEGzU=" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://jlouis.github.io/fontawesome/css/all.min.css" />
+  
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Slab|Ruda" />
+  
+  
+  <link rel="stylesheet" type="text/css" href="/css/styles.css" /></head>
+
+<body>
+  <div id="container">
+    <header>
+      <h1>
+                <a href="/">jlouis' Ramblings</a>
+            </h1>
+
+      <ul id="social-media">
+             <li>
+               <a href="https://github.com/jlouis" title="GitHub">
+               <i class="fab fa-github fa-lg"></i>
+               </a>
+             </li>
+             <li>
+               <a href="https://twitter.com/jlouis666" title="Twitter">
+               <i class="fab fa-twitter fa-lg"></i>
+               </a>
+             </li>
+      </ul>
+      
+      <p><em>Musings on tech, software, and other things</em></p>
+      
+    </header>
+
+    
+<nav>
+    <ul>
+        
+    </ul>
+</nav>
+
+
+    <main>
+
+
+
+
+<article>
+
+    <h1>Breaking Erlang Maps #3</h1>
+
+    
+      <aside>
+    <ul>
+        <li>
+            <time class="post-date" datetime="2015-04-05T00:00:00&#43;02:00">Apr 5, 2015</time>
+        </li>
+        
+        
+
+        
+
+        <li>3 minute read</li>
+    </ul>
+</aside>
+
+    
+
+    
+<div class="featured_image">
+    <a href="https://jlouis.github.io/posts/breaking-erlang-maps-3/" title="Breaking Erlang Maps #3">
+        <img src="">
+    </a>
+</div>
+
+
+
+    <p>Easter hacking on the Maps Erlang QuickCheck model is progressing nicely. And I have new interesting findings to report. I started by trying to generate very large maps, in order to get some collisions on the underlying hash value. At 25.000 elements and a 32-bit hash, we can approximate the chance of a collision by a Taylor expansion of the birthday paradox. If we take</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-text" data-lang="text">n = 25000
+k = 65536 * 65536
+C = 1-exp(-(n*(n-1)/2)/k)
+</code></pre></div><p>and my approximation calculation is right, then C is 0.07 which is 7% chance at a hash collision.</p>
+<p>This is enough that we can build maps of 25000 elements and if we build enough of those, then there will be random hash collisions. However, such a large map is bad when we consider shrinking, and just printing out a model with 25000 elements is not going to be easy. Furthermore, operating on such a large map takes more computational time.</p>
+<h2 id="switching-strategy">Switching strategy</h2>
+<p>A far better strategy is to change our generator. We first write a helper module which uses a Pseudo-Random Number Generator to generate random key values. Then we check those against the hash value of other keys. If the same hash is generated, we have an overlapping keypair, <code>[K1, K2]</code>. A couple of seconds generates thousands of these, and thus we have a lot of keys which will collide.</p>
+<p>Now, we don’t need large maps to create collisions. We just have to pick some keys which are colliding. This is way easier to handle and as long as we begin toying with the HAMT structure, we are likely to find lots of errors, while keeping the maps small. We can then easily alter the generator for ‘map_key()’ to take the current state into account. We store a list of collisions as a list of lists, [[K01, K02], [K11, K12], …] where the inner lists have keys which are known to collide. Then we can generate colliding keys. First a little helper function:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#a6e22e">find_eligible_collisions</span>(Keys, Cols) <span style="color:#f92672">-&gt;</span>
+    lists:<span style="color:#a6e22e">flatten</span>(eligible(Keys, Cols)).
+
+<span style="color:#a6e22e">eligible</span>([], _) <span style="color:#f92672">-&gt;</span> [];
+<span style="color:#a6e22e">eligible</span>([K | Ks], Cols) <span style="color:#f92672">-&gt;</span>
+    Pairs <span style="color:#f92672">=</span> [Cs || Cs <span style="color:#f92672">&lt;-</span> Cols, lists:<span style="color:#a6e22e">member</span>(K, Cs)],
+    [Pairs <span style="color:#f92672">--</span> [K] | eligible(Ks, Cols)].
+</code></pre></div><p>We use the find_eligible_collisions/2 to search among a set of Keys. It then returns the “other” keys among the ones which collide. In turn, it produces a list of possibly colliding keys. With this, we can fix the generator for map keys:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang"><span style="color:#a6e22e">map_key</span>(#state { collisions <span style="color:#f92672">=</span> [] }) <span style="color:#f92672">-&gt;</span>
+      map_term();
+<span style="color:#a6e22e">map_key</span>(#state { collisions <span style="color:#f92672">=</span> Cols, contents <span style="color:#f92672">=</span> Contents }) <span style="color:#f92672">-&gt;</span>
+      Keys <span style="color:#f92672">=</span> [K || {K, _} <span style="color:#f92672">&lt;-</span> Contents],
+      <span style="color:#66d9ef">case</span> find_eligible_collisions(Keys, Cols) <span style="color:#66d9ef">of</span>
+          [] <span style="color:#f92672">-&gt;</span> oneof([map_term(),
+                       oneof(lists:<span style="color:#a6e22e">flatten</span>(Cols))]);
+          Eligible <span style="color:#f92672">-&gt;</span>
+              frequency([
+                  {<span style="color:#ae81ff">10</span>, map_term()},
+                  {<span style="color:#ae81ff">10</span>, oneof(lists:<span style="color:#a6e22e">flatten</span>(Cols))},
+                  {<span style="color:#ae81ff">20</span>, oneof(Eligible)}])
+      <span style="color:#66d9ef">end</span>.
+</code></pre></div><p>If there are no collisions, we just generate a map_term() as always. If there are collisions, we search among these to find possibly eligible colliders. And if there are, we make it slightly more likely to generate one of those as a key.</p>
+<p>Running this test on 18.0-rc1+patches for every error we know of right now, we get:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-text" data-lang="text">1&gt; eqc:module({numtests, 1000}, maps_eqc).
+prop_map:
+....................................................................................................(x10)..........................User defined signal 2
+</code></pre></div><p>which is due to an allocation error where we can’t allocate more memory. This is due to some looping inside maps:merge/2 where a flatmap and a hashmap are merged together. It is likely that this is a bug we haven’t discovered yet.</p>
+<p>The next phase of testing will have to consider code coverage of the maps C code in order to figure out what we are not covering yet. Given the excellent debug-tooling in Erlang/OTP, this should be fairly straightforward to get a grip at.</p>
+
+
+</article>
+
+
+<section class="post-nav">
+    <ul>
+        
+        <li>
+            <a href="https://jlouis.github.io/posts/breaking-erlang-maps-2/"><i class="fa fa-chevron-circle-left"></i> Breaking Erlang Maps #2</a>
+        </li>
+        
+        
+        <li>
+            <a href="https://jlouis.github.io/posts/breaking-erlang-maps-4/">Breaking Erlang Maps #4 <i class="fa fa-chevron-circle-right"></i> </a>
+        </li>
+        
+    </ul>
+</section>
+  
+    
+    
+  
+
+
+
+
+
+</main>
+    <footer>
+        <h6> |
+            Rendered by <a href="https://gohugo.io" title="Hugo">Hugo</a> |
+            <a href="https://jlouis.github.io/index.xml">Subscribe </a></h6>
+    </footer>
+</div>
+<script src="/js/scripts.js"></script>
+
+
+</body>
+
+</html>
+

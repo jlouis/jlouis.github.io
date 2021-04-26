@@ -278,6 +278,70 @@ What is often meant is how the system handles additional load, for some measure 
     
 
     <li >
+      <h1><a href="https://jlouis.github.io/posts/breaking-erlang-maps-4/" title="Breaking Erlang Maps #4">Breaking Erlang Maps #4</a></h1>
+      <aside>
+    <ul>
+        <li>
+            <time class="post-date" datetime="2015-04-09T00:00:00&#43;02:00">Apr 9, 2015</time>
+        </li>
+        
+        
+
+        
+
+        <li>7 minute read</li>
+    </ul>
+</aside>
+
+      
+<div class="featured_image">
+    <a href="https://jlouis.github.io/posts/breaking-erlang-maps-4/" title="Breaking Erlang Maps #4">
+        <img src="">
+    </a>
+</div>
+
+
+      <p>In Part 1, we set up the basic generators. In Part 2, we introduced the use of a stateful model to track what happens “inside” the map, as we generate and execute random tests. In Part 3, we addressed a major problem in a Map-implementation: how it handles key collisions.
+The power of having a model for a subsystem is layering. Whenever you get a new idea on how you can improve the model, that improvement gets mixed in with every other idea you’ve had automatically.</p>
+      
+      <a href="/posts/breaking-erlang-maps-4/">Read more…</a>
+      
+    </li>
+    
+
+    <li >
+      <h1><a href="https://jlouis.github.io/posts/breaking-erlang-maps-3/" title="Breaking Erlang Maps #3">Breaking Erlang Maps #3</a></h1>
+      <aside>
+    <ul>
+        <li>
+            <time class="post-date" datetime="2015-04-05T00:00:00&#43;02:00">Apr 5, 2015</time>
+        </li>
+        
+        
+
+        
+
+        <li>3 minute read</li>
+    </ul>
+</aside>
+
+      
+<div class="featured_image">
+    <a href="https://jlouis.github.io/posts/breaking-erlang-maps-3/" title="Breaking Erlang Maps #3">
+        <img src="">
+    </a>
+</div>
+
+
+      <p>Easter hacking on the Maps Erlang QuickCheck model is progressing nicely. And I have new interesting findings to report. I started by trying to generate very large maps, in order to get some collisions on the underlying hash value. At 25.000 elements and a 32-bit hash, we can approximate the chance of a collision by a Taylor expansion of the birthday paradox. If we take
+n = 25000 k = 65536 * 65536 C = 1-exp(-(n*(n-1)/2)/k) and my approximation calculation is right, then C is 0.</p>
+      
+      <a href="/posts/breaking-erlang-maps-3/">Read more…</a>
+      
+    </li>
+    
+
+    <li >
       <h1><a href="https://jlouis.github.io/posts/breaking-erlang-maps-2/" title="Breaking Erlang Maps #2">Breaking Erlang Maps #2</a></h1>
       <aside>
     <ul>
@@ -305,70 +369,6 @@ What is often meant is how the system handles additional load, for some measure 
 From where we came In the first part, we built a generator which could generate data to put into maps. When we request something of type map_term(), we get a random term we can push into a map.</p>
       
       <a href="/posts/breaking-erlang-maps-2/">Read more…</a>
-      
-    </li>
-    
-
-    <li >
-      <h1><a href="https://jlouis.github.io/posts/breaking-erlang-maps-1/" title="Breaking Erlang Maps #1">Breaking Erlang Maps #1</a></h1>
-      <aside>
-    <ul>
-        <li>
-            <time class="post-date" datetime="2015-03-29T00:00:00&#43;01:00">Mar 29, 2015</time>
-        </li>
-        
-        
-
-        
-
-        <li>15 minute read</li>
-    </ul>
-</aside>
-
-      
-<div class="featured_image">
-    <a href="https://jlouis.github.io/posts/breaking-erlang-maps-1/" title="Breaking Erlang Maps #1">
-        <img src="">
-    </a>
-</div>
-
-
-      <p>Introduction Erlang got a new data structure in release 17.0, the map(). This structure is a finite mapping from keys to values with a flat internal representation: a map is essentially two arrays: one of sorted keys and one of values. In turn, maps in this so-called flatmap representation are efficient for small map sizes, but they don’t perform well for large maps.
-Release 18.0 is going to eliminate the large-map problem.</p>
-      
-      <a href="/posts/breaking-erlang-maps-1/">Read more…</a>
-      
-    </li>
-    
-
-    <li >
-      <h1><a href="https://jlouis.github.io/posts/solving-challenge-1/" title="Solving the Go Challenge #1 in Erlang">Solving the Go Challenge #1 in Erlang</a></h1>
-      <aside>
-    <ul>
-        <li>
-            <time class="post-date" datetime="2015-03-19T00:00:00&#43;01:00">Mar 19, 2015</time>
-        </li>
-        
-        
-
-        
-
-        <li>13 minute read</li>
-    </ul>
-</aside>
-
-      
-<div class="featured_image">
-    <a href="https://jlouis.github.io/posts/solving-challenge-1/" title="Solving the Go Challenge #1 in Erlang">
-        <img src="">
-    </a>
-</div>
-
-
-      <p>The first Go challenge is over. So by now, I can take my Erlang solution and write about how you would go around solving the challenge in Erlang. I’m deliberately skipping some details in Erlang, so don’t expect me to explain all the nitty-gritty parts. I do hope a reader with some programming language experience can follow along, even if you have had very little exposure to functional programming.
-The goal of the challenge is to implement a parser for a binary format.</p>
-      
-      <a href="/posts/solving-challenge-1/">Read more…</a>
       
     </li>
     
