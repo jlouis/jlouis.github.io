@@ -1,0 +1,280 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+  <title>Erlang Dirty Scheduler Overhead - jlouis&#39; Ramblings</title>
+  <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="The HTML5 Herald" />
+<meta name="author" content="Jesper Louis Andersen" /><meta property="og:title" content="Erlang Dirty Scheduler Overhead" />
+<meta property="og:description" content="Using DTrace to figure out what calls cost Due to heroic efforts by Steve Vinoski, Rickard Green, and Sverker Eriksson, we have an (experimental) so-called dirty-scheduler (DS) NIF API in the Erlang runtime, which has been somewhat stable since release 17.3.
+What is a NIF? It is a Natively-Implemented-Function, which is a shorthand for replacing Erlang code with C. A NIF library has access to a number of helper functions in the Erlang VM which makes their implementation easy, and their overhead in the interpreter is fairly low." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://jlouis.github.io/posts/erlang-dirty-scheduler-overhead/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2015-08-29T00:00:00&#43;02:00" />
+<meta property="article:modified_time" content="2015-08-29T00:00:00&#43;02:00" />
+
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Erlang Dirty Scheduler Overhead"/>
+<meta name="twitter:description" content="Using DTrace to figure out what calls cost Due to heroic efforts by Steve Vinoski, Rickard Green, and Sverker Eriksson, we have an (experimental) so-called dirty-scheduler (DS) NIF API in the Erlang runtime, which has been somewhat stable since release 17.3.
+What is a NIF? It is a Natively-Implemented-Function, which is a shorthand for replacing Erlang code with C. A NIF library has access to a number of helper functions in the Erlang VM which makes their implementation easy, and their overhead in the interpreter is fairly low."/>
+
+<meta name="generator" content="Hugo 0.82.0" />
+    
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" integrity="sha256-l85OmPOjvil/SOvVt3HnSSjzF1TUMyT9eV0c2BzEGzU=" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://jlouis.github.io/fontawesome/css/all.min.css" />
+  
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Slab|Ruda" />
+  
+  
+  <link rel="stylesheet" type="text/css" href="/css/styles.css" /></head>
+
+<body>
+  <div id="container">
+    <header>
+      <h1>
+                <a href="/">jlouis' Ramblings</a>
+            </h1>
+
+      <ul id="social-media">
+             <li>
+               <a href="https://github.com/jlouis" title="GitHub">
+               <i class="fab fa-github fa-lg"></i>
+               </a>
+             </li>
+             <li>
+               <a href="https://twitter.com/jlouis666" title="Twitter">
+               <i class="fab fa-twitter fa-lg"></i>
+               </a>
+             </li>
+      </ul>
+      
+      <p><em>Musings on tech, software, and other things</em></p>
+      
+    </header>
+
+    
+<nav>
+    <ul>
+        
+    </ul>
+</nav>
+
+
+    <main>
+
+
+
+
+<article>
+
+    <h1>Erlang Dirty Scheduler Overhead</h1>
+
+    
+      <aside>
+    <ul>
+        <li>
+            <time class="post-date" datetime="2015-08-29T00:00:00&#43;02:00">Aug 29, 2015</time>
+        </li>
+        
+        
+
+        
+
+        <li>11 minute read</li>
+    </ul>
+</aside>
+
+    
+
+    
+<div class="featured_image">
+    <a href="https://jlouis.github.io/posts/erlang-dirty-scheduler-overhead/" title="Erlang Dirty Scheduler Overhead">
+        <img src="">
+    </a>
+</div>
+
+
+
+    <h3 id="using-dtrace-to-figure-out-what-callscost">Using DTrace to figure out what calls cost</h3>
+<p>Due to heroic efforts by Steve Vinoski, Rickard Green, and Sverker Eriksson, we have an (experimental) so-called dirty-scheduler (DS) NIF API in the Erlang runtime, which has been somewhat stable since release 17.3.</p>
+<p>What is a NIF? It is a Natively-Implemented-Function, which is a shorthand for replacing Erlang code with C. A NIF library has access to a number of helper functions in the Erlang VM which makes their implementation easy, and their overhead in the interpreter is fairly low. They make for an excellent way to speed up compute-intensive operations in the VM. Of course, the caveat is if your C code crashes, then so does the VM.</p>
+<p>The other slight problem with NIFs are that they run out of the main Erlang schedulers, of which the VM usually runs one per virtual core in the machine. If a NIF takes 300ms, then the NIF will block a scheduler for 300ms. For a system which prides itself on low-latency operation, this is a serious problem, because every job assigned to the particular scheduler is now delayed by 300ms. Worse, the Erlang VM dislikes long-running jobs like these. It can lead to a situation called scheduler-collapse where a scheduler stops operating all of a sudden. And you need a specific flag (+sfwi) in order to force schedulers to wake up again from the collapse situation.</p>
+<p>In order to avoid these problems, NIFs should run no more than 1ms. In order to achieve this, you can take “lengthy work” and break it up into smaller chunks, each taking roughly 1ms in time. Steve Vinoski has an example repository, <a href="https://github.com/vinoski/bitwise">bitwise</a>.</p>
+<p>In this repository, Steve shows how to attack the problem of splitting up work for long-running NIFs, and the videos he refers to are online, so you can go watch them.</p>
+<p>But many libraries do not outright support the chunking solution. Rather, they expect to run until they relinquish control back to the caller with no cooperation in sight. An example is the libsodium cryptographic library.</p>
+<p>This is where dirty schedulers come in.</p>
+<p>The idea is to have two separate groups of scheduler threads: one for IO-bound jobs, and one for CPU-bound jobs. Now, NIFs marked as being dirty, will be sent to one of the dirty scheduler groups and get executed there. Hence, they won’t interfere with the normal operation of the schedulers, as the job runs on a separate thread. Once the job is done executing, the process is sent back to a regular scheduler, and it continues its life there.</p>
+<hr>
+<h2 id="low-leveldetails">Low level details</h2>
+<p>So what really happens, in more detail. First, you have to compile the Erlang VM with support. Pass the option</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-text" data-lang="text">--enable-dirty-schedulers
+</code></pre></div><p>to the configure script. Next your code has to change a bit. If you have a standard NIF, like the one for obtaining random data in the enacl library[x], you have a function with signature:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erlang" data-lang="erlang">ERL_NIF_TERM enif_randombytes(ErlNifEnv <span style="color:#f92672">*</span>, int, ERL_NIF_TERM[])
+</code></pre></div><p>When you then build the table for the NIF, you write the following:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">/* Tie the knot to the Erlang world */</span>
+<span style="color:#66d9ef">static</span> ErlNifFunc nif_funcs[] <span style="color:#f92672">=</span> {
+     ...
+     {<span style="color:#e6db74">&#34;randombytes_b&#34;</span>, <span style="color:#ae81ff">1</span>, enif_randombytes},
+     {<span style="color:#e6db74">&#34;randombytes&#34;</span>, <span style="color:#ae81ff">1</span>, enif_randombytes, ERL_NIF_DIRTY_JOB_CPU_BOUND}
+ };
+
+ERL_NIF_INIT(enacl_nif, nif_funcs, enif_crypto_load,
+  NULL, NULL, NULL);
+</code></pre></div><p>Which tells the Erlang system that the function randombytes_b is a regular NIF, and the function randombytes is bound to the dirty scheduler for CPU bound jobs.</p>
+<p>The way Erlang works with a NIF module is that you can replace functions in a module with the NIF functions by calling erlang:load_nif/2. This reads the above nif_funcs[] array, and then patches the functions such that calling a function in the module will invoke the BEAM operation ‘call_nif’ as the very first instruction. This opcode contains the function pointer to the real C-function.</p>
+<p>When the opcode is invoked an environment is set up and passed to the C code. It can then inspect the environment and the incomnig parameters and carry out its work. Once it is done, it simply returns an Erlang term back to the interpreter, which in turn regards that as the return value of the function in question.</p>
+<p>When loading a dirty NIF however, the NIF is not directly patched in. Rather, a wrapper function ‘schedule_dirty_io_nif’ or ‘schedule_dirty_cpu_nif’ is patched in. And the NIF itself is wrapped in yet another helper ‘execute_dirty_nif’. So when calling the NIF, you are really calling, say, schedule_dirty_cpu_nif.</p>
+<p>The scheduling functions alters the process flags for the currently executing function such that it becomes a dirty (cpu-bound) function. It then bumps all reductions so the process it out of reductions. This forces a re-evaluation of the process queueing. The scheduler now sees the dirty-flag and evacuates the process into the run queue of the dirty schedulers.</p>
+<p>Once on the dirty scheduler, the‘execute_dirty_nif’ wrapper gets called. This wrapper executes the real NIF, clears the flags, and arranges the ‘dirty_nif_finalizer’ to run, which is a function that simply returns the NIF result via a standard trap[0]. The scheduler now requeues and moves the NIF back onto one of the main schedulers, where it will continue execution and return its value.</p>
+<p>The execution wrapper can also handle exceptions in the NIF. This executes another finalizer, which raises the exception once it is back on the main scheduler thread. Also, functions may decide to yield the scheduler they are running on in order to give others a chance to run. Like the exception case, the execution wrapper handles this.</p>
+<h2 id="overhead-measurement-strategy">Overhead measurement strategy</h2>
+<p>Now, this whole dirty NIF evacuation back and forth is not a free operation. For a long-running NIF that could take something like 20 milli-seconds or more, it is probably a negligible overhead. But for a NIF which returns in a few instructions, the overhead of moving things around would dominate. Also, when a NIF returns quickly, there is no reason to even consider the dirty scheduler.</p>
+<p>The question is, however, how large is this overhead? Luckily, I have a new Illumos machine sitting around to answer this question through DTrace.</p>
+<p>The above description suggests a way to grab the overhead of going back and forth. We can use DTrace to dynamically add trace probes into the running Erlang system and measure the actual overhead of going back and forth between schedulers by writing a DTrace script:</p>
+<pre><code class="language-dtrace" data-lang="dtrace">pid$target:beam.smp:schedule_dirty_cpu_nif:return
+  {
+              s = timestamp;
+  }
+
+pid$target:beam.smp:execute_dirty_nif:entry
+  /s != 0/
+  {
+          @SchedTime&lt;/a&gt; = lquantize(timestamp - s, 0, 10000, 250);
+          s = 0;
+  }
+</code></pre><p>Whenever we return from schedule_dirty_cpu_nif, we record a timestamp. And whenever we start to execute the dirty nif through execute_dirty_nif, we linearly quantize the time it took. Likewise, the return path can be measured by recording the time it takes from the dirty nif execution returns and until the dirty nif finalizer runs (which will happen back on a normal scheduler core).</p>
+<pre><code class="language-dtrace" data-lang="dtrace">pid$target:beam.smp:execute_dirty_nif:return
+  {
+              r = timestamp;
+  }
+
+pid$target:beam.smp:dirty_nif_finalizer:entry
+  /r != 0/
+  {
+          @ReturnTime = lquantize(timestamp - r, 0, 10000, 250);
+          r = 0;
+  }
+</code></pre><p>Now, running DTrace on this script will dynamically reach inside the Erlang VM and patch the prologue/epilogue of the targeted functions. Once hit, we will execute the body snippets of the above in order to measure the runtime overhead.</p>
+<h2 id="measurement">Measurement</h2>
+<p>Measurements are done on a Intel(r) Core(tm) i7–3720QM CPU @ 2.60GHz with 16 Gigabytes of RAM, running SunOS dev 5.11 omnios-d08e0e5 i86pc i386 i86pc (i.e., OmniOS).</p>
+<p>A first naive run where we just run many scheduler operations back-to-back one at a time, on a standard configured Erlang with no special provisioning options results in the following output:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-text" data-lang="text">Scheduling overhead (nanos):
+  value  ------------- Distribution ------------- count
+   1000 |                                         0
+   1250 |@@@@@@                                   2978
+   1500 |@@@@@@@@@@@                              5684
+   1750 |@@@@@@@@@@@@@@@@@@@@                     10171
+   2000 |@@                                       1139
+   2250 |                                         11
+   2500 |                                         2
+  ...
+</code></pre></div><p>Which suggests overhead of moving to the scheduler is in the ballpark of 1750 nanoseconds which is around 1.8us. The return graph looks like this:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-text" data-lang="text">Return overhead (nanos):
+   value  ------------- Distribution ------------- count
+    6750 |                                         0
+    7000 |                                         54
+    7250 |@@@@@@                                   3125
+    7500 |@@@@@@@@@@@@@@@@@@@@@@                   11214
+    7750 |@@@@@                                    2639
+    8000 |@                                        415
+    8250 |                                         54
+    8500 |                                         24
+    8750 |                                         13
+    9000 |                                         10
+    9250 |                                         8
+    9500 |                                         52
+    9750 |                                         70
+&gt;= 10000 |@@@@@                                    2326
+</code></pre></div><p>So it takes around 7.5us to get back on the main scheduler.</p>
+<p>The hypothesis is that the reason it costs nearly 10us to move around is that you are highly likely to move from one CPU core another while this is happening. This results in a lot of contention in caches, TLBs, Locking and so on. In turn, things get expensive because we have to wake up cores, and intercommunicate a lot. Worse, since we only need a single core, we will be moved around on the CPU cores all the time, which blows our cache, destroys our TLB and makes us generally sad.</p>
+<p>To test our hypothesis, we exploit that we are running on the raw steel of a machine, and set up some Erlang flag options to the runtime:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">ERL_FLAGS<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;+K true +A 10 +sbt db +sbwt very_long +swt very_low +Mulmbcs 32767 +Mumbcgs 1 +Musmbcs 2047&#39;</span> rebar3 shell
+</code></pre></div><p>The important flags here are sbt which binds schedulers to cores, and the sbwt/swt setting the wakeup threshold. The +M options makes the system allocate in 2–32 megabyte blocks which really helps if the system supports superpages/hugepages in its VM layer. It also tends to pack data for locality.</p>
+<p>This has a huge effect on the runs. Whereas in the above, the overhead is 10us, after setting options, the overhead is in the ballpark of 2.5us to 3.75us[1]:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-text" data-lang="text">Scheduling overhead (nanos):
+  value  ------------- Distribution ------------- count
+    750 |                                         0
+   1000 |@@@@@@@@@@@@@@@@@@@@@                    10259
+   1250 |@@@@                                     2217
+   1500 |@@@@@                                    2373
+   1750 |@@@@@@@@@@                               5104
+   2000 |                                         29
+
+Return overhead (nanos):
+  value  ------------- Distribution ------------- count
+   1000 |                                         0
+   1250 |@@@@@                                    2412
+   1500 |@@@@@@@@@@@@@@@@@@@@@@@@@@               12827
+   1750 |@@@@@@                                   3029
+   2000 |@@                                       1107
+   2250 |@                                        301
+</code></pre></div><p>Note some important caveats here: We are far from loading the system! We only run at a concurrency level of 1, such that we don’t let some measurements interfere with others. We can’t easily use thread-local-variables since we are measuring work that gets moved between threads, which is why we use the above somewhat simplified approach.</p>
+<p>1000ns for a scheduling operation isn’t that high. There are several atomics, a couple of mutex locks, and a DRAM hit will cost 100ns in there. Synchronization has rarely been entirely free, and this is yet another example of it. For a highly optimized loop, 1000ns is an eternity given the good ILP of a modern CPU core. There are easily 2500 insns in there, and this number can be much higher if you use SIMD style vector operations. But this suggests you have a pipeline by which you can feed the system, or that you are not in a synchronization routine. This is quite different.</p>
+<h2 id="dualize-dirty-nifhandling">Dualize Dirty NIF handling</h2>
+<p>The Erlang documentation suggests using Dirty Schedulers whenever a NIF is about to do lengthy work (1ms or 1000us). But the measurements above suggests another solution: once the overhead of executing a dirty NIF is low enough, it’s execution is hidden in the noise.</p>
+<p>For instance, running an enacl crypto_box operation requires you to first to compute an ed25519 curve shared key. These take so much time to compute that the overhead of running on a dirty scheduler is impossible to measure. Hence, it is easier to just always execute it as a dirty operation.</p>
+<p>For other operations, say a secret key computation in NaCl/libsodium, encrypting a 4096 byte entry is so fast the movement onto a dirty scheduler dominates. Enacl detects this and simply runs the operation directly on the non-dirty scheduler in order to make many small operations faster.</p>
+<p>I’m currently revising the overhead thresholds for the enacl subsystem based on the above measurements. I’m targeting far smaller thresholds now, as the above suggests I can stop worring when the DS overhead is less than 10%, say. So if handling 8192 bytes of data takes 35us, I stop worrying and just run it on a Dirty Scheduler now. As an example, here is the run for one of the operations, secretboxes with a size of 8192 bytes on the above-mentioned Ivy Bridge based CPU:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-text" data-lang="text">0  enacl_nif:crypto_secretbox_b/3
+    value  ------------- Distribution ------------- count
+    15000 |                                         0
+    16000 |@@@@@@                                   1525
+    17000 |@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@        8222
+    18000 |@                                        167
+    19000 |                                         3
+    20000 |                                         6
+    21000 |                                         6
+    22000 |                                         2
+    23000 |                                         0
+    24000 |                                         1
+</code></pre></div><p>To obtain this, we used Scott L. Fritchie et.al’s work on the Erlang DTrace provider to directly hook onto ‘nif-entry’ and ‘nif-return’ in Erlang and measure how long it took to execute these. It suggests a current overhead of roughly 15%, which is fine I think, provided you know how to configure your Erlang system.</p>
+<hr>
+<p>[0] Traps are common in many compilers where you arrange a call stack such that it looks like another function returned than the one you were really executing.</p>
+<p>[1] I’ve cut off some outliers from the graph in order to keep it small. But there are not enough for it to register as a problem.</p>
+<p>[x] enacl is an Erlang NIF wrapper for the libsodium cryptographic library: <a href="https://github.com/jlouis/enacl">GH/jlouis/enacl</a></p>
+
+
+</article>
+
+
+<section class="post-nav">
+    <ul>
+        
+        <li>
+            <a href="https://jlouis.github.io/posts/scalability-capacity-sensitivity/"><i class="fa fa-chevron-circle-left"></i> On Scalability, Capacity, and Sensitivity</a>
+        </li>
+        
+        
+        <li>
+            <a href="https://jlouis.github.io/posts/testing-parallel-map/">Testing a Parallel map implementation <i class="fa fa-chevron-circle-right"></i> </a>
+        </li>
+        
+    </ul>
+</section>
+  
+    
+    
+  
+
+
+
+
+
+</main>
+    <footer>
+        <h6> |
+            Rendered by <a href="https://gohugo.io" title="Hugo">Hugo</a> |
+            <a href="https://jlouis.github.io/index.xml">Subscribe </a></h6>
+    </footer>
+</div>
+<script src="/js/scripts.js"></script>
+
+
+</body>
+
+</html>
+

@@ -246,6 +246,38 @@ map(F, Xs) -&gt; [F(X) || X &lt;- Xs] If, however, the function given as F block
     
 
     <li >
+      <h1><a href="https://jlouis.github.io/posts/erlang-dirty-scheduler-overhead/" title="Erlang Dirty Scheduler Overhead">Erlang Dirty Scheduler Overhead</a></h1>
+      <aside>
+    <ul>
+        <li>
+            <time class="post-date" datetime="2015-08-29T00:00:00&#43;02:00">Aug 29, 2015</time>
+        </li>
+        
+        
+
+        
+
+        <li>11 minute read</li>
+    </ul>
+</aside>
+
+      
+<div class="featured_image">
+    <a href="https://jlouis.github.io/posts/erlang-dirty-scheduler-overhead/" title="Erlang Dirty Scheduler Overhead">
+        <img src="">
+    </a>
+</div>
+
+
+      <p>Using DTrace to figure out what calls cost Due to heroic efforts by Steve Vinoski, Rickard Green, and Sverker Eriksson, we have an (experimental) so-called dirty-scheduler (DS) NIF API in the Erlang runtime, which has been somewhat stable since release 17.3.
+What is a NIF? It is a Natively-Implemented-Function, which is a shorthand for replacing Erlang code with C. A NIF library has access to a number of helper functions in the Erlang VM which makes their implementation easy, and their overhead in the interpreter is fairly low.</p>
+      
+      <a href="/posts/erlang-dirty-scheduler-overhead/">Read more…</a>
+      
+    </li>
+    
+
+    <li >
       <h1><a href="https://jlouis.github.io/posts/scalability-capacity-sensitivity/" title="On Scalability, Capacity, and Sensitivity">On Scalability, Capacity, and Sensitivity</a></h1>
       <aside>
     <ul>
@@ -337,38 +369,6 @@ The power of having a model for a subsystem is layering. Whenever you get a new 
 n = 25000 k = 65536 * 65536 C = 1-exp(-(n*(n-1)/2)/k) and my approximation calculation is right, then C is 0.</p>
       
       <a href="/posts/breaking-erlang-maps-3/">Read more…</a>
-      
-    </li>
-    
-
-    <li >
-      <h1><a href="https://jlouis.github.io/posts/breaking-erlang-maps-2/" title="Breaking Erlang Maps #2">Breaking Erlang Maps #2</a></h1>
-      <aside>
-    <ul>
-        <li>
-            <time class="post-date" datetime="2015-03-31T00:00:00&#43;02:00">Mar 31, 2015</time>
-        </li>
-        
-        
-
-        
-
-        <li>18 minute read</li>
-    </ul>
-</aside>
-
-      
-<div class="featured_image">
-    <a href="https://jlouis.github.io/posts/breaking-erlang-maps-2/" title="Breaking Erlang Maps #2">
-        <img src="">
-    </a>
-</div>
-
-
-      <p>This is part 2 in my work on using QuickCheck for Erlang to find errors in maps. I assume the reader is familiar with the first part, though I’ll start with a quick recap.
-From where we came In the first part, we built a generator which could generate data to put into maps. When we request something of type map_term(), we get a random term we can push into a map.</p>
-      
-      <a href="/posts/breaking-erlang-maps-2/">Read more…</a>
       
     </li>
     
