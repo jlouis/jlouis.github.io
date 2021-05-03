@@ -17,7 +17,7 @@
 <meta name="twitter:title" content="jlouis&#39; Ramblings"/>
 <meta name="twitter:description" content=""/>
 
-<meta name="generator" content="Hugo 0.82.0" />
+<meta name="generator" content="Hugo 0.82.1" />
     
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" integrity="sha256-l85OmPOjvil/SOvVt3HnSSjzF1TUMyT9eV0c2BzEGzU=" crossorigin="anonymous" />
@@ -214,6 +214,38 @@ In contrast, suppose the queue is full at 10 elements, and that the load increas
     
 
     <li >
+      <h1><a href="https://jlouis.github.io/posts/systems-in-production/" title="Systems in Production">Systems in Production</a></h1>
+      <aside>
+    <ul>
+        <li>
+            <time class="post-date" datetime="2016-02-06T00:00:00&#43;01:00">Feb 6, 2016</time>
+        </li>
+        
+        
+
+        
+
+        <li>8 minute read</li>
+    </ul>
+</aside>
+
+      
+<div class="featured_image">
+    <a href="https://jlouis.github.io/posts/systems-in-production/" title="Systems in Production">
+        <img src="">
+    </a>
+</div>
+
+
+      <p>You embark upon the journey. You build the system. You test the system. The system seems to work. You spend time deploying the system into production. And then what?
+The maintenance period of a project is often measured in years, whereas the time to build the project is measured in months. Thus, the maintenance period by far dwarf the initial construction period. And modern software is dynamically updated all the time: new customers, new uses of the software nobody thought of, operational change around the software, and new patches adding or fixing functionality.</p>
+      
+      <a href="/posts/systems-in-production/">Read more…</a>
+      
+    </li>
+    
+
+    <li >
       <h1><a href="https://jlouis.github.io/posts/testing-parallel-map/" title="Testing a Parallel map implementation">Testing a Parallel map implementation</a></h1>
       <aside>
     <ul>
@@ -340,38 +372,6 @@ The power of having a model for a subsystem is layering. Whenever you get a new 
       
     </li>
     
-
-    <li >
-      <h1><a href="https://jlouis.github.io/posts/breaking-erlang-maps-3/" title="Breaking Erlang Maps #3">Breaking Erlang Maps #3</a></h1>
-      <aside>
-    <ul>
-        <li>
-            <time class="post-date" datetime="2015-04-05T00:00:00&#43;02:00">Apr 5, 2015</time>
-        </li>
-        
-        
-
-        
-
-        <li>3 minute read</li>
-    </ul>
-</aside>
-
-      
-<div class="featured_image">
-    <a href="https://jlouis.github.io/posts/breaking-erlang-maps-3/" title="Breaking Erlang Maps #3">
-        <img src="">
-    </a>
-</div>
-
-
-      <p>Easter hacking on the Maps Erlang QuickCheck model is progressing nicely. And I have new interesting findings to report. I started by trying to generate very large maps, in order to get some collisions on the underlying hash value. At 25.000 elements and a 32-bit hash, we can approximate the chance of a collision by a Taylor expansion of the birthday paradox. If we take
-n = 25000 k = 65536 * 65536 C = 1-exp(-(n*(n-1)/2)/k) and my approximation calculation is right, then C is 0.</p>
-      
-      <a href="/posts/breaking-erlang-maps-3/">Read more…</a>
-      
-    </li>
-    
   </ul>
 </section>
 
@@ -393,10 +393,13 @@ n = 25000 k = 65536 * 65536 C = 1-exp(-(n*(n-1)/2)/k) and my approximation calcu
     <a class="page-link" href="/page/3/">3</a>
   </li>
   <li class="page-item">
+    <a class="page-link" href="/page/4/">4</a>
+  </li>
+  <li class="page-item">
     <a href="/page/2/" class="page-link" aria-label="Next"><span aria-hidden="true">&raquo;</span></a>
   </li>
   <li class="page-item">
-    <a href="/page/3/" class="page-link" aria-label="Last"><span aria-hidden="true">&raquo;&raquo;</span></a>
+    <a href="/page/4/" class="page-link" aria-label="Last"><span aria-hidden="true">&raquo;&raquo;</span></a>
   </li>
 </ul>
 
