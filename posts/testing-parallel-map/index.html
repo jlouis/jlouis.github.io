@@ -21,7 +21,7 @@ map(F, Xs) -&gt; [F(X) || X &lt;- Xs] If, however, the function given as F block
 <meta name="twitter:description" content="Erlang programs, often have a a list comprehension which implements the ubiquitous serial map of functional programming:
 map(F, Xs) -&gt; [F(X) || X &lt;- Xs] If, however, the function given as F blocks, then the map function blocks as well. This is not a desirable situation if the elements in Xs are truly independent. We could run all of the comprehension in parallel and then collect the data afterwards. This is the purpose of the pmap function:"/>
 
-<meta name="generator" content="Hugo 0.82.1" />
+<meta name="generator" content="Hugo 0.84.1" />
     
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" integrity="sha256-l85OmPOjvil/SOvVt3HnSSjzF1TUMyT9eV0c2BzEGzU=" crossorigin="anonymous" />
