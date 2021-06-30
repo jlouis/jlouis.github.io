@@ -1,0 +1,276 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+  <title>Js is Weird in Ocaml - jlouis&#39; Ramblings</title>
+  <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="The HTML5 Herald" />
+<meta name="author" content="Jesper Louis Andersen" /><meta property="og:title" content="Js is Weird in Ocaml" />
+<meta property="og:description" content="The web site jsisweird contains puzzling things from Javascript and runs a multiple choice test over them, to test if people understand the logic. Here, we do the same, but translate each of the questions into likewise OCaml:
+Questions Q1 # true &#43; false;; Error: This expression has type bool but an expression was expected of type int First question is a type error. The &#43; operator isn&rsquo;t defined for boolean values." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://jlouis.github.io/posts/js-weird-in-ocaml/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2021-06-28T12:41:28&#43;02:00" />
+<meta property="article:modified_time" content="2021-06-28T12:41:28&#43;02:00" />
+
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Js is Weird in Ocaml"/>
+<meta name="twitter:description" content="The web site jsisweird contains puzzling things from Javascript and runs a multiple choice test over them, to test if people understand the logic. Here, we do the same, but translate each of the questions into likewise OCaml:
+Questions Q1 # true &#43; false;; Error: This expression has type bool but an expression was expected of type int First question is a type error. The &#43; operator isn&rsquo;t defined for boolean values."/>
+
+<meta name="generator" content="Hugo 0.84.1" />
+    
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" integrity="sha256-l85OmPOjvil/SOvVt3HnSSjzF1TUMyT9eV0c2BzEGzU=" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://jlouis.github.io/fontawesome/css/all.min.css" />
+  
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Slab|Ruda" />
+  
+  
+  <link rel="stylesheet" type="text/css" href="/css/styles.css" /></head>
+
+<body>
+  <div id="container">
+    <header>
+      <h1>
+                <a href="/">jlouis' Ramblings</a>
+            </h1>
+
+      <ul id="social-media">
+             <li>
+               <a href="https://github.com/jlouis" title="GitHub">
+               <i class="fab fa-github fa-lg"></i>
+               </a>
+             </li>
+             <li>
+               <a href="https://twitter.com/jlouis666" title="Twitter">
+               <i class="fab fa-twitter fa-lg"></i>
+               </a>
+             </li>
+      </ul>
+      
+      <p><em>Musings on tech, software, and other things</em></p>
+      
+    </header>
+
+    
+<nav>
+    <ul>
+        
+    </ul>
+</nav>
+
+
+    <main>
+
+
+
+
+<article>
+
+    <h1>Js is Weird in Ocaml</h1>
+
+    
+      <aside>
+    <ul>
+        <li>
+            <time class="post-date" datetime="2021-06-28T12:41:28&#43;02:00">Jun 28, 2021</time>
+        </li>
+        
+        
+
+        
+
+        <li>8 minute read</li>
+    </ul>
+</aside>
+
+    
+
+    
+<div class="featured_image">
+    <a href="https://jlouis.github.io/posts/js-weird-in-ocaml/" title="Js is Weird in Ocaml">
+        <img src="">
+    </a>
+</div>
+
+
+
+    <p>The web site <a href="https://jsisweird.com">jsisweird</a> contains puzzling things from Javascript and runs a multiple choice test over them, to test if people understand the logic. Here, we do the same, but translate each of the questions into likewise OCaml:</p>
+<h2 id="questions">Questions</h2>
+<h3 id="q1">Q1</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="color:#f92672">#</span> true <span style="color:#f92672">+</span> false<span style="color:#f92672">;;</span>
+<span style="color:#a6e22e">Error</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">This</span> expression has <span style="color:#66d9ef">type</span> <span style="color:#66d9ef">bool</span> but an expression was expected <span style="color:#66d9ef">of</span> <span style="color:#66d9ef">type</span> <span style="color:#66d9ef">int</span>
+</code></pre></div><p>First question is a type error. The <code>+</code> operator isn&rsquo;t defined for boolean values. The perhaps mathematically valid solution is to take <code>+</code> to mean logical or, in which case the output should be equal to true. Javascript is what I tend to call &ldquo;weakly typed&rdquo; in that it does implicit type conversions. The <code>true</code> is converted into a number, <code>1</code>, <code>false</code> is converted into a number <code>0</code>, and then these are added up.</p>
+<h3 id="q2">Q2</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="color:#f92672">#</span> List.length <span style="color:#f92672">[;;;];;</span>
+<span style="color:#a6e22e">Error</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">Syntax</span> error
+</code></pre></div><p>This isn&rsquo;t even valid OCaml, because the list entries must have some value. You could use something like <code>[();();()]</code> if you wanted. In JS, this outputs <code>3</code>.</p>
+<h3 id="q3">Q3</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="color:#f92672">#</span> <span style="color:#f92672">[</span>1<span style="color:#f92672">;</span>2<span style="color:#f92672">;</span>3<span style="color:#f92672">]</span> <span style="color:#f92672">+</span> <span style="color:#f92672">[</span>4<span style="color:#f92672">;</span>5<span style="color:#f92672">;</span>6<span style="color:#f92672">];;</span>
+<span style="color:#a6e22e">Error</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">This</span> expression has <span style="color:#66d9ef">type</span> <span style="color:#66d9ef">&#39;</span>a <span style="color:#66d9ef">list</span> but an expression was expected <span style="color:#66d9ef">of</span> <span style="color:#66d9ef">type</span> <span style="color:#66d9ef">int</span>
+</code></pre></div><p>Invalid in OCaml. You can&rsquo;t use a sum on lists. There&rsquo;s another operator, which does the job:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="color:#f92672">#</span> <span style="color:#f92672">[</span>1<span style="color:#f92672">;</span>2<span style="color:#f92672">;</span>3<span style="color:#f92672">]</span> <span style="color:#f92672">@</span> <span style="color:#f92672">[</span>4<span style="color:#f92672">;</span>5<span style="color:#f92672">;</span>6<span style="color:#f92672">];;</span>
+<span style="color:#f92672">-</span> <span style="color:#f92672">:</span> <span style="color:#66d9ef">int</span> <span style="color:#66d9ef">list</span> <span style="color:#f92672">=</span> <span style="color:#f92672">[</span>1<span style="color:#f92672">;</span> 2<span style="color:#f92672">;</span> 3<span style="color:#f92672">;</span> 4<span style="color:#f92672">;</span> 5<span style="color:#f92672">;</span> 6<span style="color:#f92672">]</span>
+</code></pre></div><p>In languages with types, you often have specialized operators for different kinds of operations on different types. That way, you eliminate programming errors in the code, because the programmer has to explicitly ask for a given kind of operation when they need it.</p>
+<h3 id="q4">Q4</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="color:#f92672">#</span> 0<span style="color:#f92672">.</span>1 <span style="color:#f92672">+.</span> 0<span style="color:#f92672">.</span>2 <span style="color:#f92672">=</span> 0<span style="color:#f92672">.</span>3<span style="color:#f92672">;;</span>
+<span style="color:#f92672">-</span> <span style="color:#f92672">:</span> <span style="color:#66d9ef">bool</span> <span style="color:#f92672">=</span> false
+</code></pre></div><p>First point where JS and OCaml will agree. The reason is that OCaml has a bug in the specification of floating point values because it allows them to be compared for equality. Standard ML doesn&rsquo;t:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-text" data-lang="text">Poly/ML 5.7.1 Release
+&gt; 0.1 + 0.2 = 0.3;
+poly: : error: Type error in function application.
+   Function: = : &#39;&#39;a * &#39;&#39;a -&gt; bool
+   Argument: (0.1 + 0.2, 0.3) : real * real
+   Reason: Can&#39;t unify &#39;&#39;a to real (Requires equality type)
+Found near 0.1 + 0.2 = 0.3
+</code></pre></div><p>Comparisons of floating point values must use tolerances. You have to check if the two values are within each other by some small epsilon.</p>
+<h3 id="q5">Q5</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="color:#f92672">#</span> 10<span style="color:#f92672">,</span>2<span style="color:#f92672">;;</span>
+<span style="color:#f92672">-</span> <span style="color:#f92672">:</span> <span style="color:#66d9ef">int</span> <span style="color:#f92672">*</span> <span style="color:#66d9ef">int</span> <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>10<span style="color:#f92672">,</span> 2<span style="color:#f92672">)</span>
+</code></pre></div><p>OCaml returns a tuple. Javascript throws away the 10 and returns 2. This seems dangerous and I hope linters are good at catching this, because it&rsquo;s a small error waiting to happen in the code base.</p>
+<h3 id="q6">Q6</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="color:#f92672">#</span> not <span style="color:#f92672">(</span>not <span style="color:#e6db74">&#34;&#34;</span><span style="color:#f92672">);;</span>
+<span style="color:#a6e22e">Error</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">This</span> expression has <span style="color:#66d9ef">type</span> <span style="color:#66d9ef">string</span> but an expression was expected <span style="color:#66d9ef">of</span> <span style="color:#66d9ef">type</span>
+         <span style="color:#66d9ef">bool</span>
+</code></pre></div><p>The Ocaml type system strikes again. This is not valid because you can&rsquo;t invert the boolean value of an empty string. Javascript uses weak typing, implicit conversion and returns <code>false</code>.</p>
+<h3 id="q7">Q7</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="color:#f92672">#</span> <span style="color:#f92672">+(</span>not <span style="color:#f92672">(</span>not []<span style="color:#f92672">));;</span>
+<span style="color:#a6e22e">Error</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">This</span> variant expression is expected <span style="color:#66d9ef">to</span> have <span style="color:#66d9ef">type</span> <span style="color:#66d9ef">bool</span>
+       <span style="color:#a6e22e">The</span> constructor [] does not belong <span style="color:#66d9ef">to</span> <span style="color:#66d9ef">type</span> <span style="color:#66d9ef">bool</span>
+</code></pre></div><p>Again, OCaml&rsquo;s type system to the rescue! This doesn&rsquo;t make sense. In Javascript, <code>+!![]</code> converts by first converting <code>[]</code> to it&rsquo;s boolean representation, which is <code>true</code>, then converting <code>true</code> to a number due to the <code>+</code>, which is <code>1</code>.</p>
+<h3 id="q8">Q8</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="color:#f92672">#</span> not <span style="color:#f92672">(</span>not <span style="color:#f92672">(</span>not true<span style="color:#f92672">));;</span>
+<span style="color:#f92672">-</span> <span style="color:#f92672">:</span> <span style="color:#66d9ef">bool</span> <span style="color:#f92672">=</span> false
+</code></pre></div><p>Javascript and OCaml agrees here. It makes sense, since you are inverting an odd number of times.</p>
+<h3 id="q9">Q9</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="color:#f92672">#</span> true <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;true&#34;</span><span style="color:#f92672">;;</span>
+<span style="color:#a6e22e">Error</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">This</span> expression has <span style="color:#66d9ef">type</span> <span style="color:#66d9ef">string</span> but an expression was expected <span style="color:#66d9ef">of</span> <span style="color:#66d9ef">type</span>
+         <span style="color:#66d9ef">bool</span>
+</code></pre></div><p>You are not allowed to compare values from different types because normal equality is homogeneous. You can make systems with heterogenous equality, but this is most often used in the case where you have some evidence the types are really the same. You then present such evidence to the type system so it can verify it. It&rsquo;s a more lenient form of equality, but it&rsquo;s doesn&rsquo;t allow you to cheat.</p>
+<p>Javascript outputs <code>false</code>. Because <code>true</code> converts into <code>1</code> and <code>&quot;true&quot;</code> converts into <code>NaN</code>. After which falsity is obtained.</p>
+<h3 id="q10">Q10</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="color:#f92672">#</span> 010 <span style="color:#f92672">-</span> 03<span style="color:#f92672">;;</span>
+<span style="color:#f92672">-</span> <span style="color:#f92672">:</span> <span style="color:#66d9ef">int</span> <span style="color:#f92672">=</span> 7
+<span style="color:#f92672">#</span> 0o10 <span style="color:#f92672">-</span> 0o3<span style="color:#f92672">;;</span>
+<span style="color:#f92672">-</span> <span style="color:#f92672">:</span> <span style="color:#66d9ef">int</span> <span style="color:#f92672">=</span> 5
+</code></pre></div><p>OCaml has a specific way of writing octal numbers, which doesn&rsquo;t come into play unless you explicitly ask for it. Javascript chose the representation from C, where a preceding <code>0</code> yields an octal number.</p>
+<h3 id="q11">Q11</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="color:#f92672">#</span> <span style="color:#e6db74">&#34;&#34;</span> <span style="color:#f92672">-</span> <span style="color:#f92672">-</span> <span style="color:#e6db74">&#34;&#34;</span><span style="color:#f92672">;;</span>
+<span style="color:#a6e22e">Error</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">This</span> expression has <span style="color:#66d9ef">type</span> <span style="color:#66d9ef">string</span> but an expression was expected <span style="color:#66d9ef">of</span> <span style="color:#66d9ef">type</span>
+         <span style="color:#66d9ef">int</span>
+</code></pre></div><p>OCaml uses the type system to eliminate nonsense, yet again.</p>
+<h3 id="q12">Q12</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="color:#f92672">#</span> <span style="color:#66d9ef">type</span> null <span style="color:#f92672">=</span> <span style="color:#a6e22e">Null</span><span style="color:#f92672">;;</span>
+<span style="color:#66d9ef">type</span> null <span style="color:#f92672">=</span> <span style="color:#a6e22e">Null</span>
+<span style="color:#f92672">#</span> <span style="color:#a6e22e">Null</span> <span style="color:#f92672">+</span> 0<span style="color:#f92672">;;</span>
+<span style="color:#a6e22e">Error</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">This</span> expression has <span style="color:#66d9ef">type</span> null but an expression was expected <span style="color:#66d9ef">of</span> <span style="color:#66d9ef">type</span> <span style="color:#66d9ef">int</span>
+</code></pre></div><p>OCaml has no null value, but we can create a null value as a new type. Clearly, the addition is ill-typed, so the compiler rejects this nonsense.</p>
+<h3 id="q13">Q13</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="color:#f92672">#</span> 0 <span style="color:#f92672">/</span> 0<span style="color:#f92672">;;</span>
+<span style="color:#a6e22e">Exception</span><span style="color:#f92672">:</span> Division_by_zero.
+utop <span style="color:#f92672">#</span> 0<span style="color:#f92672">.</span> <span style="color:#f92672">/.</span> 0<span style="color:#f92672">.;;</span>
+<span style="color:#f92672">-</span> <span style="color:#f92672">:</span> <span style="color:#66d9ef">float</span> <span style="color:#f92672">=</span> nan
+</code></pre></div><p>Typing it exactly like you do in Javascript, yields an exception because you are dividing by 0. In the case you request floating point values, the result is the same as in Javascript. It&rsquo;s a consequence of IEEE 754 floating point numbers, where <code>nan</code> represents an illegal number value. This can be useful in some situations, particularly when your data is incomplete, where you can use a <code>nan</code> to represent lack of data.</p>
+<p>It&rsquo;s also useful for performance reasons. Run your computation to the end, then check for <code>nan</code>. If present, the computation is failed and you can analyze why. This avoids the code to check for legality in each step, greatly improving performance for computations.</p>
+<h3 id="q14">Q14</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="color:#f92672">#</span> 1<span style="color:#f92672">/</span>0 <span style="color:#f92672">&gt;</span> 10<span style="color:#f92672">**</span>1000<span style="color:#f92672">;;</span>
+<span style="color:#a6e22e">Error</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">This</span> expression has <span style="color:#66d9ef">type</span> <span style="color:#66d9ef">int</span> but an expression was expected <span style="color:#66d9ef">of</span> <span style="color:#66d9ef">type</span>
+         <span style="color:#66d9ef">float</span>
+  <span style="color:#a6e22e">Hint</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">Did</span> you mean <span style="color:#f92672">`</span>10<span style="color:#f92672">.</span><span style="color:#66d9ef">&#39;</span><span style="color:#f92672">?</span>
+
+utop <span style="color:#f92672">#</span> 1<span style="color:#f92672">.</span> <span style="color:#f92672">/.</span> 0<span style="color:#f92672">.</span> <span style="color:#f92672">&gt;</span> 10<span style="color:#f92672">.</span> <span style="color:#f92672">**</span> 1000<span style="color:#f92672">.;;</span>
+<span style="color:#f92672">-</span> <span style="color:#f92672">:</span> <span style="color:#66d9ef">bool</span> <span style="color:#f92672">=</span> false
+</code></pre></div><p>Again, like the Q13, this is a consequence of how IEEE 754 floating point values work. Both values convert to <code>infinity</code> and they compare equal. However, in Javascript, floating point numbers is the default, whereas in OCaml you can opt to work with integers instead.</p>
+<h3 id="q15">Q15</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="color:#f92672">#</span> true<span style="color:#f92672">++;;</span>
+<span style="color:#a6e22e">Error</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">Syntax</span> error
+</code></pre></div><p>Javascript and OCaml does the same here, thank god.</p>
+<h3 id="q16">Q16</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="color:#f92672">#</span> <span style="color:#e6db74">&#34;&#34;</span> <span style="color:#f92672">-</span> 1<span style="color:#f92672">;;</span>
+<span style="color:#a6e22e">Error</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">This</span> expression has <span style="color:#66d9ef">type</span> <span style="color:#66d9ef">string</span> but an expression was expected <span style="color:#66d9ef">of</span> <span style="color:#66d9ef">type</span>
+         <span style="color:#66d9ef">int</span>
+</code></pre></div><p>OCaml rejects this as ill-typed, where Javascript happily regards <code>&quot;&quot;</code> as <code>0</code>, and then returns <code>-1</code>. How can people work with this in practice?</p>
+<h3 id="q17--q18--q19">Q17 + Q18 + Q19</h3>
+<p>All of these questions behave the same:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="color:#f92672">#</span> <span style="color:#f92672">(</span><span style="color:#a6e22e">Null</span> <span style="color:#f92672">-</span> 0<span style="color:#f92672">)</span> <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;0&#34;</span><span style="color:#f92672">,</span> true <span style="color:#f92672">+</span> <span style="color:#f92672">(</span><span style="color:#e6db74">&#34;true&#34;</span> <span style="color:#f92672">-</span> 0<span style="color:#f92672">),</span> <span style="color:#f92672">(</span>not 5<span style="color:#f92672">)</span> <span style="color:#f92672">+</span> <span style="color:#f92672">(</span>not 5<span style="color:#f92672">);;</span>
+<span style="color:#a6e22e">Error</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">This</span> expression has <span style="color:#66d9ef">type</span> null but an expression was expected <span style="color:#66d9ef">of</span> <span style="color:#66d9ef">type</span> <span style="color:#66d9ef">int</span>
+</code></pre></div><p>OCaml only ever reports the first error encountered. But the other expressions are not well-typed either.</p>
+<h3 id="q20">Q20</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml">utop <span style="color:#f92672">#</span> [] <span style="color:#f92672">+</span> []<span style="color:#f92672">;;</span>
+<span style="color:#a6e22e">Error</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">This</span> expression has <span style="color:#66d9ef">type</span> <span style="color:#66d9ef">&#39;</span>a <span style="color:#66d9ef">list</span> but an expression was expected <span style="color:#66d9ef">of</span> <span style="color:#66d9ef">type</span>
+         <span style="color:#66d9ef">int</span>
+<span style="color:#f92672">#</span> [] <span style="color:#f92672">@</span> []<span style="color:#f92672">;;</span>
+<span style="color:#f92672">-</span> <span style="color:#f92672">:</span> <span style="color:#66d9ef">&#39;</span>a <span style="color:#66d9ef">list</span> <span style="color:#f92672">=</span> []
+</code></pre></div><p>Same variant as Q3, and it should behave the same way. Javascript uses a concept of &ldquo;primitive values&rdquo; in which implicit conversion follows a set order. The first matching entry in this order is <code>toString</code>, so the result is <code>&quot;&quot; + &quot;&quot;</code> which is <code>&quot;&quot;</code>.</p>
+<h3 id="q21">Q21</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="color:#f92672">#</span> nan <span style="color:#f92672">=</span> nan<span style="color:#f92672">;;</span>
+<span style="color:#f92672">-</span> <span style="color:#f92672">:</span> <span style="color:#66d9ef">bool</span> <span style="color:#f92672">=</span> false
+</code></pre></div><p>This is a consequence of IEEE 754 floating point numbers. NaN values are never equal.</p>
+<h3 id="q22">Q22</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="color:#f92672">#</span> nan <span style="color:#f92672">+.</span> 1<span style="color:#f92672">.;;</span>
+<span style="color:#f92672">-</span> <span style="color:#f92672">:</span> <span style="color:#66d9ef">float</span> <span style="color:#f92672">=</span> nan
+</code></pre></div><p>IEEE 754 again. NaN sort of represents the failed computation, so if part of the computation is a failure, then so is any further computation with that value.</p>
+<h3 id="q23">Q23</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="color:#f92672">#</span> <span style="color:#66d9ef">type</span> undefined <span style="color:#f92672">=</span> <span style="color:#a6e22e">Undef</span><span style="color:#f92672">;;</span>
+<span style="color:#66d9ef">type</span> undefined <span style="color:#f92672">=</span> <span style="color:#a6e22e">Undef</span>
+utop <span style="color:#f92672">#</span> <span style="color:#a6e22e">Undef</span> <span style="color:#f92672">+</span> false<span style="color:#f92672">;;</span>
+<span style="color:#a6e22e">Error</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">This</span> expression has <span style="color:#66d9ef">type</span> undefined
+       but an expression was expected <span style="color:#66d9ef">of</span> <span style="color:#66d9ef">type</span> <span style="color:#66d9ef">int</span>
+</code></pre></div><p>Another simple type error in OCaml.</p>
+<h3 id="q24">Q24</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="color:#f92672">#</span> <span style="color:#f92672">+</span>0 <span style="color:#f92672">=</span> <span style="color:#f92672">-</span>0<span style="color:#f92672">;;</span>
+<span style="color:#f92672">-</span> <span style="color:#f92672">:</span> <span style="color:#66d9ef">bool</span> <span style="color:#f92672">=</span> true
+utop <span style="color:#f92672">#</span> <span style="color:#f92672">+</span>0<span style="color:#f92672">.</span> <span style="color:#f92672">=</span> <span style="color:#f92672">-</span>0<span style="color:#f92672">.;;</span>
+<span style="color:#f92672">-</span> <span style="color:#f92672">:</span> <span style="color:#66d9ef">bool</span> <span style="color:#f92672">=</span> true
+</code></pre></div><p>It&rsquo;s important to note that in IEEE 754, the values <code>+0.</code> and <code>-0.</code> have different bit representations because the sign bit is flipped. This is why they can compare unequal in some cases. However, as a rule, you should never compare floating point values for equality.</p>
+<h3 id="q25">Q25</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="color:#f92672">#</span> <span style="color:#f92672">-</span> <span style="color:#e6db74">&#34;&#34;</span> <span style="color:#f92672">+</span> <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;1&#34;</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">Null</span> <span style="color:#f92672">-</span> <span style="color:#f92672">[,];;</span>
+<span style="color:#a6e22e">Error</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">Syntax</span> error
+</code></pre></div><p>This has a value in Javascript! And it&rsquo;s 0!</p>
+<h2 id="some-comments">Some comments</h2>
+<p>The Javascript implicit conversion rules are complex. They are also dangerous. In some cases, where the programmer wants the program to fail, the implicit conversions make sure the Javascript code will continue to execute. In turn, the error will accumulate in the program.</p>
+<p>In the lucky case, the error then makes some part of the system into nonsense and it breaks. Debugging will take time because you have to backtrack to where the fault really happened, but at least you have an error to work with.</p>
+<p>In the unlucky case, the program will run. It will compute the wrong value. It will write the wrong value to disk. It will do this for several months and nobody will notice. Then all of a sudden, someone notices and you have months worth of data which were wrong.</p>
+<p>In short: avoid Javascript for your important compute-kernels.</p>
+
+
+</article>
+
+
+<section class="post-nav">
+    <ul>
+        
+        <li>
+            <a href="https://jlouis.github.io/posts/observability/"><i class="fa fa-chevron-circle-left"></i> On Observability</a>
+        </li>
+        
+        
+    </ul>
+</section>
+  
+    
+    
+  
+
+
+
+
+
+</main>
+    <footer>
+        <h6> |
+            Rendered by <a href="https://gohugo.io" title="Hugo">Hugo</a> |
+            <a href="https://jlouis.github.io/index.xml">Subscribe </a></h6>
+    </footer>
+</div>
+<script src="/js/scripts.js"></script>
+
+
+</body>
+
+</html>
+
